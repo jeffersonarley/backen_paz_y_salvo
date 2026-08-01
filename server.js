@@ -1,4 +1,4 @@
- require('dotenv').config();
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const conectarDB = require('./src/config/db');
@@ -33,6 +33,10 @@ app.get('/api/test-db', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+// 3. Rutas de Autenticación (Login)
+const authRoutes = require('./src/routes/authRoutes');
+app.use('/api/auth', authRoutes);
 
 // Arrancar Servidor
 const PORT = process.env.PORT || 3000;
