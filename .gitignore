@@ -1,20 +1,2 @@
-# Dependencias (pesadas e instalables con npm install)
-node_modules/
-
-# Variables de entorno y secretos (¡NUNCA SUBIR A GIT!)
-.env
-.env.local
-.env.development
-
-# Archivos de logs y depuración
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Archivos del sistema operativo
-.DS_Store
-Thumbs.db
-
-# Configuración del editor
-.vscode/
-.idea/
+node_modules
+.quasar
