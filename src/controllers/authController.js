@@ -19,6 +19,7 @@ exports.login = async (req, res) => {
             return res.status(401).json({ mensaje: 'Credenciales inválidas.' });
         }
 
+
         // 3. Verificar si el usuario está inactivo por el Admin
         if (usuario.activo === false) {
             return res.status(401).json({ 
@@ -35,6 +36,7 @@ exports.login = async (req, res) => {
                 mensaje: `Cuenta bloqueada por intentos fallidos. Intente de nuevo en ${minutosRestantes} minuto(s).` 
             });
         }
+console.log("sigo");
 
         // 5. Validar la contraseña con Bcrypt
         const esCorrecta = await bcrypt.compare(password, usuario.password_hash);
@@ -60,6 +62,7 @@ exports.login = async (req, res) => {
                 mensaje: `Credenciales inválidas. Intentos fallidos: ${usuario.intentos_fallidos}/3` 
             });
         }
+console.log("ass correcto");
 
         // 6. Si la contraseña es correcta: Resetear contadores de bloqueo
         usuario.intentos_fallidos = 0;
@@ -79,6 +82,7 @@ exports.login = async (req, res) => {
             process.env.JWT_SECRET || 'secreto_sena_pazysalvo', 
             { expiresIn: '8h' }
         );
+console.log("abd",token);
 
         // 8. Responder con estado HTTP 200 y entregar el token + rol
         return res.status(200).json({

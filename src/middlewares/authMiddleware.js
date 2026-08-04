@@ -2,8 +2,8 @@ const jwt = require('jsonwebtoken');
 
 // 1. Validar que la petición tenga un Token JWT válido
 const verificarToken = (req, res, next) => {
-    // Obtener el token del encabezado de la petición
-    const authHeader = req.header('Authorization');
+    // Obtener el token del encabezado de la petición (compatible con minúsculas y mayúsculas)
+    const authHeader = req.headers.authorization || req.header('Authorization');
 
     if (!authHeader) {
         return res.status(401).json({ 
@@ -12,16 +12,18 @@ const verificarToken = (req, res, next) => {
     }
 
     try {
-        // Formato esperado: "Bearer TOKEN_AQUÍ"
-        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
-        
-        // Verificar el token con la clave secreta
+        // Formato esperado: "Bearer TOKEN_AQUÍ" (limpia espacios innecesarios)
+        const token = authHeader.toLowerCase().startsWith('bearer ') 
+            ? authHeader.slice(7).trim() 
+            : authHeader.trim();
+
+        // Verificar el token con la clave secreta del .env
         const decodificado = jwt.verify(token, process.env.JWT_SECRET || 'secreto_sena_pazysalvo');
-        
-        // Guardar los datos del usuario logueado en req.usuario para usarlos en los controladores
+
+        // Guardar la información del usuario en req.usuario
         req.usuario = decodificado;
-        
-        next(); // Continuar a la siguiente función/controlador
+
+        next(); // Continuar al controlador o siguiente middleware
     } catch (error) {
         return res.status(401).json({ 
             mensaje: 'Token no válido o expirado. Por favor, inicie sesión de nuevo.' 

@@ -1,4 +1,4 @@
-require('dotenv').config();
+ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const conectarDB = require('./src/config/db');
@@ -37,6 +37,10 @@ app.get('/api/test-db', async (req, res) => {
 // 3. Rutas de Autenticación (Login)
 const authRoutes = require('./src/routes/authRoutes');
 app.use('/api/auth', authRoutes);
+
+// 4. Rutas del Módulo de Usuarios (Diagrama 2)
+const usuarioRoutes = require('./src/routes/usuarioRoutes');
+app.use('/api/usuarios', usuarioRoutes);
 
 // Arrancar Servidor
 const PORT = process.env.PORT || 3000;
