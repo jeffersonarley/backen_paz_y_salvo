@@ -23,6 +23,7 @@ const verificarToken = (req, res, next) => {
         
         next(); // Continuar a la siguiente función/controlador
     } catch (error) {
+        console.error(error);
         return res.status(401).json({ 
             mensaje: 'Token no válido o expirado. Por favor, inicie sesión de nuevo.' 
         });

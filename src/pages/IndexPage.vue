@@ -67,8 +67,9 @@ import logoSena from '../images/logo-sena.png'
 }
 
 .logo{
-    width:110px;
-    margin-bottom:20px;
+    display: block;
+    width: 110px;
+    margin: 0 auto 20px;
 }
 
 h4{

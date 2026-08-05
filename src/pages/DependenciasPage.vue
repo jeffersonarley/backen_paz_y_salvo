@@ -36,7 +36,7 @@
 
     <q-table
       title="Listado de Dependencias"
-      :rows="rows"
+      :rows="store.dependencias"
       :columns="columns"
       :filter="filtro"
       row-key="codigo"
@@ -88,7 +88,7 @@
         v-model="dependencia.codigo"
         label="Código"
         outlined
-        :disable="editando"
+        
         class="q-mb-md"
       />
 
@@ -183,10 +183,11 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useDependenciasStore } from '../stores/Dependencias.js'
 
 const filtro = ref('')
 
-const rows = ref([])
+const store = useDependenciasStore()
 
 const dialogo = ref(false)
 
@@ -245,7 +246,7 @@ const columns = [
 ]
 
 function guardarDependencia() {
-
+ 
   // Validar campos obligatorios
   if (
     !dependencia.value.codigo ||
@@ -261,7 +262,7 @@ function guardarDependencia() {
 
   }
 
- const existeCodigo = rows.value.some((item, index) => {
+ const existeCodigo = store.dependencias.some((item, index) => {
   return (
     item.codigo === dependencia.value.codigo &&
     index !== indiceEditar.value
@@ -286,17 +287,17 @@ if (existeCodigo) {
 
   if (editando.value) {
 
- rows.value[indiceEditar.value] = {
+store.editar(indiceEditar.value, {
   codigo: dependencia.value.codigo,
   nombre: dependencia.value.nombre,
   responsable: dependencia.value.responsable,
   correo: dependencia.value.correo,
   estado: dependencia.value.estado
-}
+});
 
 } else {
 
-rows.value.push({
+store.agregar({
   codigo: dependencia.value.codigo,
   nombre: dependencia.value.nombre,
   responsable: dependencia.value.responsable,
@@ -326,7 +327,7 @@ function editarDependencia(fila) {
 
   dependencia.value = { ...fila }
  
-  indiceEditar.value = rows.value.findIndex(
+  indiceEditar.value = store.dependencias.findIndex(
     item => item.codigo === fila.codigo
   )
 
@@ -335,13 +336,9 @@ function editarDependencia(fila) {
 }
 
 function confirmarEliminar() {
-
-  rows.value = rows.value.filter(
-    dependencia => dependencia.codigo !== codigoEliminar.value
-  )
+  store.eliminar(codigoEliminar.value)
   codigoEliminar.value = ''
   dialogoEliminar.value = false
-
 }
 function eliminarDependencia(codigo) {
 

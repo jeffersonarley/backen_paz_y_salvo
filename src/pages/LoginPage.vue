@@ -84,8 +84,9 @@ function ingresar() {
 }
 
 .logo{
+    display: block;
     width:120px;
-    margin-bottom:20px;
+    margin:0 auto 20px;
 }
 
 .titulo{

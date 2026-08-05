@@ -15,7 +15,7 @@
         />
 
         <q-avatar class="q-ml-md">
-          <img src="../images/logo-sena.png" alt="Logo SENA">
+          <img class="header-logo" src="../images/logo-sena.png" alt="Logo SENA">
         </q-avatar>
 
         <q-toolbar-title>
@@ -87,20 +87,7 @@
           </q-item-section>
 
         </q-item>
-        <q-item
-  clickable
-  @click="router.push('/app/supervisores')"
->
-
-  <q-item-section avatar>
-    <q-icon name="supervisor_account" />
-  </q-item-section>
-
-  <q-item-section>
-    Supervisores
-  </q-item-section>
-
-</q-item>
+        
 
         <q-item
           clickable
@@ -183,3 +170,11 @@ const leftDrawerOpen = ref(true)
 
 const router = useRouter()
 </script>
+
+<style scoped>
+.header-logo {
+  filter: brightness(0) invert(1);
+  width: 36px;
+  height: auto;
+}
+</style>
