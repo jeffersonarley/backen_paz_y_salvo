@@ -1,9 +1,9 @@
- require('dotenv').config();
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const conectarDB = require('./src/config/db');
 
-// 1. Importar el modelo de Usuario
+// 1. Importar los modelos
 const Usuario = require('./src/models/Usuario');
 
 const app = express();
@@ -38,10 +38,14 @@ app.get('/api/test-db', async (req, res) => {
 const authRoutes = require('./src/routes/authRoutes');
 app.use('/api/auth', authRoutes);
 
-// 4. Rutas del Módulo de Usuarios (Diagrama 2)
+// 4. Rutas del Módulo de Usuarios (Diagrama 2 - Jerarquía de Usuarios)
 const usuarioRoutes = require('./src/routes/usuarioRoutes');
 app.use('/api/usuarios', usuarioRoutes);
 
+ 
+// 5. Rutas del Módulo de Contratos e Inventario (Diagrama 2)
+const contratoRoutes = require('./src/routes/contratoRoutes');
+app.use('/api/contratos', contratoRoutes);
 // Arrancar Servidor
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

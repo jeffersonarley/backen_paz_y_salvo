@@ -36,7 +36,6 @@ exports.login = async (req, res) => {
                 mensaje: `Cuenta bloqueada por intentos fallidos. Intente de nuevo en ${minutosRestantes} minuto(s).` 
             });
         }
-console.log("sigo");
 
         // 5. Validar la contraseña con Bcrypt
         const esCorrecta = await bcrypt.compare(password, usuario.password_hash);
