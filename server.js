@@ -38,14 +38,18 @@ app.get('/api/test-db', async (req, res) => {
 const authRoutes = require('./src/routes/authRoutes');
 app.use('/api/auth', authRoutes);
 
-// 4. Rutas del Módulo de Usuarios (Diagrama 2 - Jerarquía de Usuarios)
+// 4. Rutas del Módulo de Usuarios
 const usuarioRoutes = require('./src/routes/usuarioRoutes');
 app.use('/api/usuarios', usuarioRoutes);
 
- 
 // 5. Rutas del Módulo de Contratos e Inventario (Diagrama 2)
 const contratoRoutes = require('./src/routes/contratoRoutes');
 app.use('/api/contratos', contratoRoutes);
+
+// 6. Rutas del Módulo de Supervisión y Evaluación (Diagrama 3)
+const supervisionRoutes = require('./src/routes/supervisionRoutes');
+app.use('/api/contratos', supervisionRoutes);
+
 // Arrancar Servidor
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

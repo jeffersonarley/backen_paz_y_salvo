@@ -28,7 +28,7 @@ const contratoSchema = new mongoose.Schema({
     },
     estado: {
         type: String,
-        enum: ['Borrador', 'EnProceso', 'Aprobado', 'Rechazado'],
+        enum: ['Borrador', 'EnProceso', 'Pendiente de Firmas', 'Aprobado', 'Rechazado'],
         default: 'Borrador'
     },
     version_formato: {
