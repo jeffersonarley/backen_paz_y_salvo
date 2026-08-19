@@ -50,6 +50,10 @@ app.use('/api/contratos', contratoRoutes);
 const supervisionRoutes = require('./src/routes/supervisionRoutes');
 app.use('/api/contratos', supervisionRoutes);
 
+// Rutas para el módulo de firmas (Diagrama 4)
+const firmasRoutes = require('./src/routes/firmasRoutes');
+app.use('/api/firmas', firmasRoutes);
+
 // Arrancar Servidor
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

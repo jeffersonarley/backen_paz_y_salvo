@@ -22,6 +22,10 @@ const trazabilidadFirmaSchema = new mongoose.Schema({
         type: String,
         default: null
     },
+    hash_verificacion: {
+        type: String,
+        default: ''
+    },
     fecha_firma: {
         type: Date
     }
