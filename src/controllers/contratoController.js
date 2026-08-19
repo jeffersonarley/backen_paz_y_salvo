@@ -1,7 +1,9 @@
+const mongoose = require('mongoose');
 const Contrato = require('../models/Contrato');
 const BienEntregado = require('../models/BienEntregado');
 
 exports.crearContrato = async (req, res) => {
+  const session = await mongoose.startSession();
   try {
     const { numero, telefono, dependencia, bienes } = req.body;
 
@@ -21,7 +23,7 @@ exports.crearContrato = async (req, res) => {
       return res.status(400).json({ mensaje: 'Debe incluir al menos un bien en el inventario.' });
     }
 
-    // 3. Crear y guardar el Contrato en MongoDB
+    // Preparar datos
     const nuevoContrato = new Contrato({
       numero_contrato: numero,
       nombre_contratista: req.usuario.nombre_completo || req.usuario.nombre || 'Contratista',
@@ -32,9 +34,6 @@ exports.crearContrato = async (req, res) => {
       estado: 'Borrador'
     });
 
-    await nuevoContrato.save();
-
-    // 4. Mapear e insertar los bienes asociando el _id del contrato guardado
     const bienesConContrato = bienes.map(bien => ({
       descripcion: bien.descripcion || bien.nombre,
       codigo_inventario: bien.codigo_inventario || bien.codigo || bien.placa,
@@ -42,16 +41,51 @@ exports.crearContrato = async (req, res) => {
       contrato: nuevoContrato._id
     }));
 
-    await BienEntregado.insertMany(bienesConContrato);
+    // 3. Intentar transacción atómica (requiere replica set en MongoDB)
+    try {
+      await session.withTransaction(async () => {
+        await nuevoContrato.save({ session });
+        await BienEntregado.insertMany(bienesConContrato, { session });
+      });
+      session.endSession();
 
-    // 5. Respuesta exitosa
-    return res.status(201).json({
-      mensaje: 'Registro contractual e inventario creado exitosamente en estado Borrador.',
-      contrato: nuevoContrato
-    });
+      return res.status(201).json({
+        mensaje: 'Registro contractual e inventario creado exitosamente en estado Borrador.',
+        contrato: nuevoContrato
+      });
+    } catch (txError) {
+      // Si las transacciones no son soportadas (standalone) o fallan, hacemos fallback
+      console.warn('Transacción fallida o no soportada, intentando fallback:', txError.message);
+      session.endSession();
+
+      // Fallback secuencial con compensación manual
+      try {
+        await nuevoContrato.save();
+        await BienEntregado.insertMany(bienesConContrato);
+
+        return res.status(201).json({
+          mensaje: 'Registro contractual e inventario creado (fallback secuencial).',
+          contrato: nuevoContrato
+        });
+      } catch (fallbackErr) {
+        // Intentar eliminar contrato creado si hubo falla al insertar bienes
+        try {
+          await Contrato.findByIdAndDelete(nuevoContrato._id);
+        } catch (cleanupErr) {
+          console.error('Error en limpieza tras fallo fallback:', cleanupErr.message);
+        }
+
+        console.error('Error en fallback al registrar contrato:', fallbackErr);
+        return res.status(500).json({
+          mensaje: 'Error interno del servidor al procesar el contrato (fallback).',
+          error: fallbackErr.message
+        });
+      }
+    }
 
   } catch (error) {
     console.error('Error al registrar contrato:', error);
+    try { session.endSession(); } catch (e) {}
     return res.status(500).json({ 
       mensaje: 'Error interno del servidor al procesar el contrato.',
       error: error.message 

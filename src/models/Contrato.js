@@ -26,6 +26,11 @@ const contratoSchema = new mongoose.Schema({
         type: String,
         required: [true, 'La dependencia es obligatoria']
     },
+    supervisor: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Usuario',
+        default: null
+    },
     estado: {
         type: String,
         enum: ['Borrador', 'EnProceso', 'Pendiente de Firmas', 'Aprobado', 'Rechazado'],

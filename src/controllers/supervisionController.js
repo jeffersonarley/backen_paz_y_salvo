@@ -19,6 +19,21 @@ exports.evaluarContrato = async (req, res) => {
       return res.status(404).json({ mensaje: 'Contrato no encontrado.' });
     }
 
+    // 2.1 Validar que el supervisor autenticado sea el asignado al contrato (si existe)
+    // Los Administradores pueden omitir esta verificación
+    if (req.usuario.rol === 'Supervisor') {
+      if (contrato.supervisor) {
+        const supervisorId = contrato.supervisor.toString();
+        const usuarioId = req.usuario.id || req.usuario._id || req.usuario.uid;
+        if (supervisorId !== usuarioId.toString()) {
+          return res.status(403).json({ mensaje: 'Acceso denegado. No estás asignado como supervisor de este contrato.' });
+        }
+      } else {
+        // Si no hay supervisor asignado, denegar la acción para evitar que supervisores no asignados actúen
+        return res.status(403).json({ mensaje: 'Acceso denegado. Este contrato no tiene un supervisor asignado.' });
+      }
+    }
+
     // 3. Evaluar veredicto (Aprobado / Rechazado)
     if (aprobado === false) {
       // --- RECHAZADO ---
