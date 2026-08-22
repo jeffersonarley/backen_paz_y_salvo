@@ -10,6 +10,11 @@ const dependenciaAreaSchema = new mongoose.Schema({
     activo: {
         type: Boolean,
         default: true
+    },
+    responsable_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Usuario',
+        default: null
     }
 }, {
     timestamps: true,

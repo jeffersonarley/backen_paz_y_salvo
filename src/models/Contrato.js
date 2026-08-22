@@ -23,8 +23,14 @@ const contratoSchema = new mongoose.Schema({
         trim: true
     },
     dependencia: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'DependenciaArea',
         required: [true, 'La dependencia es obligatoria']
+    },
+    usuario: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Usuario',
+        default: null
     },
     supervisor: {
         type: mongoose.Schema.Types.ObjectId,
@@ -33,8 +39,12 @@ const contratoSchema = new mongoose.Schema({
     },
     estado: {
         type: String,
-        enum: ['Borrador', 'EnProceso', 'Pendiente de Firmas', 'Aprobado', 'Rechazado'],
+        enum: ['Borrador', 'EnProceso', 'Pendiente de Firmas', 'Aprobado', 'Rechazado', 'Finalizado'],
         default: 'Borrador'
+    },
+    observaciones_supervisor: {
+        type: String,
+        default: null
     },
     version_formato: {
         type: Number,

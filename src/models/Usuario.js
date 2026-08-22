@@ -26,6 +26,20 @@ const usuarioSchema = new mongoose.Schema({
         type: String,
         trim: true
     },
+    dependencia_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'DependenciaArea',
+        default: null
+    },
+    supervisor_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Usuario',
+        default: null
+    },
+    cargo: {
+        type: String,
+        trim: true
+    },
     activo: {
         type: Boolean,
         default: true
@@ -33,6 +47,18 @@ const usuarioSchema = new mongoose.Schema({
     intentos_fallidos: {
         type: Number,
         default: 0
+    },
+    bloqueado_hasta: {
+        type: Date,
+        default: null
+    },
+    token_recuperacion: {
+        type: String,
+        default: null
+    },
+    token_expiracion: {
+        type: Date,
+        default: null
     }
 }, {
     timestamps: true,

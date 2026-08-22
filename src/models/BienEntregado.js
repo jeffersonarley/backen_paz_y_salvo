@@ -17,6 +17,10 @@ const bienEntregadoSchema = new mongoose.Schema({
     cantidad: {
         type: Number,
         default: 1
+    },
+    estado_bien: {
+        type: String,
+        default: 'Bueno'
     }
 }, {
     timestamps: true,
