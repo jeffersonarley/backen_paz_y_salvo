@@ -7,6 +7,7 @@ import {
 } from 'vue-router'
 
 import routes from './routes.js'
+import { useAuthStore } from '../stores/authStore.js'
 
 /*
  * If not building with SSR mode, you can
@@ -17,7 +18,7 @@ import routes from './routes.js'
  * with the Router instance.
  */
 
-export default defineRouter((/* { store, ssrContext } */) => {
+export default defineRouter(({ store }) => {
   const createHistory = import.meta.env.QUASAR_SERVER
     ? createMemoryHistory
     : import.meta.env.QUASAR_VUE_ROUTER_MODE === 'history'
@@ -32,6 +33,27 @@ export default defineRouter((/* { store, ssrContext } */) => {
     // quasar.conf.js -> build -> vueRouterMode
     // quasar.conf.js -> build -> publicPath
     history: createHistory(import.meta.env.QUASAR_VUE_ROUTER_BASE),
+  })
+
+  // Guard de autenticación: protege las rutas del módulo /app y
+  // redirige usuarios ya logueados fuera de la pantalla de login.
+  Router.beforeEach((to) => {
+    const auth = useAuthStore(store)
+    const requiereAuth = to.path.startsWith('/app')
+
+    if (requiereAuth && !auth.isAuthenticated) {
+      return { path: '/' }
+    }
+
+    if (to.path === '/' && auth.isAuthenticated) {
+      return { path: '/app' }
+    }
+
+    if (to.meta?.roles && !to.meta.roles.includes(auth.rol)) {
+      return { path: '/app/sinpermisos' }
+    }
+
+    return true
   })
 
   return Router

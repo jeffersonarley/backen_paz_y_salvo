@@ -1,442 +1,464 @@
 <template>
   <q-page class="q-pa-lg">
 
-    <div class="row items-center justify-between q-mb-lg">
-
-      <div class="text-h4 text-primary text-weight-bold">
-        Responsables de Área
+    <div class="row items-center justify-between q-mb-md">
+      <div>
+        <div class="text-h4 text-weight-bold text-grey-9">
+          Solicitudes pendientes de firmar
+        </div>
+        <div class="text-subtitle1 text-grey-6">
+          Revise y firme las solicitudes asignadas
+        </div>
       </div>
 
       <q-btn
-        color="positive"
-        icon="add"
-        label="Nueva Solicitud"
-        @click="nuevaSolicitud"
+        color="primary"
+        outline
+        icon="refresh"
+        label="Actualizar"
+        @click="cargarTodo"
       />
-
     </div>
 
-    <div class="row q-mb-md">
+    <q-banner
+      v-if="bannerMsj"
+      class="q-mb-md"
+      :class="bannerTipo === 'error' ? 'bg-red-1 text-red-9' : 'bg-green-1 text-green-8'"
+      dense
+    >
+      <q-icon :name="bannerTipo === 'error' ? 'report_problem' : 'check_circle'" size="sm" class="q-mr-sm" />
+      {{ bannerMsj }}
+      <template #action>
+        <q-btn flat dense color="grey" icon="close" size="sm" @click="bannerMsj = ''" />
+      </template>
+    </q-banner>
 
-      <q-input
-        v-model="filtro"
-        outlined
-        dense
-        clearable
-        style="width:300px"
-        placeholder="Buscar solicitud..."
+    <q-tabs
+      v-model="tab"
+      dense
+      class="bg-white q-mb-md rounded-borders"
+      active-color="primary"
+      indicator-color="primary"
+      align="left"
+      no-caps
+    >
+      <q-tab name="pendientes" label="Pendientes" />
+      <q-tab name="historial" label="Historial" />
+    </q-tabs>
+
+    <q-card flat bordered class="q-pa-md bg-white">
+      <div class="row q-mb-md">
+        <q-input
+          v-model="filtro"
+          outlined
+          dense
+          clearable
+          style="width:340px"
+          placeholder="Buscar solicitud..."
+        >
+          <template #prepend>
+            <q-icon name="search" />
+          </template>
+        </q-input>
+      </div>
+
+      <q-table
+        v-if="tab === 'pendientes'"
+        :rows="rowsPendientes"
+        :columns="columns"
+        :filter="filtro"
+        row-key="id"
+        flat
+        bordered
+        :loading="cargando"
+        no-data-label="No hay solicitudes pendientes para su área."
+        hide-bottom
       >
-        <template #prepend>
-          <q-icon name="search" />
+        <template #body-cell-estado="props">
+          <q-td :props="props">
+            <q-badge
+              class="q-px-sm"
+              :color="badgeColor(props.row.estado)"
+              :text-color="badgeText(props.row.estado)"
+            >
+              {{ props.row.estado }}
+            </q-badge>
+          </q-td>
         </template>
 
-      </q-input>
+        <template #body-cell-acciones="props">
+          <q-td :props="props">
+            <div class="row q-gutter-sm">
+              <q-btn outline no-caps unelevated size="sm" label="Ver PDF" @click="verPdf(props.row)" />
+              <q-btn no-caps unelevated size="sm" color="primary" label="Firmar" @click="abrirFirma(props.row)" />
+              <q-btn outline no-caps unelevated size="sm" label="Observaciones" @click="abrirRechazo(props.row)" />
+            </div>
+          </q-td>
+        </template>
+      </q-table>
 
-    </div>
+      <q-table
+        v-else
+        :rows="rowsHistorial"
+        :columns="columnsHistorial"
+        :filter="filtro"
+        row-key="id"
+        flat
+        bordered
+        :loading="cargando"
+        no-data-label="No hay solicitudes gestionadas todavía."
+        hide-bottom
+      >
+        <template #body-cell-estado="props">
+          <q-td :props="props">
+            <q-badge
+              class="q-px-sm"
+              :color="badgeColor(props.row.estado)"
+              :text-color="badgeText(props.row.estado)"
+            >
+              {{ props.row.estado }}
+            </q-badge>
+          </q-td>
+        </template>
 
-    <q-table
-      title="Solicitudes de Firma"
-      :rows="rows"
-      :columns="columns"
-      :filter="filtro"
-      row-key="id"
-      flat
-      bordered
-    >
+        <template #body-cell-observacion="props">
+          <q-td :props="props">
+            {{ props.row.observacion || '—' }}
+          </q-td>
+        </template>
 
-      <template #body-cell-estado="props">
+        <template #body-cell-acciones="props">
+          <q-td :props="props">
+            <div class="row q-gutter-sm">
+              <q-btn outline no-caps unelevated size="sm" label="Ver PDF" @click="verPdf(props.row)" />
+              <q-btn no-caps unelevated size="sm" color="positive" label="Descargar PDF" :disable="props.row.estado !== 'Finalizado'" @click="descargarPdf(props.row.contratoId)" />
+            </div>
+          </q-td>
+        </template>
+      </q-table>
+    </q-card>
 
-        <q-td :props="props">
-
-          <q-badge
-            :color="
-              props.row.estado === 'Firmado'
-                ? 'positive'
-                : props.row.estado === 'Pendiente'
-                ? 'warning'
-                : 'negative'
-            "
-          >
-            {{ props.row.estado }}
-          </q-badge>
-
-        </q-td>
-
-      </template>
-
-      <template #body-cell-acciones="props">
-
-        <q-td :props="props">
-
-          <q-btn
-            flat
-            round
-            color="positive"
-            icon="how_to_reg"
-            @click="firmar(props.row)"
-          />
-
-          <q-btn
-            flat
-            round
-            color="orange"
-            icon="report_problem"
-            @click="rechazar(props.row)"
-          />
-
-          <q-btn
-            flat
-            round
-            color="primary"
-            icon="edit"
-            @click="editarSolicitud(props.row)"
-          />
-
-          <q-btn
-            flat
-            round
-            color="negative"
-            icon="delete"
-            @click="eliminarSolicitud(props.row.id)"
-          />
-
-        </q-td>
-
-      </template>
-
-    </q-table>
-
-    <!-- Dialogo -->
-
-    <q-dialog v-model="dialogo">
-
-      <q-card style="min-width:600px">
-
+    <!-- Diálogo: cargar firma electrónica -->
+    <q-dialog v-model="dialogoFirma">
+      <q-card style="min-width:480px; max-width:520px">
         <q-card-section>
-
           <div class="text-h6 text-primary">
-            {{ editando ? 'Editar Solicitud' : 'Nueva Solicitud' }}
+            Firmar solicitud
           </div>
-
+          <div class="text-caption text-grey-7">
+            {{ seleccionado?.numero }} - {{ seleccionado?.contratista }}
+          </div>
         </q-card-section>
 
         <q-card-section>
+          <q-banner class="bg-info text-white q-mb-md" dense>
+            <div class="text-body2">
+              <q-icon name="info" size="sm" class="q-mr-sm" />
+              La firma se utilizará <strong>únicamente</strong> para generar el documento PDF
+              GCCON-F-088 y <strong>no será almacenada permanentemente</strong> en la base de datos.
+            </div>
+          </q-banner>
 
-          <q-input
-            outlined
-            v-model="solicitud.numeroContrato"
-            label="Número de Contrato"
-            class="q-mb-md"
-          />
-
-          <q-input
-            outlined
-            v-model="solicitud.contratista"
-            label="Contratista"
-            class="q-mb-md"
-          />
-
-          <q-input
-            outlined
-            v-model="solicitud.dependencia"
-            label="Dependencia"
-            class="q-mb-md"
-          />
-
-          <q-input
-            outlined
-            v-model="solicitud.responsable"
-            label="Responsable de Área"
-            class="q-mb-md"
-          />
-
-          <q-input
-            outlined
-            type="textarea"
-            v-model="solicitud.observacion"
-            label="Observación"
-            autogrow
-          />
-
-          <q-select
-            class="q-mt-md"
-            outlined
-            v-model="solicitud.estado"
-            :options="['Pendiente','Firmado','Rechazado']"
-            label="Estado"
-          />
-
+          <FirmaCanvas ref="canvasRef" />
         </q-card-section>
 
         <q-card-actions align="right">
-
-          <q-btn
-            flat
-            label="Cancelar"
-            color="negative"
-            @click="cancelar"
-          />
-
-          <q-btn
-            color="positive"
-            label="Guardar"
-            @click="guardarSolicitud"
-          />
-
+          <q-btn flat label="Cancelar" color="negative" v-close-popup @click="dialogoFirma = false" />
+          <q-btn color="primary" label="Confirmar firma" :loading="procesando" @click="confirmarFirma" />
         </q-card-actions>
-
       </q-card>
-
     </q-dialog>
 
-    <!-- Confirmar eliminación -->
-
-    <q-dialog v-model="dialogoEliminar">
-
-      <q-card style="min-width:350px">
-
-        <q-card-section class="text-h6">
-          Confirmar eliminación
+    <!-- Diálogo: registrar observación -->
+    <q-dialog v-model="dialogoRechazo">
+      <q-card style="min-width:480px">
+        <q-card-section>
+          <div class="text-h6">
+            Registrar Observación
+          </div>
         </q-card-section>
 
         <q-card-section>
-          ¿Está seguro de eliminar esta solicitud?
+          <div class="campo">
+            <label>Solicitud</label>
+            <q-input outlined dense readonly :model-value="seleccionado?.numero || '—'" bg-color="grey-2" />
+          </div>
+          <div class="campo">
+            <label>Dependencia</label>
+            <q-input outlined dense readonly :model-value="seleccionado?.area || '—'" bg-color="grey-2" />
+          </div>
+          <div class="campo">
+            <label>Observación</label>
+            <q-input
+              outlined
+              type="textarea"
+              v-model="observacionRechazo"
+              autogrow
+              :disable="procesando"
+            />
+          </div>
         </q-card-section>
 
         <q-card-actions align="right">
-
-          <q-btn
-            flat
-            label="Cancelar"
-            color="primary"
-            v-close-popup
-          />
-
-          <q-btn
-            color="negative"
-            label="Eliminar"
-            @click="confirmarEliminar"
-          />
-
+          <q-btn flat label="Cancelar" color="grey" v-close-popup @click="dialogoRechazo = false" />
+          <q-btn color="primary" label="Guardar Observación" :loading="procesando" @click="confirmarRechazo" />
         </q-card-actions>
-
       </q-card>
-
     </q-dialog>
+
+    <!-- Vista previa PDF -->
+    <FirmaPdfPreview
+      v-model="mostrarPdf"
+      :item="seleccionado"
+      :pdf-url="pdfUrl"
+    />
 
   </q-page>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
+import api from '../services/api'
+import FirmaCanvas from '../components/FirmaCanvas.vue'
+import FirmaPdfPreview from '../components/FirmaPdfPreview.vue'
 
+const tab = ref('pendientes')
 const filtro = ref('')
+const cargando = ref(false)
+const procesando = ref(false)
 
-const dialogo = ref(false)
-const dialogoEliminar = ref(false)
+const rowsPendientes = ref([])
+const rowsHistorial = ref([])
 
-const editando = ref(false)
-const indiceEditar = ref(null)
+const dialogoFirma = ref(false)
+const dialogoRechazo = ref(false)
+const observacionRechazo = ref('')
 
-const idEliminar = ref(null)
+const mostrarPdf = ref(false)
+const pdfUrl = ref('')
 
-const rows = ref([])
-
-const solicitud = ref({
-  numeroContrato: '',
-  contratista: '',
-  dependencia: '',
-  responsable: '',
-  observacion: '',
-  estado: 'Pendiente'
-})
+const canvasRef = ref(null)
+const seleccionado = ref(null)
+const contratoActualId = ref(null)
+const bannerMsj = ref('')
+const bannerTipo = ref('success')
 
 const columns = [
-  {
-    name: 'numeroContrato',
-    label: 'Contrato',
-    field: 'numeroContrato',
-    align: 'left'
-  },
-  {
-    name: 'contratista',
-    label: 'Contratista',
-    field: 'contratista',
-    align: 'left'
-  },
-  {
-    name: 'dependencia',
-    label: 'Dependencia',
-    field: 'dependencia',
-    align: 'left'
-  },
-  {
-    name: 'responsable',
-    label: 'Responsable',
-    field: 'responsable',
-    align: 'left'
-  },
-  {
-    name: 'estado',
-    label: 'Estado',
-    field: 'estado',
-    align: 'center'
-  },
-  {
-    name: 'acciones',
-    label: 'Acciones',
-    field: 'acciones',
-    align: 'center'
-  }
+  { name: 'numero', label: 'Contrato', field: 'numero', align: 'left', sortable: true },
+  { name: 'contratista', label: 'Contratista', field: 'contratista', align: 'left' },
+  { name: 'area', label: 'Dependencia', field: 'area', align: 'left' },
+  { name: 'fecha', label: 'Fecha de solicitud', field: 'fecha', align: 'left', sortable: true },
+  { name: 'estado', label: 'Estado', field: 'estado', align: 'center' },
+  { name: 'acciones', label: 'Acciones', field: 'acciones', align: 'center' }
 ]
 
-function guardarSolicitud() {
+const columnsHistorial = [
+  ...columns.slice(0, 4),
+  { name: 'estado', label: 'Estado', field: 'estado', align: 'center' },
+  { name: 'observacion', label: 'Observación', field: 'observacion', align: 'left' },
+  { name: 'acciones', label: 'Acciones', field: 'acciones', align: 'center' }
+]
 
-  if (
-    !solicitud.value.numeroContrato ||
-    !solicitud.value.contratista ||
-    !solicitud.value.dependencia ||
-    !solicitud.value.responsable
-  ) {
+onMounted(cargarTodo)
+onBeforeUnmount(() => {
+  if (pdfUrl.value) window.URL.revokeObjectURL(pdfUrl.value)
+})
 
-    alert('Todos los campos son obligatorios.')
+async function cargarTodo() {
+  await Promise.all([cargarPendientes(), cargarHistorial()])
+}
 
-    return
-
+async function cargarPendientes() {
+  cargando.value = true
+  try {
+    const { data } = await api.get('/api/firmas/pendientes')
+    rowsPendientes.value = data.map(normalizar)
+  } catch (error) {
+    mostrarBanner(error.mensaje || 'No se pudieron cargar las solicitudes.', 'error')
+  } finally {
+    cargando.value = false
   }
+}
 
-  const existeContrato = rows.value.some((item, index) => {
-    return (
-      item.numeroContrato === solicitud.value.numeroContrato &&
-      index !== indiceEditar.value
-    )
-  })
-
-  if (existeContrato) {
-
-    alert('Ya existe una solicitud con ese número de contrato.')
-
-    return
-
+async function cargarHistorial() {
+  cargando.value = true
+  try {
+    const { data } = await api.get('/api/firmas/historial')
+    rowsHistorial.value = data.map(normalizar)
+  } catch (error) {
+    mostrarBanner(error.mensaje || 'No se pudo cargar el historial.', 'error')
+  } finally {
+    cargando.value = false
   }
+}
 
-  if (editando.value) {
+function normalizar(item) {
+  const contrato = item.contrato_id || {}
+  const codigo = item.codigo || contrato.numero_contrato || '—'
+  return {
+    id: item._id,
+    contratoId: contrato._id || contrato,
+    numero: codigo,
+    contratista: contratosNombre(contrato),
+    area: item.area_id?.nombre_dependencia || '—',
+    fecha: item.fecha_firma || item.createdAt,
+    estado: contrato.estado || item.estado || 'Pendiente',
+    observacion: item.observacion_rechazo || ''
+  }
+}
 
-    rows.value[indiceEditar.value] = {
-      ...solicitud.value
-    }
+function contratosNombre(contrato) {
+  return contrato.nombre_contratista || contrato.nombre_contratante || '—'
+}
 
-  } else {
+function badgeColor(estado) {
+  switch (estado) {
+    case 'Finalizado':
+    case 'Aprobado':
+      return 'green-1'
+    case 'Rechazado':
+      return 'red-1'
+    case 'Pendiente':
+      return 'yellow-1'
+    case 'En revision':
+      return 'light-blue-1'
+    default:
+      return 'grey-3'
+  }
+}
 
-    rows.value.push({
-      id: Date.now(),
-      ...solicitud.value
+function badgeText(estado) {
+  switch (estado) {
+    case 'Finalizado':
+    case 'Aprobado':
+      return 'green-8'
+    case 'Rechazado':
+      return 'red-8'
+    case 'Pendiente':
+      return 'yellow-9'
+    case 'En revision':
+      return 'light-blue-9'
+    default:
+      return 'grey-8'
+  }
+}
+
+function mostrarBanner(mensaje, tipo = 'success') {
+  bannerMsj.value = mensaje
+  bannerTipo.value = tipo
+}
+
+function abrirFirma(fila) {
+  seleccionado.value = fila
+  contratoActualId.value = fila.contratoId
+  dialogoFirma.value = true
+}
+
+async function confirmarFirma() {
+  if (!canvasRef.value) return
+
+  procesando.value = true
+  try {
+    const dataUrl = canvasRef.value.exportarBase64()
+    const firmaBase64 = dataUrl.replace(/^data:image\/png;base64,/, '')
+
+    const { data } = await api.post('/api/firmas/procesar', {
+      contratoId: contratoActualId.value,
+      accion: 'Aprobar',
+      firma_base64: firmaBase64
     })
 
+    mostrarBanner('Firma registrada correctamente')
+    dialogoFirma.value = false
+    await cargarTodo()
+
+    if (data.pdf_path) {
+      tab.value = 'historial'
+      await descargarPdf(contratoActualId.value)
+    }
+  } catch (error) {
+    mostrarBanner(error.mensaje || 'No se pudo registrar la firma.', 'error')
+  } finally {
+    procesando.value = false
+  }
+}
+
+function abrirRechazo(fila) {
+  seleccionado.value = fila
+  contratoActualId.value = fila.contratoId
+  observacionRechazo.value = ''
+  dialogoRechazo.value = true
+}
+
+async function confirmarRechazo() {
+  if (!observacionRechazo.value.trim()) {
+    mostrarBanner('Debe indicar el motivo de la observación.', 'error')
+    return
   }
 
-  solicitud.value = {
-    numeroContrato: '',
-    contratista: '',
-    dependencia: '',
-    responsable: '',
-    observacion: '',
-    estado: 'Pendiente'
+  procesando.value = true
+  try {
+    await api.post('/api/firmas/procesar', {
+      contratoId: contratoActualId.value,
+      accion: 'Rechazar',
+      observacion_rechazo: observacionRechazo.value.trim()
+    })
+
+    mostrarBanner('Observación registrada correctamente')
+    dialogoRechazo.value = false
+    await cargarTodo()
+  } catch (error) {
+    mostrarBanner(error.mensaje || 'No se pudo registrar la observación.', 'error')
+  } finally {
+    procesando.value = false
   }
-
-  dialogo.value = false
-  editando.value = false
-  indiceEditar.value = null
-
 }
 
-function editarSolicitud(fila) {
-
-  solicitud.value = { ...fila }
-
-  indiceEditar.value = rows.value.findIndex(
-    item => item.id === fila.id
-  )
-
-  editando.value = true
-
-  dialogo.value = true
-
-}
-
-function eliminarSolicitud(id) {
-
-  idEliminar.value = id
-
-  dialogoEliminar.value = true
-
-}
-
-function confirmarEliminar() {
-
-  rows.value = rows.value.filter(
-    item => item.id !== idEliminar.value
-  )
-
-  idEliminar.value = null
-
-  dialogoEliminar.value = false
-
-}
-
-function firmar(fila) {
-
-  fila.estado = 'Firmado'
-
-}
-
-function rechazar(fila) {
-
-  const motivo = prompt('Ingrese la observación')
-
-  if (!motivo) return
-
-  fila.observacion = motivo
-
-  fila.estado = 'Rechazado'
-
-}
-
-function nuevaSolicitud() {
-
-  editando.value = false
-
-  indiceEditar.value = null
-
-  solicitud.value = {
-    numeroContrato: '',
-    contratista: '',
-    dependencia: '',
-    responsable: '',
-    observacion: '',
-    estado: 'Pendiente'
+async function descargarPdf(contratoId) {
+  if (!contratoId) return
+  try {
+    const respuesta = await api.get(`/api/firmas/pdf/${contratoId}`, { responseType: 'blob' })
+    const url = window.URL.createObjectURL(respuesta.data)
+    const enlace = document.createElement('a')
+    enlace.href = url
+    enlace.download = `pazysalvo_${contratoId}.pdf`
+    document.body.appendChild(enlace)
+    enlace.click()
+    document.body.removeChild(enlace)
+    window.URL.revokeObjectURL(url)
+  } catch (error) {
+    mostrarBanner(error.mensaje || 'No se pudo descargar el documento PDF.', 'error')
   }
-
-  dialogo.value = true
-
 }
 
-function cancelar() {
-
-  dialogo.value = false
-
-  editando.value = false
-
-  indiceEditar.value = null
-
-  solicitud.value = {
-    numeroContrato: '',
-    contratista: '',
-    dependencia: '',
-    responsable: '',
-    observacion: '',
-    estado: 'Pendiente'
+async function verPdf(fila) {
+  seleccionado.value = fila
+  if (pdfUrl.value) {
+    window.URL.revokeObjectURL(pdfUrl.value)
+    pdfUrl.value = ''
   }
-
+  if (fila.estado === 'Finalizado') {
+    try {
+      const respuesta = await api.get(`/api/firmas/pdf/${fila.contratoId}`, { responseType: 'blob' })
+      pdfUrl.value = window.URL.createObjectURL(respuesta.data)
+    } catch (error) {
+      mostrarBanner(error.mensaje || 'No se pudo cargar el PDF.', 'error')
+    }
+  }
+  mostrarPdf.value = true
 }
 </script>
+
+<style scoped>
+.campo {
+  margin-bottom: 16px;
+}
+
+.campo label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #444;
+  margin-bottom: 6px;
+}
+</style>
