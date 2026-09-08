@@ -1,247 +1,245 @@
-
 <template>
   <q-page class="q-pa-lg">
-
+    <!-- Encabezado -->
     <div class="row items-center justify-between q-mb-lg">
-
-      <div class="text-h4 text-primary text-weight-bold">
-        Solicitudes
+      <div>
+        <div class="text-h4 text-primary text-weight-bold">Solicitudes</div>
+        <div class="text-subtitle2 text-grey-7">Gestión de formatos GCCON-F-088</div>
       </div>
 
       <q-btn
         color="positive"
         icon="add"
         label="Nueva Solicitud"
+        unelevated
         @click="nuevaSolicitud"
       />
-
     </div>
 
+    <!-- Filtro de Búsqueda -->
     <div class="row q-mb-md">
-
       <q-input
         v-model="filtro"
         outlined
         dense
         clearable
-        style="width:300px"
-        placeholder="Buscar solicitud..."
+        style="width: 320px"
+        placeholder="Buscar solicitud, contrato, contratista..."
       >
         <template #prepend>
           <q-icon name="search" />
         </template>
       </q-input>
-
     </div>
 
+    <!-- Tabla de Solicitudes -->
     <q-table
-      title="Listado de Solicitudes"
+      title="Listado de Solicitudes Paz y Salvo"
       :rows="rows"
       :columns="columns"
       :filter="filtro"
       row-key="numeroSolicitud"
       flat
       bordered
+      no-data-label="No hay solicitudes registradas"
+      no-results-label="No se encontraron coincidencias"
     >
-
+      <!-- Badge de Estado -->
       <template #body-cell-estado="props">
-
-        <q-td :props="props">
-
+        <q-td :props="props" class="text-center">
           <q-badge
-            :color="
-              props.row.estado === 'Pendiente'
-                ? 'warning'
-                : props.row.estado === 'En revisión'
-                ? 'primary'
-                : props.row.estado === 'Firmado'
-                ? 'positive'
-                : props.row.estado === 'Finalizado'
-                ? 'teal'
-                : 'negative'
-            "
+            :color="obtenerColorEstado(props.row.estado)"
+            class="q-pa-xs text-weight-bold"
           >
-            {{ props.row.estado }}
+            {{ props.row.estado || 'En Trámite' }}
           </q-badge>
-
         </q-td>
-
       </template>
 
+      <!-- Columna de Acciones -->
       <template #body-cell-acciones="props">
-
-        <q-td :props="props">
+        <q-td :props="props" class="q-gutter-xs text-center">
+          <q-btn
+            flat
+            round
+            dense
+            color="red-7"
+            icon="picture_as_pdf"
+            @click="verCertificado(props.row)"
+          >
+            <q-tooltip>Ver Certificado PDF</q-tooltip>
+          </q-btn>
 
           <q-btn
             flat
             round
+            dense
             color="primary"
             icon="edit"
             @click="editarSolicitud(props.row)"
-          />
+          >
+            <q-tooltip>Editar</q-tooltip>
+          </q-btn>
 
           <q-btn
             flat
             round
+            dense
             color="negative"
             icon="delete"
-            @click="eliminarSolicitud(props.row.numeroSolicitud)"
-          />
-
+            @click="eliminarSolicitud(props.row)"
+          >
+            <q-tooltip>Eliminar</q-tooltip>
+          </q-btn>
         </q-td>
-
       </template>
-
     </q-table>
 
-    <!-- Dialogo -->
-
-    <q-dialog v-model="dialogo">
-
-      <q-card style="min-width:600px">
-
-        <q-card-section>
-
-          <div class="text-h6 text-primary">
+    <!-- Diálogo Formulario -->
+    <q-dialog v-model="dialogo" persistent>
+      <q-card style="min-width: 550px; max-width: 90vw;">
+        <q-card-section class="row items-center justify-between">
+          <div class="text-h6 text-primary text-weight-bold">
             {{ editando ? 'Editar Solicitud' : 'Nueva Solicitud' }}
           </div>
-
+          <q-btn icon="close" flat round dense v-close-popup @click="cancelar" />
         </q-card-section>
 
-        <q-card-section>
+        <q-separator />
 
-          <q-input
-            outlined
-            v-model="solicitud.numeroSolicitud"
-            label="Número de Solicitud"
-            class="q-mb-md"
-          />
+        <q-form ref="formRef" @submit.prevent="guardarSolicitud">
+          <q-card-section class="q-gutter-y-sm">
+            <q-input
+              outlined
+              dense
+              v-model="solicitud.numeroSolicitud"
+              label="Número de Solicitud *"
+              :disable="editando"
+              :rules="[val => !!val || 'El número de solicitud es obligatorio']"
+            />
 
-          <q-input
-            outlined
-            v-model="solicitud.numeroContrato"
-            label="Número de Contrato"
-            class="q-mb-md"
-          />
+            <q-input
+              outlined
+              dense
+              v-model="solicitud.numeroContrato"
+              label="Número de Contrato *"
+              :rules="[val => !!val || 'El número de contrato es obligatorio']"
+            />
 
-          <q-input
-            outlined
-            v-model="solicitud.contratista"
-            label="Contratista"
-            class="q-mb-md"
-          />
+            <q-input
+              outlined
+              dense
+              v-model="solicitud.contratista"
+              label="Contratista *"
+              :rules="[val => !!val || 'El nombre del contratista es obligatorio']"
+            />
 
-          <q-input
-            outlined
-            v-model="solicitud.dependencia"
-            label="Dependencia"
-            class="q-mb-md"
-          />
+            <q-input
+              outlined
+              dense
+              v-model="solicitud.dependencia"
+              label="Dependencia *"
+              :rules="[val => !!val || 'La dependencia es obligatoria']"
+            />
 
-          <q-input
-            outlined
-            v-model="solicitud.responsable"
-            label="Responsable de Área"
-            class="q-mb-md"
-          />
+            <q-input
+              outlined
+              dense
+              v-model="solicitud.responsable"
+              label="Responsable de Área *"
+              :rules="[val => !!val || 'El responsable es obligatorio']"
+            />
 
-          <q-input
-            outlined
-            type="date"
-            v-model="solicitud.fecha"
-            label="Fecha"
-            class="q-mb-md"
-          />
+            <q-input
+              outlined
+              dense
+              type="date"
+              v-model="solicitud.fecha"
+              label="Fecha *"
+              stack-label
+              :rules="[val => !!val || 'La fecha es obligatoria']"
+            />
 
-          <q-select
-            outlined
-            v-model="solicitud.estado"
-            :options="[
-              'Pendiente',
-              'En revisión',
-              'Firmado',
-              'Rechazado',
-              'Finalizado'
-            ]"
-            label="Estado"
-          />
+            <q-select
+              outlined
+              dense
+              v-model="solicitud.estado"
+              :options="OPCIONES_ESTADO"
+              label="Estado"
+            />
+          </q-card-section>
 
-        </q-card-section>
-
-        <q-card-actions align="right">
-
-          <q-btn
-            flat
-            label="Cancelar"
-            color="negative"
-            @click="cancelar"
-          />
-
-          <q-btn
-            color="positive"
-            label="Guardar"
-            @click="guardarSolicitud"
-          />
-
-        </q-card-actions>
-
+          <q-card-actions align="right" class="q-pa-md">
+            <q-btn
+              flat
+              label="Cancelar"
+              color="grey-8"
+              @click="cancelar"
+            />
+            <q-btn
+              unelevated
+              type="submit"
+              color="positive"
+              label="Guardar"
+            />
+          </q-card-actions>
+        </q-form>
       </q-card>
-
     </q-dialog>
 
-    <!-- Eliminar -->
-
+    <!-- Diálogo Eliminar -->
     <q-dialog v-model="dialogoEliminar">
-
-      <q-card style="min-width:350px">
-
-        <q-card-section class="text-h6">
-          Confirmar eliminación
+      <q-card style="min-width: 350px">
+        <q-card-section class="row items-center">
+          <q-avatar icon="warning" color="negative" text-color="white" class="q-mr-sm" />
+          <span class="text-h6">Confirmar eliminación</span>
         </q-card-section>
 
-        <q-card-section>
-          ¿Está seguro de eliminar esta solicitud?
+        <q-card-section class="q-pt-none">
+          ¿Está seguro de eliminar esta solicitud? Esta acción no se puede deshacer.
         </q-card-section>
 
         <q-card-actions align="right">
-
           <q-btn
             flat
             label="Cancelar"
-            color="primary"
+            color="grey-8"
             v-close-popup
           />
-
           <q-btn
+            unelevated
             color="negative"
             label="Eliminar"
             @click="confirmarEliminar"
           />
-
         </q-card-actions>
-
       </q-card>
-
     </q-dialog>
-
   </q-page>
 </template>
 
-
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useQuasar } from 'quasar'
+import { useRouter } from 'vue-router'
+import { useSolicitudesStore } from '../stores/useSolicitudesStore.js'
 
+const $q = useQuasar()
+const router = useRouter()
+const store = useSolicitudesStore()
+
+const OPCIONES_ESTADO = ['Pendiente', 'En Trámite', 'En revisión', 'Firmado', 'Rechazado', 'Finalizado']
+
+const formRef = ref(null)
 const filtro = ref('')
-
 const dialogo = ref(false)
 const dialogoEliminar = ref(false)
 
 const editando = ref(false)
-const indiceEditar = ref(null)
+const codigoEditar = ref(null)
+const solicitudEliminar = ref(null)
 
-const solicitudEliminar = ref('')
-
-const rows = ref([])
+const rows = computed(() => store.solicitudes || [])
 
 const solicitud = ref({
   numeroSolicitud: '',
@@ -249,176 +247,180 @@ const solicitud = ref({
   contratista: '',
   dependencia: '',
   responsable: '',
-  fecha: '',
-  estado: 'Pendiente'
+  fecha: new Date().toISOString().substring(0, 10),
+  estado: 'En Trámite'
 })
 
 const columns = [
-  {
-    name: 'numeroSolicitud',
-    label: 'Solicitud',
-    field: 'numeroSolicitud',
-    align: 'left'
+  { 
+    name: 'numeroSolicitud', 
+    label: 'Solicitud', 
+    field: row => row.numeroSolicitud || row.solicitud || row.codigo || row.id || 'N/A', 
+    align: 'left', 
+    sortable: true 
   },
-  {
-    name: 'numeroContrato',
-    label: 'Contrato',
-    field: 'numeroContrato',
-    align: 'left'
+  { 
+    name: 'numeroContrato', 
+    label: 'Contrato', 
+    field: row => row.numeroContrato || row.contrato || 'N/A', 
+    align: 'left', 
+    sortable: true 
   },
-  {
-    name: 'contratista',
-    label: 'Contratista',
-    field: 'contratista',
-    align: 'left'
+  { 
+    name: 'contratista', 
+    label: 'Contratista', 
+    field: row => row.contratista || row.nombreContratista || 'N/A', 
+    align: 'left', 
+    sortable: true 
   },
-  {
-    name: 'dependencia',
-    label: 'Dependencia',
-    field: 'dependencia',
-    align: 'left'
+  { 
+    name: 'dependencia', 
+    label: 'Dependencia', 
+    field: row => row.dependencia || row.nombreDependencia || 'N/A', 
+    align: 'left', 
+    sortable: true 
   },
-  {
-    name: 'estado',
-    label: 'Estado',
-    field: 'estado',
-    align: 'center'
+  { 
+    name: 'estado', 
+    label: 'Estado', 
+    field: row => row.estado || 'En Trámite', 
+    align: 'center', 
+    sortable: true 
   },
-  {
-    name: 'acciones',
-    label: 'Acciones',
-    field: 'acciones',
-    align: 'center'
+  { 
+    name: 'acciones', 
+    label: 'Acciones', 
+    field: 'acciones', 
+    align: 'center' 
   }
 ]
 
-function guardarSolicitud() {
-
-  if (
-    !solicitud.value.numeroSolicitud ||
-    !solicitud.value.numeroContrato ||
-    !solicitud.value.contratista ||
-    !solicitud.value.dependencia ||
-    !solicitud.value.responsable ||
-    !solicitud.value.fecha
-  ) {
-
-    alert('Todos los campos son obligatorios.')
-
-    return
-
+function obtenerColorEstado(estado) {
+  switch (estado) {
+    case 'Pendiente': return 'warning'
+    case 'En Trámite': return 'red-8'
+    case 'En revisión': return 'primary'
+    case 'Firmado': return 'positive'
+    case 'Finalizado': return 'teal'
+    case 'Rechazado': return 'negative'
+    default: return 'red-8'
   }
+}
 
-  const existe = rows.value.some((item, index) => {
-
-    return (
-      item.numeroSolicitud === solicitud.value.numeroSolicitud &&
-      index !== indiceEditar.value
-    )
-
+function verCertificado(fila) {
+  const codigo = fila.numeroSolicitud || fila.solicitud || fila.codigo || fila.numeroContrato || fila.contrato
+  
+  router.push({
+    name: 'certificado-pdf',
+    query: { codigo: codigo }
   })
+}
 
-  if (existe) {
-
-    alert('Ya existe una solicitud con ese número.')
-
-    return
-
+async function guardarSolicitud() {
+  if (formRef.value) {
+    const esValido = await formRef.value.validate()
+    if (!esValido) return
   }
 
   if (editando.value) {
+    const idBusqueda = codigoEditar.value
 
-    rows.value[indiceEditar.value] = {
-
-      ...solicitud.value
-
+    if (typeof store.actualizarSolicitud === 'function') {
+      await store.actualizarSolicitud(idBusqueda, { ...solicitud.value })
     }
 
+    // Actualización reactiva directa por si el Store no muta la lista internamente
+    if (Array.isArray(store.solicitudes)) {
+      const index = store.solicitudes.findIndex(s => 
+        (s.numeroSolicitud || s.solicitud || s.codigo || s.numeroContrato || s.contrato) === idBusqueda
+      )
+      if (index !== -1) {
+        store.solicitudes[index] = { 
+          ...store.solicitudes[index], 
+          ...solicitud.value,
+          numeroSolicitud: solicitud.value.numeroSolicitud || store.solicitudes[index].numeroSolicitud || store.solicitudes[index].solicitud
+        }
+      }
+    }
+    $q.notify({ type: 'positive', message: 'Solicitud actualizada correctamente.' })
   } else {
-
-    rows.value.push({
-
-      ...solicitud.value
-
-    })
-
+    if (typeof store.agregarSolicitud === 'function') {
+      await store.agregarSolicitud({ ...solicitud.value })
+    } else if (Array.isArray(store.solicitudes)) {
+      store.solicitudes.push({ ...solicitud.value })
+    }
+    $q.notify({ type: 'positive', message: 'Solicitud registrada correctamente.' })
   }
 
   limpiarFormulario()
-
 }
 
 function editarSolicitud(fila) {
+  const codigoExistente = fila.numeroSolicitud || fila.solicitud || fila.codigo || fila.numeroContrato || fila.contrato || ''
 
-  solicitud.value = { ...fila }
+  solicitud.value = { 
+    numeroSolicitud: fila.numeroSolicitud || fila.solicitud || fila.codigo || codigoExistente,
+    numeroContrato: fila.numeroContrato || fila.contrato || '',
+    contratista: fila.contratista || fila.nombreContratista || '',
+    dependencia: fila.dependencia || fila.nombreDependencia || '',
+    responsable: fila.responsable || fila.supervisor || '',
+    fecha: fila.fecha || new Date().toISOString().substring(0, 10),
+    estado: fila.estado || 'En Trámite'
+  }
 
-  indiceEditar.value = rows.value.findIndex(
-
-    item => item.numeroSolicitud === fila.numeroSolicitud
-
-  )
-
+  codigoEditar.value = codigoExistente
   editando.value = true
-
   dialogo.value = true
-
 }
 
-function eliminarSolicitud(numeroSolicitud) {
-
-  solicitudEliminar.value = numeroSolicitud
-
+function eliminarSolicitud(fila) {
+  solicitudEliminar.value = fila
   dialogoEliminar.value = true
-
 }
 
-function confirmarEliminar() {
-
-  rows.value = rows.value.filter(
-
-    item => item.numeroSolicitud !== solicitudEliminar.value
-
-  )
-
+async function confirmarEliminar() {
+  if (solicitudEliminar.value) {
+    const id = solicitudEliminar.value.numeroSolicitud || solicitudEliminar.value.solicitud || solicitudEliminar.value.codigo || solicitudEliminar.value.numeroContrato
+    if (typeof store.eliminarSolicitud === 'function') {
+      await store.eliminarSolicitud(id)
+    } else if (Array.isArray(store.solicitudes)) {
+      store.solicitudes = store.solicitudes.filter(s => 
+        (s.numeroSolicitud || s.solicitud || s.codigo || s.numeroContrato) !== id
+      )
+    }
+    $q.notify({ type: 'info', message: 'Solicitud eliminada.' })
+  }
   dialogoEliminar.value = false
-
-  solicitudEliminar.value = ''
-
+  solicitudEliminar.value = null
 }
 
 function nuevaSolicitud() {
-
   limpiarFormulario()
-
+  const cons = ((store.solicitudes?.length || 0) + 1).toString().padStart(3, '0')
+  solicitud.value.numeroSolicitud = `SOL-2026-${cons}`
+  solicitud.value.numeroContrato = 'CNT-2025-088'
   dialogo.value = true
-
 }
 
 function cancelar() {
-
   limpiarFormulario()
-
 }
 
 function limpiarFormulario() {
-
   solicitud.value = {
-
     numeroSolicitud: '',
     numeroContrato: '',
     contratista: '',
     dependencia: '',
     responsable: '',
-    fecha: '',
-    estado: 'Pendiente'
-
+    fecha: new Date().toISOString().substring(0, 10),
+    estado: 'En Trámite'
   }
-
   dialogo.value = false
-
   editando.value = false
-
-  indiceEditar.value = null
-
+  codigoEditar.value = null
+  if (formRef.value) {
+    formRef.value.resetValidation()
+  }
 }
 </script>

@@ -23,3 +23,38 @@ $positive: #25843b;
 $negative: #c10015;
 $info: #31ccec;
 $warning: #f2c037;
+
+/* Estilos globales de impresión para anular los contenedores de Quasar */
+@media print {
+  /* Oculta el menú, la barra superior y cualquier elemento de navegación */
+  .q-drawer, 
+  .q-header, 
+  .q-footer,
+  .print-hide {
+    display: none !important;
+    width: 0 !important;
+    min-width: 0 !important;
+  }
+
+  /* Mata cualquier espacio en blanco o padding que Quasar reserve a la izquierda */
+  .q-layout,
+  .q-page-container,
+  .q-page {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    left: 0 !important;
+  }
+
+  body, html {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+}

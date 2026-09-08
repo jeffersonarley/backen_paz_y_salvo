@@ -1,99 +1,142 @@
 <template>
-
   <q-page class="q-pa-lg">
+    <!-- Encabezado -->
+    <div class="row items-center justify-between q-mb-lg">
+      <div>
+        <div class="text-h4 text-primary text-weight-bold">
+          👋 Bienvenido
+        </div>
+        <div class="text-h6 q-mt-xs">
+          Sistema GCCON-F-088
+        </div>
+        <div class="text-subtitle2 text-grey-8">
+          Paz y Salvo Contractual
+        </div>
+        <div class="text-caption text-grey-6 text-capitalize q-mt-xs">
+          {{ fechaActual }}
+        </div>
+      </div>
 
-   <div class="text-h4 text-primary text-weight-bold">
-  👋 Bienvenido
-</div>
+      <q-btn
+        color="primary"
+        icon="add"
+        label="Nueva Solicitud"
+        unelevated
+        :to="{ name: 'solicitudes' }"
+      />
+    </div>
 
-<div class="text-h6 q-mt-sm">
-  Sistema GCCON-F-088
-</div>
-
-<div class="text-grey">
-  Paz y Salvo Contractual
-</div>
-
-<div class="text-grey q-mb-xl">
-  {{ fechaActual }}
-</div>
-
+    <!-- Tarjetas de Estadísticas -->
     <div class="row q-col-gutter-lg">
-
       <div class="col-12 col-sm-6 col-md-3">
-
         <DashboardCard
           titulo="Usuarios"
-          :cantidad="0"
+          :cantidad="totalUsuarios"
           icono="groups"
         />
-
       </div>
 
       <div class="col-12 col-sm-6 col-md-3">
-
         <DashboardCard
           titulo="Contratistas"
-          :cantidad="0"
+          :cantidad="totalContratistas"
           icono="badge"
         />
-
       </div>
 
       <div class="col-12 col-sm-6 col-md-3">
-
         <DashboardCard
           titulo="Dependencias"
-          :cantidad="0"
+          :cantidad="totalDependencias"
           icono="business"
         />
-
       </div>
 
       <div class="col-12 col-sm-6 col-md-3">
-
         <DashboardCard
-          titulo="Firmas"
-          :cantidad="0"
+          titulo="Firmas Pendientes"
+          :cantidad="totalFirmas"
           icono="draw"
         />
-
       </div>
-
     </div>
-     <div class="q-mt-xl">
 
-  <q-card flat bordered>
+    <!-- Actividad Reciente -->
+    <div class="q-mt-xl">
+      <q-card flat bordered class="shadow-1">
+        <q-card-section class="row items-center justify-between">
+          <div class="text-h6 text-weight-bold text-grey-9">
+            Actividad Reciente
+          </div>
+          <q-btn
+            flat
+            dense
+            color="primary"
+            label="Ver todas"
+            :to="{ name: 'solicitudes' }"
+          />
+        </q-card-section>
 
-    <q-card-section>
+        <q-separator />
 
-      <div class="text-h6">
-        Actividad reciente
-      </div>
+        <q-card-section>
+          <div v-if="actividades.length === 0" class="text-grey text-center q-py-lg">
+            <q-icon name="assignment_late" size="48px" class="q-mb-sm" />
+            <div>No existen solicitudes registradas por el momento.</div>
+          </div>
 
-      <div class="text-grey q-mt-md">
-        No existen solicitudes registradas por el momento.
-      </div>
+          <q-list v-else separator>
+            <q-item v-for="item in actividades" :key="item.id">
+              <q-item-section avatar>
+                <q-avatar icon="description" color="primary" text-color="white" />
+              </q-item-section>
 
-    </q-card-section>
+              <q-item-section>
+                <q-item-label class="text-weight-bold">{{ item.contratista }}</q-item-label>
+                <q-item-label caption>{{ item.dependencia }} — {{ item.fecha }}</q-item-label>
+              </q-item-section>
 
-  </q-card>
-
-</div> 
+              <q-item-section side>
+                <q-chip
+                  :color="item.estado === 'Aprobado' ? 'positive' : 'warning'"
+                  text-color="white"
+                  dense
+                  size="sm"
+                >
+                  {{ item.estado }}
+                </q-chip>
+              </q-item-section>
+            </q-item>
+          </q-list>
+        </q-card-section>
+      </q-card>
+    </div>
   </q-page>
-
 </template>
 
 <script setup>
-
+import { ref, computed } from 'vue'
 import DashboardCard from '../components/DashboardCard.vue'
 
-const fecha = new Date()
+// Contadores
+const totalUsuarios = ref(0)
+const totalContratistas = ref(0)
+const totalDependencias = ref(0)
+const totalFirmas = ref(0)
 
-const fechaActual = fecha.toLocaleDateString('es-CO', {
+// Lista de actividades de ejemplo (inicialmente vacía)
+const actividades = ref([])
+
+// Formato de Fecha
+const fecha = new Date()
+const fechaFormateada = fecha.toLocaleDateString('es-CO', {
   weekday: 'long',
   year: 'numeric',
   month: 'long',
   day: 'numeric'
+})
+
+const fechaActual = computed(() => {
+  return fechaFormateada.charAt(0).toUpperCase() + fechaFormateada.slice(1)
 })
 </script>

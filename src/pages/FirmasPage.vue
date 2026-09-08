@@ -1,442 +1,175 @@
 <template>
   <q-page class="q-pa-lg">
-
+    <!-- Encabezado -->
     <div class="row items-center justify-between q-mb-lg">
-
-      <div class="text-h4 text-primary text-weight-bold">
-        Responsables de Área
+      <div>
+        <div class="text-h4 text-primary text-weight-bold">Aprobaciones y Firmas</div>
+        <div class="text-subtitle2 text-grey-7">
+          Certificado GCCON-F-088 — Solicitud: {{ codigoSolicitud || 'No especificada' }}
+        </div>
       </div>
 
-      <q-btn
-        color="positive"
-        icon="add"
-        label="Nueva Solicitud"
-        @click="nuevaSolicitud"
-      />
-
+      <div class="q-gutter-sm">
+        <q-btn
+          outline
+          color="primary"
+          icon="arrow_back"
+          label="Volver a Solicitudes"
+          @click="router.push({ name: 'solicitudes' })"
+        />
+        <q-btn
+          color="red-7"
+          icon="picture_as_pdf"
+          label="Descargar / Imprimir PDF"
+          unelevated
+          :disable="!solicitudActual"
+          @click="imprimirCertificado"
+        />
+      </div>
     </div>
 
-    <div class="row q-mb-md">
+    <!-- Si no existe la solicitud -->
+    <q-banner v-if="!solicitudActual" class="bg-warning text-white rounded-borders q-mb-md">
+      No se encontró información registrada para el código de solicitud: <strong>{{ codigoSolicitud }}</strong>.
+    </q-banner>
 
-      <q-input
-        v-model="filtro"
-        outlined
-        dense
-        clearable
-        style="width:300px"
-        placeholder="Buscar solicitud..."
-      >
-        <template #prepend>
-          <q-icon name="search" />
-        </template>
+    <!-- Detalle de la Solicitud y Certificado -->
+    <div v-else class="row q-col-gutter-md">
+      <!-- Tarjeta Información del Paz y Salvo -->
+      <div class="col-12 col-md-8">
+        <q-card flat bordered class="q-pa-md">
+          <q-card-section>
+            <div class="text-h6 text-secondary text-weight-bold q-mb-md">
+              FORMATO GCCON-F-088 - PAZ Y SALVO CONTRACTUAL
+            </div>
+            <q-separator class="q-mb-md" />
 
-      </q-input>
+            <div class="row q-col-gutter-sm">
+              <div class="col-12 col-sm-6">
+                <strong>Número de Solicitud:</strong> {{ solicitudActual.numeroSolicitud || solicitudActual.solicitud || solicitudActual.codigo || 'N/A' }}
+              </div>
+              <div class="col-12 col-sm-6">
+                <strong>Número de Contrato:</strong> {{ solicitudActual.numeroContrato || solicitudActual.contrato }}
+              </div>
+              <div class="col-12 col-sm-6">
+                <strong>Contratista:</strong> {{ solicitudActual.contratista || solicitudActual.nombreContratista || 'No registrado' }}
+              </div>
+              <div class="col-12 col-sm-6">
+                <strong>Dependencia:</strong> {{ solicitudActual.dependencia || solicitudActual.nombreDependencia || 'No registrada' }}
+              </div>
+              <div class="col-12 col-sm-6">
+                <strong>Responsable de Área:</strong> {{ solicitudActual.responsable || solicitudActual.supervisor || 'No asignado' }}
+              </div>
+              <div class="col-12 col-sm-6">
+                <strong>Fecha:</strong> {{ solicitudActual.fecha }}
+              </div>
+              <div class="col-12 col-sm-6">
+                <strong>Estado Actual:</strong> 
+                <q-badge color="primary" class="q-ml-xs">{{ solicitudActual.estado || 'En Trámite' }}</q-badge>
+              </div>
+            </div>
+          </q-card-section>
+        </q-card>
+      </div>
 
+      <!-- Tarjeta Gestión de Firmas -->
+      <div class="col-12 col-md-4">
+        <q-card flat bordered class="q-pa-md">
+          <q-card-section>
+            <div class="text-h6 text-primary text-weight-bold">Estado de Firmas</div>
+            <div class="text-caption text-grey-7 q-mb-sm">Aprobación por responsables de área</div>
+            <q-separator class="q-mb-md" />
+
+            <q-list bordered separator class="rounded-borders">
+              <q-item>
+                <q-item-section avatar>
+                  <q-icon name="check_circle" color="positive" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label class="text-weight-bold">Supervisor de Contrato</q-item-label>
+                  <q-item-label caption>Aprobado</q-item-label>
+                </q-item-section>
+              </q-item>
+
+              <q-item>
+                <q-item-section avatar>
+                  <q-icon name="pending" color="warning" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label class="text-weight-bold">Responsable de Dependencia</q-item-label>
+                  <q-item-label caption>Pendiente de firma</q-item-label>
+                </q-item-section>
+              </q-item>
+            </q-list>
+
+            <div class="q-mt-lg row justify-end">
+              <q-btn
+                color="positive"
+                icon="draw"
+                label="Firmar Certificado"
+                unelevated
+                class="full-width"
+                @click="aprobarYFirmar"
+              />
+            </div>
+          </q-card-section>
+        </q-card>
+      </div>
     </div>
-
-    <q-table
-      title="Solicitudes de Firma"
-      :rows="rows"
-      :columns="columns"
-      :filter="filtro"
-      row-key="id"
-      flat
-      bordered
-    >
-
-      <template #body-cell-estado="props">
-
-        <q-td :props="props">
-
-          <q-badge
-            :color="
-              props.row.estado === 'Firmado'
-                ? 'positive'
-                : props.row.estado === 'Pendiente'
-                ? 'warning'
-                : 'negative'
-            "
-          >
-            {{ props.row.estado }}
-          </q-badge>
-
-        </q-td>
-
-      </template>
-
-      <template #body-cell-acciones="props">
-
-        <q-td :props="props">
-
-          <q-btn
-            flat
-            round
-            color="positive"
-            icon="how_to_reg"
-            @click="firmar(props.row)"
-          />
-
-          <q-btn
-            flat
-            round
-            color="orange"
-            icon="report_problem"
-            @click="rechazar(props.row)"
-          />
-
-          <q-btn
-            flat
-            round
-            color="primary"
-            icon="edit"
-            @click="editarSolicitud(props.row)"
-          />
-
-          <q-btn
-            flat
-            round
-            color="negative"
-            icon="delete"
-            @click="eliminarSolicitud(props.row.id)"
-          />
-
-        </q-td>
-
-      </template>
-
-    </q-table>
-
-    <!-- Dialogo -->
-
-    <q-dialog v-model="dialogo">
-
-      <q-card style="min-width:600px">
-
-        <q-card-section>
-
-          <div class="text-h6 text-primary">
-            {{ editando ? 'Editar Solicitud' : 'Nueva Solicitud' }}
-          </div>
-
-        </q-card-section>
-
-        <q-card-section>
-
-          <q-input
-            outlined
-            v-model="solicitud.numeroContrato"
-            label="Número de Contrato"
-            class="q-mb-md"
-          />
-
-          <q-input
-            outlined
-            v-model="solicitud.contratista"
-            label="Contratista"
-            class="q-mb-md"
-          />
-
-          <q-input
-            outlined
-            v-model="solicitud.dependencia"
-            label="Dependencia"
-            class="q-mb-md"
-          />
-
-          <q-input
-            outlined
-            v-model="solicitud.responsable"
-            label="Responsable de Área"
-            class="q-mb-md"
-          />
-
-          <q-input
-            outlined
-            type="textarea"
-            v-model="solicitud.observacion"
-            label="Observación"
-            autogrow
-          />
-
-          <q-select
-            class="q-mt-md"
-            outlined
-            v-model="solicitud.estado"
-            :options="['Pendiente','Firmado','Rechazado']"
-            label="Estado"
-          />
-
-        </q-card-section>
-
-        <q-card-actions align="right">
-
-          <q-btn
-            flat
-            label="Cancelar"
-            color="negative"
-            @click="cancelar"
-          />
-
-          <q-btn
-            color="positive"
-            label="Guardar"
-            @click="guardarSolicitud"
-          />
-
-        </q-card-actions>
-
-      </q-card>
-
-    </q-dialog>
-
-    <!-- Confirmar eliminación -->
-
-    <q-dialog v-model="dialogoEliminar">
-
-      <q-card style="min-width:350px">
-
-        <q-card-section class="text-h6">
-          Confirmar eliminación
-        </q-card-section>
-
-        <q-card-section>
-          ¿Está seguro de eliminar esta solicitud?
-        </q-card-section>
-
-        <q-card-actions align="right">
-
-          <q-btn
-            flat
-            label="Cancelar"
-            color="primary"
-            v-close-popup
-          />
-
-          <q-btn
-            color="negative"
-            label="Eliminar"
-            @click="confirmarEliminar"
-          />
-
-        </q-card-actions>
-
-      </q-card>
-
-    </q-dialog>
-
   </q-page>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useQuasar } from 'quasar'
+import { useSolicitudesStore } from '../stores/useSolicitudesStore.js'
 
-const filtro = ref('')
+const route = useRoute()
+const router = useRouter()
+const $q = useQuasar()
+const store = useSolicitudesStore()
 
-const dialogo = ref(false)
-const dialogoEliminar = ref(false)
+// Obtener el código enviado por query params: /app/firmas?codigo=SOL-2026-001
+const codigoSolicitud = computed(() => route.query.codigo)
 
-const editando = ref(false)
-const indiceEditar = ref(null)
-
-const idEliminar = ref(null)
-
-const rows = ref([])
-
-const solicitud = ref({
-  numeroContrato: '',
-  contratista: '',
-  dependencia: '',
-  responsable: '',
-  observacion: '',
-  estado: 'Pendiente'
+// Buscar la solicitud en el store comprobando múltiples nombres de propiedad
+const solicitudActual = computed(() => {
+  if (!codigoSolicitud.value) return null
+  return store.solicitudes.find(s => 
+    (s.numeroSolicitud || s.solicitud || s.codigo || s.numeroContrato || s.contrato) === codigoSolicitud.value
+  ) || null
 })
 
-const columns = [
-  {
-    name: 'numeroContrato',
-    label: 'Contrato',
-    field: 'numeroContrato',
-    align: 'left'
-  },
-  {
-    name: 'contratista',
-    label: 'Contratista',
-    field: 'contratista',
-    align: 'left'
-  },
-  {
-    name: 'dependencia',
-    label: 'Dependencia',
-    field: 'dependencia',
-    align: 'left'
-  },
-  {
-    name: 'responsable',
-    label: 'Responsable',
-    field: 'responsable',
-    align: 'left'
-  },
-  {
-    name: 'estado',
-    label: 'Estado',
-    field: 'estado',
-    align: 'center'
-  },
-  {
-    name: 'acciones',
-    label: 'Acciones',
-    field: 'acciones',
-    align: 'center'
-  }
-]
+async function aprobarYFirmar() {
+  if (solicitudActual.value) {
+    const idBusqueda = codigoSolicitud.value
 
-function guardarSolicitud() {
-
-  if (
-    !solicitud.value.numeroContrato ||
-    !solicitud.value.contratista ||
-    !solicitud.value.dependencia ||
-    !solicitud.value.responsable
-  ) {
-
-    alert('Todos los campos son obligatorios.')
-
-    return
-
-  }
-
-  const existeContrato = rows.value.some((item, index) => {
-    return (
-      item.numeroContrato === solicitud.value.numeroContrato &&
-      index !== indiceEditar.value
-    )
-  })
-
-  if (existeContrato) {
-
-    alert('Ya existe una solicitud con ese número de contrato.')
-
-    return
-
-  }
-
-  if (editando.value) {
-
-    rows.value[indiceEditar.value] = {
-      ...solicitud.value
+    if (typeof store.actualizarSolicitud === 'function') {
+      await store.actualizarSolicitud(idBusqueda, {
+        ...solicitudActual.value,
+        estado: 'Firmado'
+      })
     }
 
-  } else {
+    // Actualización reactiva directa en la lista de solicitudes
+    if (Array.isArray(store.solicitudes)) {
+      const item = store.solicitudes.find(s => 
+        (s.numeroSolicitud || s.solicitud || s.codigo || s.numeroContrato || s.contrato) === idBusqueda
+      )
+      if (item) {
+        item.estado = 'Firmado'
+      }
+    }
 
-    rows.value.push({
-      id: Date.now(),
-      ...solicitud.value
+    $q.notify({
+      type: 'positive',
+      message: 'Certificado firmado y actualizado a estado "Firmado".'
     })
-
   }
-
-  solicitud.value = {
-    numeroContrato: '',
-    contratista: '',
-    dependencia: '',
-    responsable: '',
-    observacion: '',
-    estado: 'Pendiente'
-  }
-
-  dialogo.value = false
-  editando.value = false
-  indiceEditar.value = null
-
 }
 
-function editarSolicitud(fila) {
-
-  solicitud.value = { ...fila }
-
-  indiceEditar.value = rows.value.findIndex(
-    item => item.id === fila.id
-  )
-
-  editando.value = true
-
-  dialogo.value = true
-
-}
-
-function eliminarSolicitud(id) {
-
-  idEliminar.value = id
-
-  dialogoEliminar.value = true
-
-}
-
-function confirmarEliminar() {
-
-  rows.value = rows.value.filter(
-    item => item.id !== idEliminar.value
-  )
-
-  idEliminar.value = null
-
-  dialogoEliminar.value = false
-
-}
-
-function firmar(fila) {
-
-  fila.estado = 'Firmado'
-
-}
-
-function rechazar(fila) {
-
-  const motivo = prompt('Ingrese la observación')
-
-  if (!motivo) return
-
-  fila.observacion = motivo
-
-  fila.estado = 'Rechazado'
-
-}
-
-function nuevaSolicitud() {
-
-  editando.value = false
-
-  indiceEditar.value = null
-
-  solicitud.value = {
-    numeroContrato: '',
-    contratista: '',
-    dependencia: '',
-    responsable: '',
-    observacion: '',
-    estado: 'Pendiente'
-  }
-
-  dialogo.value = true
-
-}
-
-function cancelar() {
-
-  dialogo.value = false
-
-  editando.value = false
-
-  indiceEditar.value = null
-
-  solicitud.value = {
-    numeroContrato: '',
-    contratista: '',
-    dependencia: '',
-    responsable: '',
-    observacion: '',
-    estado: 'Pendiente'
-  }
-
+function imprimirCertificado() {
+  window.print()
 }
 </script>
