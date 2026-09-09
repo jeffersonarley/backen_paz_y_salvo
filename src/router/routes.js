@@ -1,9 +1,19 @@
 const routes = [
-  // Redirección inicial a solicitudes
+  // Ruta pública de inicio de sesión
+  {
+    path: '/login',
+    name: 'login',
+    component: () => import('@/pages/LoginPage.vue'),
+    meta: { titulo: 'Iniciar Sesión', publica: true }
+  },
+
+  // Redirección inicial
   {
     path: '/',
     redirect: '/app/solicitudes'
   },
+
+  // Rutas del aplicativo con MainLayout
   {
     path: '/app',
     component: () => import('@/layouts/MainLayout.vue'),
@@ -15,32 +25,38 @@ const routes = [
       {
         path: 'dashboard',
         name: 'dashboard',
-        component: () => import('@/pages/DashboardPage.vue'), // Ajusta la ruta a tu página de Dashboard
+        component: () => import('@/pages/DashboardPage.vue'),
         meta: { titulo: 'Dashboard', roles: ['ADMINISTRADOR', 'SUPERVISOR', 'CONTRATISTA'] }
       },
       {
         path: 'usuarios',
         name: 'usuarios',
-        component: () => import('@/pages/UsuariosPage.vue'), // Ajusta la ruta a tu página de Usuarios
-        meta: { titulo: 'Usuarios', roles: ['ADMINISTRADOR', 'SUPERVISOR', 'CONTRATISTA'] }
+        component: () => import('@/pages/UsuariosPage.vue'),
+        meta: { titulo: 'Usuarios', roles: ['ADMINISTRADOR'] }
       },
       {
         path: 'contratistas',
         name: 'contratistas',
-        component: () => import('@/pages/ContratistasPage.vue'), // Ajusta la ruta a tu página de Contratistas
-        meta: { titulo: 'Contratistas', roles: ['ADMINISTRADOR', 'SUPERVISOR', 'CONTRATISTA'] }
+        component: () => import('@/pages/ContratistasPage.vue'),
+        meta: { titulo: 'Contratistas', roles: ['ADMINISTRADOR', 'SUPERVISOR'] }
       },
       {
         path: 'dependencias',
         name: 'dependencias',
-        component: () => import('@/pages/DependenciasPage.vue'), // Ajusta la ruta a tu página de Dependencias
-        meta: { titulo: 'Dependencias', roles: ['ADMINISTRADOR', 'SUPERVISOR', 'CONTRATISTA'] }
+        component: () => import('@/pages/DependenciasPage.vue'),
+        meta: { titulo: 'Dependencias', roles: ['ADMINISTRADOR'] }
       },
       {
         path: 'solicitudes',
         name: 'solicitudes',
         component: () => import('@/pages/SolicitudesPage.vue'),
         meta: { titulo: 'Solicitudes GCCON-F-088', roles: ['ADMINISTRADOR', 'SUPERVISOR', 'CONTRATISTA'] }
+      },
+      {
+        path: 'solicitudes/nueva',
+        name: 'nueva-solicitud',
+        component: () => import('@/pages/NuevaSolicitudPage.vue'),
+        meta: { titulo: 'Nueva Solicitud GCCON-F-088', roles: ['ADMINISTRADOR', 'CONTRATISTA'] }
       },
       {
         path: 'solicitudes/certificado',
@@ -51,13 +67,13 @@ const routes = [
       {
         path: 'firmas',
         name: 'firmas',
-        component: () => import('@/pages/FirmasPage.vue'), // Ajusta la ruta a tu página de Firmas
-        meta: { titulo: 'Firmas', roles: ['ADMINISTRADOR', 'SUPERVISOR', 'CONTRATISTA'] }
+        component: () => import('@/pages/FirmasPage.vue'),
+        meta: { titulo: 'Gestionar Firmas', roles: ['ADMINISTRADOR', 'SUPERVISOR'] }
       },
       {
         path: 'perfil',
         name: 'perfil',
-        component: () => import('@/pages/PerfilPage.vue'), // Ajusta la ruta a tu página de Perfil
+        component: () => import('@/pages/PerfilPage.vue'),
         meta: { titulo: 'Perfil', roles: ['ADMINISTRADOR', 'SUPERVISOR', 'CONTRATISTA'] }
       }
     ]

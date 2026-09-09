@@ -38,9 +38,23 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
     }
   }
 
+  function rechazarSolicitud(idSolicitud, observacion) {
+    const solicitud = solicitudes.value.find(s => s.id === idSolicitud)
+    if (solicitud) {
+      solicitud.estado = 'Rechazado'
+      solicitud.observacionRechazo = observacion
+    }
+  }
+
+  function obtenerSolicitudPorId(id) {
+    return solicitudes.value.find(s => s.id === id || s.numeroContrato === id)
+  }
+
   return {
     solicitudes,
     agregarSolicitud,
-    registrarFirma
+    registrarFirma,
+    rechazarSolicitud,
+    obtenerSolicitudPorId
   }
 })
