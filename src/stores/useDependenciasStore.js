@@ -1,4 +1,4 @@
-import { defineStore } from 'pinia'
+﻿import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 export const useDependenciasStore = defineStore('dependencias', () => {
@@ -8,22 +8,22 @@ export const useDependenciasStore = defineStore('dependencias', () => {
       nombre: 'Gestión Tecnológica',
       responsable: 'Carlos Mendoza',
       correo: 'tecnologia@sena.edu.co',
-      estado: 'Activa'
+      estado: 'Activa',
     },
     {
       codigo: 'DEP-02',
       nombre: 'Recursos Humanos',
       responsable: 'Ana María López',
       correo: 'rrhh@sena.edu.co',
-      estado: 'Activa'
+      estado: 'Activa',
     },
     {
       codigo: 'DEP-03',
       nombre: 'Infraestructura y Servicios Generales',
       responsable: 'Roberto Silva',
       correo: 'infraestructura@sena.edu.co',
-      estado: 'Inactiva'
-    }
+      estado: 'Inactiva',
+    },
   ])
 
   function agregar(nuevaDependencia) {
@@ -37,15 +37,13 @@ export const useDependenciasStore = defineStore('dependencias', () => {
   }
 
   function eliminar(codigo) {
-    dependencias.value = dependencias.value.filter(
-      item => item.codigo !== codigo
-    )
+    dependencias.value = dependencias.value.filter((item) => item.codigo !== codigo)
   }
 
   return {
     dependencias,
     agregar,
     editar,
-    eliminar
+    eliminar,
   }
 })

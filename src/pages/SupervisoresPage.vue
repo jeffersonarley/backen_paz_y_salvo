@@ -1,12 +1,9 @@
-<template>
+﻿<template>
   <q-page class="q-pa-lg">
-<<<<<<< HEAD
     <!-- Encabezado -->
     <div class="row items-center justify-between q-mb-lg">
       <div>
-        <div class="text-h4 text-primary text-weight-bold">
-          Supervisores
-        </div>
+        <div class="text-h4 text-primary text-weight-bold">Supervisores</div>
         <div class="text-subtitle2 text-grey-7">
           Gestión de supervisores encargados del formato GCCON-F-088
         </div>
@@ -51,14 +48,7 @@
     >
       <template #body-cell-acciones="props">
         <q-td :props="props">
-          <q-btn
-            flat
-            round
-            dense
-            color="primary"
-            icon="edit"
-            @click="editarSupervisor(props.row)"
-          >
+          <q-btn flat round dense color="primary" icon="edit" @click="editarSupervisor(props.row)">
             <q-tooltip>Editar Supervisor</q-tooltip>
           </q-btn>
 
@@ -78,7 +68,7 @@
 
     <!-- Diálogo Formulario Creación / Edición -->
     <q-dialog v-model="dialogo" persistent>
-      <q-card style="min-width: 500px; max-width: 90vw;">
+      <q-card style="min-width: 500px; max-width: 90vw">
         <q-card-section class="row items-center justify-between">
           <div class="text-h6 text-primary text-weight-bold">
             {{ editando ? 'Editar Supervisor' : 'Nuevo Supervisor' }}
@@ -96,7 +86,7 @@
               outlined
               dense
               :disable="editando"
-              :rules="[val => !!val || 'El documento es obligatorio']"
+              :rules="[(val) => !!val || 'El documento es obligatorio']"
             />
 
             <q-input
@@ -104,7 +94,7 @@
               label="Nombre Completo *"
               outlined
               dense
-              :rules="[val => !!val || 'El nombre es obligatorio']"
+              :rules="[(val) => !!val || 'El nombre es obligatorio']"
             />
 
             <q-input
@@ -114,8 +104,9 @@
               dense
               type="email"
               :rules="[
-                val => !!val || 'El correo es obligatorio',
-                val => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) || 'Ingrese un correo electrónico válido'
+                (val) => !!val || 'El correo es obligatorio',
+                (val) =>
+                  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) || 'Ingrese un correo electrónico válido',
               ]"
             />
 
@@ -124,7 +115,7 @@
               label="Teléfono de Contacto *"
               outlined
               dense
-              :rules="[val => !!val || 'El teléfono es obligatorio']"
+              :rules="[(val) => !!val || 'El teléfono es obligatorio']"
             />
 
             <q-input
@@ -133,25 +124,13 @@
               type="password"
               outlined
               dense
-              :rules="[
-                val => editando || !!val || 'La contraseña es obligatoria'
-              ]"
+              :rules="[(val) => editando || !!val || 'La contraseña es obligatoria']"
             />
           </q-card-section>
 
           <q-card-actions align="right" class="q-pa-md">
-            <q-btn
-              flat
-              label="Cancelar"
-              color="grey-8"
-              @click="cancelar"
-            />
-            <q-btn
-              unelevated
-              type="submit"
-              color="positive"
-              label="Guardar"
-            />
+            <q-btn flat label="Cancelar" color="grey-8" @click="cancelar" />
+            <q-btn unelevated type="submit" color="positive" label="Guardar" />
           </q-card-actions>
         </q-form>
       </q-card>
@@ -166,67 +145,14 @@
         </q-card-section>
 
         <q-card-section class="q-pt-none">
-          ¿Está seguro de eliminar al supervisor con documento <strong>{{ documentoEliminar }}</strong>?
+          ¿Está seguro de eliminar al supervisor con documento
+          <strong>{{ documentoEliminar }}</strong
+          >?
         </q-card-section>
 
         <q-card-actions align="right">
-          <q-btn
-            flat
-            label="Cancelar"
-            color="grey-8"
-            v-close-popup
-          />
-          <q-btn
-            unelevated
-            color="negative"
-            label="Eliminar"
-            @click="confirmarEliminar"
-          />
-=======
-    <div class="row items-center justify-between q-mb-lg">
-      <div class="text-h4 text-weight-bold text-grey-9">Supervisores</div>
-      <q-btn no-caps unelevated color="primary" icon="add" label="Nuevo supervisor" @click="abrirNuevo" />
-    </div>
-
-    <q-card flat bordered class="bg-white q-pa-md">
-      <div class="row q-mb-md">
-        <q-input v-model="filtro" outlined dense clearable style="width:340px" placeholder="Buscar supervisor...">
-          <template #prepend><q-icon name="search" /></template>
-        </q-input>
-      </div>
-
-      <q-table :rows="rows" :columns="columns" :filter="filtro" row-key="id" flat bordered :loading="cargando" no-data-label="Sin supervisores." hide-bottom>
-        <template #body-cell-estado="props">
-          <q-td :props="props">
-            <q-badge class="q-px-sm" :color="props.row.activo ? 'green-1' : 'red-1'" :text-color="props.row.activo ? 'green-9' : 'red-8'">
-              {{ props.row.activo ? 'Activo' : 'Inactivo' }}
-            </q-badge>
-          </q-td>
-        </template>
-        <template #body-cell-acciones="props">
-          <q-td :props="props">
-            <q-btn flat round color="grey-7" icon="edit" size="sm" @click="abrirEditar(props.row)" />
-            <q-btn flat round :color="props.row.activo ? 'grey-7' : 'positive'" :icon="props.row.activo ? 'lock' : 'lock_open'" size="sm" @click="alternarEstado(props.row)" />
-          </q-td>
-        </template>
-      </q-table>
-    </q-card>
-
-    <q-dialog v-model="dialogo">
-      <q-card style="min-width:500px">
-        <q-card-section>
-          <div class="text-h6 text-grey-9">{{ editando ? 'Editar supervisor' : 'Nuevo supervisor' }}</div>
-        </q-card-section>
-        <q-card-section>
-          <q-input v-model="form.nombre_completo" label="Nombre completo" outlined dense class="q-mb-md" :disable="procesando" />
-          <q-input v-model="form.correo_institucional" label="Correo institucional" outlined dense type="email" class="q-mb-md" :disable="procesando || editando" />
-          <q-input v-if="!editando" v-model="form.password" label="Contraseña" outlined dense type="password" :disable="procesando" />
-          <q-input v-model="form.telefono" label="Teléfono" outlined dense :disable="procesando" />
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat label="Cancelar" color="grey" v-close-popup @click="dialogo = false" />
-          <q-btn no-caps unelevated color="primary" label="Guardar" :loading="procesando" @click="guardar" />
->>>>>>> origin/frontend-juanpablo
+          <q-btn flat label="Cancelar" color="grey-8" v-close-popup />
+          <q-btn unelevated color="negative" label="Eliminar" @click="confirmarEliminar" />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -234,7 +160,6 @@
 </template>
 
 <script setup>
-<<<<<<< HEAD
 import { ref } from 'vue'
 import { useQuasar } from 'quasar'
 import { useSupervisoresStore } from '../stores/useSupervisoresStore.js'
@@ -254,7 +179,7 @@ const supervisor = ref({
   nombre: '',
   correo: '',
   telefono: '',
-  password: ''
+  password: '',
 })
 
 const columns = [
@@ -263,47 +188,47 @@ const columns = [
     label: 'Documento',
     field: 'documento',
     align: 'left',
-    sortable: true
+    sortable: true,
   },
   {
     name: 'nombre',
     label: 'Nombre',
     field: 'nombre',
     align: 'left',
-    sortable: true
+    sortable: true,
   },
   {
     name: 'correo',
     label: 'Correo',
     field: 'correo',
     align: 'left',
-    sortable: true
+    sortable: true,
   },
   {
     name: 'telefono',
     label: 'Teléfono',
     field: 'telefono',
     align: 'left',
-    sortable: true
+    sortable: true,
   },
   {
     name: 'acciones',
     label: 'Acciones',
     field: 'acciones',
-    align: 'center'
-  }
+    align: 'center',
+  },
 ]
 
 function guardarSupervisor() {
   if (!editando.value) {
     const existeDocumento = store.supervisores.some(
-      item => item.documento === supervisor.value.documento
+      (item) => item.documento === supervisor.value.documento,
     )
 
     if (existeDocumento) {
       $q.notify({
         type: 'negative',
-        message: 'Ya existe un supervisor registrado con ese documento.'
+        message: 'Ya existe un supervisor registrado con ese documento.',
       })
       return
     }
@@ -313,13 +238,13 @@ function guardarSupervisor() {
     store.editar(indiceEditar.value, { ...supervisor.value })
     $q.notify({
       type: 'positive',
-      message: 'Supervisor actualizado correctamente.'
+      message: 'Supervisor actualizado correctamente.',
     })
   } else {
     store.agregar({ ...supervisor.value })
     $q.notify({
       type: 'positive',
-      message: 'Supervisor registrado correctamente.'
+      message: 'Supervisor registrado correctamente.',
     })
   }
 
@@ -334,12 +259,10 @@ function nuevoSupervisor() {
 function editarSupervisor(fila) {
   supervisor.value = {
     ...fila,
-    password: fila.password || ''
+    password: fila.password || '',
   }
 
-  indiceEditar.value = store.supervisores.findIndex(
-    item => item.documento === fila.documento
-  )
+  indiceEditar.value = store.supervisores.findIndex((item) => item.documento === fila.documento)
 
   editando.value = true
   dialogo.value = true
@@ -356,7 +279,7 @@ function confirmarEliminar() {
   dialogoEliminar.value = false
   $q.notify({
     type: 'info',
-    message: 'Supervisor eliminado correctamente.'
+    message: 'Supervisor eliminado correctamente.',
   })
 }
 
@@ -370,121 +293,10 @@ function limpiarFormulario() {
     nombre: '',
     correo: '',
     telefono: '',
-    password: ''
+    password: '',
   }
   dialogo.value = false
   editando.value = false
   indiceEditar.value = null
-=======
-import { ref, onMounted } from 'vue'
-import { useQuasar } from 'quasar'
-import api from '../services/api'
-
-const $q = useQuasar()
-const rows = ref([])
-const filtro = ref('')
-const cargando = ref(false)
-const procesando = ref(false)
-const dialogo = ref(false)
-const editando = ref(false)
-const idEditar = ref(null)
-const form = ref(defaultForm())
-
-const columns = [
-  { name: 'nombre', label: 'Nombre', field: 'nombre', align: 'left' },
-  { name: 'correo', label: 'Correo', field: 'correo', align: 'left' },
-  { name: 'telefono', label: 'Teléfono', field: 'telefono', align: 'left' },
-  { name: 'estado', label: 'Estado', field: 'estado', align: 'center' },
-  { name: 'acciones', label: 'Acciones', field: 'acciones', align: 'center' }
-]
-
-function defaultForm() {
-  return { nombre_completo: '', correo_institucional: '', password: '', telefono: '', cargo: '' }
-}
-
-onMounted(cargar)
-
-async function cargar() {
-  cargando.value = true
-  try {
-    const { data } = await api.get('/api/usuarios')
-    rows.value = data.filter((u) => u.rol === 'Supervisor').map(mapa)
-  } catch (error) {
-    $q.notify({ type: 'negative', message: error.mensaje || 'No se pudieron cargar los supervisores.' })
-  } finally {
-    cargando.value = false
-  }
-}
-
-function mapa(u) {
-  return {
-    id: u._id,
-    nombre: u.nombre_completo,
-    correo: u.correo_institucional,
-    telefono: u.telefono || '',
-    activo: u.activo !== false
-  }
-}
-
-function abrirNuevo() {
-  editando.value = false
-  idEditar.value = null
-  form.value = defaultForm()
-  dialogo.value = true
-}
-
-function abrirEditar(fila) {
-  editando.value = true
-  idEditar.value = fila.id
-  form.value = { ...defaultForm(), nombre_completo: fila.nombre, correo_institucional: fila.correo, telefono: fila.telefono }
-  dialogo.value = true
->>>>>>> origin/frontend-juanpablo
-}
-
-async function guardar() {
-  if (!form.value.nombre_completo || !form.value.correo_institucional) {
-    $q.notify({ type: 'warning', message: 'Nombre y correo son obligatorios.' })
-    return
-  }
-  procesando.value = true
-  try {
-    if (editando.value) {
-      await api.patch(`/api/usuarios/${idEditar.value}`, {
-        nombre_completo: form.value.nombre_completo,
-        telefono: form.value.telefono,
-        cargo: form.value.cargo
-      })
-    } else {
-      if (!form.value.password) {
-        $q.notify({ type: 'warning', message: 'La contraseña es obligatoria.' })
-        return
-      }
-      await api.post('/api/usuarios', {
-        nombre_completo: form.value.nombre_completo,
-        correo_institucional: form.value.correo_institucional,
-        password: form.value.password,
-        rol: 'Supervisor',
-        telefono: form.value.telefono,
-        cargo: form.value.cargo
-      })
-    }
-    $q.notify({ type: 'positive', message: 'Guardado correctamente.' })
-    dialogo.value = false
-    await cargar()
-  } catch (error) {
-    $q.notify({ type: 'negative', message: error.mensaje || 'No se pudo guardar.' })
-  } finally {
-    procesando.value = false
-  }
-}
-
-async function alternarEstado(fila) {
-  try {
-    const { data } = await api.patch(`/api/usuarios/estado/${fila.id}`, { activo: !fila.activo })
-    $q.notify({ type: 'positive', message: data.mensaje })
-    await cargar()
-  } catch (error) {
-    $q.notify({ type: 'negative', message: error.mensaje || 'No se pudo cambiar el estado.' })
-  }
 }
 </script>

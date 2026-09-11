@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="recuperar-wrap">
     <div class="recuperar-card">
       <h4 class="brand">GCCON-F-088</h4>
@@ -7,7 +7,8 @@
       <template v-if="!enviado">
         <div class="titulo">Recuperar contraseña</div>
         <p class="descripcion">
-          Ingrese su correo institucional y le enviaremos instrucciones para restablecer su contraseña.
+          Ingrese su correo institucional y le enviaremos instrucciones para restablecer su
+          contraseña.
         </p>
 
         <div class="campo">

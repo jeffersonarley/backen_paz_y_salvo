@@ -1,4 +1,4 @@
-import { defineStore } from 'pinia'
+﻿import { defineStore } from 'pinia'
 
 const certificadosIniciales = JSON.parse(localStorage.getItem('gccon_certificados')) || [
   {
@@ -10,7 +10,7 @@ const certificadosIniciales = JSON.parse(localStorage.getItem('gccon_certificado
     dependenciaNombre: 'Sistemas e Informática',
     fechaSolicitud: '2026-08-15',
     estado: 'Pendiente',
-    observaciones: 'Pendiente entrega de inventarios de software.'
+    observaciones: 'Pendiente entrega de inventarios de software.',
   },
   {
     id: 'CERT-2026-002',
@@ -21,13 +21,13 @@ const certificadosIniciales = JSON.parse(localStorage.getItem('gccon_certificado
     dependenciaNombre: 'Almacén e Inventarios',
     fechaSolicitud: '2026-08-10',
     estado: 'Aprobado',
-    observaciones: 'Paz y salvo de equipos al día.'
-  }
+    observaciones: 'Paz y salvo de equipos al día.',
+  },
 ]
 
 export const useCertificadosStore = defineStore('certificados', {
   state: () => ({
-    certificados: certificadosIniciales
+    certificados: certificadosIniciales,
   }),
 
   actions: {
@@ -41,13 +41,13 @@ export const useCertificadosStore = defineStore('certificados', {
         id: nuevoId,
         fechaSolicitud: new Date().toISOString().substring(0, 10),
         estado: 'Pendiente',
-        ...solicitud
+        ...solicitud,
       })
       this.guardarEnStorage()
     },
 
     actualizarEstado(id, nuevoEstado, observaciones = '') {
-      const index = this.certificados.findIndex(c => c.id === id)
+      const index = this.certificados.findIndex((c) => c.id === id)
       if (index !== -1) {
         this.certificados[index].estado = nuevoEstado
         if (observaciones) {
@@ -58,8 +58,8 @@ export const useCertificadosStore = defineStore('certificados', {
     },
 
     eliminar(id) {
-      this.certificados = this.certificados.filter(c => c.id !== id)
+      this.certificados = this.certificados.filter((c) => c.id !== id)
       this.guardarEnStorage()
-    }
-  }
+    },
+  },
 })

@@ -1,4 +1,4 @@
-import { defineStore } from 'pinia'
+﻿import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 
 export const useSupervisoresStore = defineStore('supervisores', () => {
@@ -13,9 +13,9 @@ export const useSupervisoresStore = defineStore('supervisores', () => {
             nombre: 'Ana María Gómez',
             correo: 'agomez@sena.edu.co',
             telefono: '3101234567',
-            password: '123'
-          }
-        ]
+            password: '123',
+          },
+        ],
   )
 
   watch(
@@ -23,7 +23,7 @@ export const useSupervisoresStore = defineStore('supervisores', () => {
     (nuevos) => {
       localStorage.setItem('supervisores_f088', JSON.stringify(nuevos))
     },
-    { deep: true }
+    { deep: true },
   )
 
   function agregar(nuevo) {
@@ -37,13 +37,13 @@ export const useSupervisoresStore = defineStore('supervisores', () => {
   }
 
   function eliminar(documento) {
-    supervisores.value = supervisores.value.filter(s => s.documento !== documento)
+    supervisores.value = supervisores.value.filter((s) => s.documento !== documento)
   }
 
   return {
     supervisores,
     agregar,
     editar,
-    eliminar
+    eliminar,
   }
 })

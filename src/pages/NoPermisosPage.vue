@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <q-page class="q-pa-lg">
     <EstadoPantalla
       titulo="No tiene permisos para acceder a esta sección"

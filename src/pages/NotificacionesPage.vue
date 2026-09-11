@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <q-page class="q-pa-lg">
     <div class="text-h4 text-weight-bold text-grey-9 q-mb-lg">Notificaciones</div>
 
@@ -19,7 +19,9 @@
           </q-item-section>
         </q-item>
       </q-list>
-      <div v-else class="text-grey-6 q-pa-lg text-center">No hay notificaciones por el momento.</div>
+      <div v-else class="text-grey-6 q-pa-lg text-center">
+        No hay notificaciones por el momento.
+      </div>
     </q-card>
   </q-page>
 </template>
@@ -55,7 +57,7 @@ async function cargar() {
         color: '#f9a825',
         titulo: 'Nueva solicitud asignada',
         descripcion: `Solicitud ${c.numero_contrato} asignada para su trámite`,
-        cuando: hace(c.createdAt)
+        cuando: hace(c.createdAt),
       })
     }
     if (c.estado === 'Finalizado') {
@@ -65,7 +67,7 @@ async function cargar() {
         color: '#2e7d32',
         titulo: 'Solicitud firmada',
         descripcion: `La solicitud ${c.numero_contrato} ha sido firmada`,
-        cuando: hace(c.updatedAt)
+        cuando: hace(c.updatedAt),
       })
     }
     if (c.estado === 'Rechazado') {
@@ -75,7 +77,7 @@ async function cargar() {
         color: '#ef6c00',
         titulo: 'Observación registrada',
         descripcion: `Se registró una observación en la solicitud ${c.numero_contrato}`,
-        cuando: hace(c.updatedAt)
+        cuando: hace(c.updatedAt),
       })
     }
   })
@@ -88,7 +90,7 @@ async function cargar() {
       color: '#333',
       titulo: 'Nuevo usuario creado',
       descripcion: `Se ha creado el usuario ${u.correo_institucional}`,
-      cuando: hace(u.createdAt)
+      cuando: hace(u.createdAt),
     })
   })
 

@@ -1,12 +1,16 @@
-import { defineStore } from 'pinia'
-<<<<<<< HEAD
+﻿import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+
+function normalizarRol(valor) {
+  return String(valor || '')
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, '_')
+}
 
 export const useAuthStore = defineStore('auth', () => {
   // Usuario autenticado en sesión
-  const usuario = ref(
-    JSON.parse(localStorage.getItem('gccon_user') || 'null')
-  )
+  const usuario = ref(JSON.parse(localStorage.getItem('gccon_user') || 'null'))
 
   // Lista de usuarios de prueba según la jerarquía del sistema
   const usuariosPrueba = ref([
@@ -16,7 +20,7 @@ export const useAuthStore = defineStore('auth', () => {
       correo: 'admin@gccon.com',
       password: 'admin',
       rol: 'ADMINISTRADOR',
-      cargo: 'Administrador del Sistema'
+      cargo: 'Administrador del Sistema',
     },
     {
       id: 2,
@@ -24,7 +28,7 @@ export const useAuthStore = defineStore('auth', () => {
       correo: 'supervisor@gccon.com',
       password: 'super',
       rol: 'SUPERVISOR',
-      cargo: 'Supervisor de Contratos'
+      cargo: 'Supervisor de Contratos',
     },
     {
       id: 3,
@@ -32,7 +36,7 @@ export const useAuthStore = defineStore('auth', () => {
       correo: 'carlos.mendoza@email.com',
       password: '123',
       rol: 'CONTRATISTA',
-      cargo: 'Contratista de Desarrollo'
+      cargo: 'Contratista de Desarrollo',
     },
     {
       id: 4,
@@ -40,16 +44,23 @@ export const useAuthStore = defineStore('auth', () => {
       correo: 'responsable@gccon.com',
       password: '123',
       rol: 'RESPONSABLE_AREA',
-      cargo: 'Responsable de Sistemas e Informática'
-    }
+      cargo: 'Responsable de Sistemas e Informática',
+    },
   ])
 
   const estaAutenticado = computed(() => !!usuario.value)
-  const rolUsuario = computed(() => usuario.value?.rol || null)
+  const rolUsuario = computed(() => normalizarRol(usuario.value?.rol))
+
+  function tienePermiso(rolesPermitidos = []) {
+    if (!usuario.value) return false
+    if (!Array.isArray(rolesPermitidos) || rolesPermitidos.length === 0) return true
+    const rolActual = normalizarRol(usuario.value.rol)
+    return rolesPermitidos.some((rol) => normalizarRol(rol) === rolActual)
+  }
 
   function login(correo, password) {
     const user = usuariosPrueba.value.find(
-      u => u.correo.toLowerCase() === correo.trim().toLowerCase() && u.password === password
+      (u) => u.correo.toLowerCase() === correo.trim().toLowerCase() && u.password === password,
     )
 
     if (user) {
@@ -71,57 +82,8 @@ export const useAuthStore = defineStore('auth', () => {
     usuariosPrueba,
     estaAutenticado,
     rolUsuario,
+    tienePermiso,
     login,
-    logout
+    logout,
   }
 })
-=======
-import api from '../services/api'
-
-/*
- * Store de autenticación del Sistema GCCON-F-088.
- * Mantiene sesión en memoria + localStorage, expone el token y el usuario.
- */
-
-const TOKEN_KEY = 'auth_token'
-const USUARIO_KEY = 'auth_usuario'
-
-export const useAuthStore = defineStore('auth', {
-  state: () => ({
-    token: localStorage.getItem(TOKEN_KEY) || '',
-    usuario: JSON.parse(localStorage.getItem(USUARIO_KEY) || 'null')
-  }),
-
-  getters: {
-    isAuthenticated: (state) => Boolean(state.token),
-    id: (state) => state.usuario?.id || '',
-    rol: (state) => state.usuario?.rol || '',
-    nombre: (state) => state.usuario?.nombre || '',
-    correo: (state) => state.usuario?.correo || '',
-    documento: (state) => state.usuario?.documento || ''
-  },
-
-  actions: {
-    async login({ correo_institucional, password }) {
-      const { data } = await api.post('/api/auth/login', {
-        correo_institucional,
-        password
-      })
-
-      this.token = data.token
-      this.usuario = data.usuario
-      localStorage.setItem(TOKEN_KEY, data.token)
-      localStorage.setItem(USUARIO_KEY, JSON.stringify(data.usuario))
-
-      return data
-    },
-
-    logout() {
-      this.token = ''
-      this.usuario = null
-      localStorage.removeItem(TOKEN_KEY)
-      localStorage.removeItem(USUARIO_KEY)
-    }
-  }
-})
->>>>>>> origin/frontend-juanpablo

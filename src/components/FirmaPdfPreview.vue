@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <q-dialog
     :model-value="modelValue"
     @update:model-value="$emit('update:modelValue', $event)"
@@ -9,7 +9,14 @@
     <div class="pdf-preview">
       <div class="pdf-topbar">
         <div class="pdf-title">PDF - Paz y Salvo Contractual</div>
-        <q-btn flat round dense color="white" icon="close" @click="$emit('update:modelValue', false)" />
+        <q-btn
+          flat
+          round
+          dense
+          color="white"
+          icon="close"
+          @click="$emit('update:modelValue', false)"
+        />
       </div>
 
       <q-toolbar class="pdf-toolbar">
@@ -25,14 +32,10 @@
       </q-toolbar>
 
       <div class="pdf-body">
-        <iframe
-          v-if="pdfUrl && item?.estado === 'Finalizado'"
-          :src="pdfUrl"
-          class="pdf-frame"
-        />
+        <iframe v-if="pdfUrl && item?.estado === 'Finalizado'" :src="pdfUrl" class="pdf-frame" />
         <div v-else class="paper">
           <div class="paper-head">
-            <img src="../images/logo-sena.png" alt="SENA" class="paper-logo">
+            <img src="../images/logo-sena.png" alt="SENA" class="paper-logo" />
             <div class="paper-titles">
               <div class="paper-title">Formato Paz y Salvo Contractual</div>
               <div class="paper-code">GCCON-F-088</div>
@@ -89,7 +92,7 @@ const props = defineProps({
   item: { type: Object, default: null },
   pdfUrl: { type: String, default: '' },
   documento: { type: String, default: '' },
-  dependencias: { type: Array, default: () => [] }
+  dependencias: { type: Array, default: () => [] },
 })
 defineEmits(['update:modelValue'])
 
@@ -105,8 +108,8 @@ const filasDependencias = computed(() => {
       dependencia: props.item?.area || '—',
       estado: props.item?.estado || 'Pendiente',
       responsable: responsable.value,
-      fechaFirma: props.item?.fecha || null
-    }
+      fechaFirma: props.item?.fecha || null,
+    },
   ]
 })
 

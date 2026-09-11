@@ -1,4 +1,4 @@
-// Quasar Sass (& SCSS) Variables
+﻿// Quasar Sass (& SCSS) Variables
 // --------------------------------------------------
 // To customize the look and feel of this app, you can override
 // the Sass/SCSS variables found in Quasar's source Sass/SCSS files.
@@ -19,7 +19,6 @@ $accent: #9c27b0;
 $dark: #1d1d1d;
 $dark-page: #121212;
 
-<<<<<<< HEAD
 $positive: #25843b;
 $negative: #c10015;
 $info: #31ccec;
@@ -28,8 +27,8 @@ $warning: #f2c037;
 /* Estilos globales de impresión para anular los contenedores de Quasar */
 @media print {
   /* Oculta el menú, la barra superior y cualquier elemento de navegación */
-  .q-drawer, 
-  .q-header, 
+  .q-drawer,
+  .q-header,
   .q-footer,
   .print-hide {
     display: none !important;
@@ -52,16 +51,11 @@ $warning: #f2c037;
     left: 0 !important;
   }
 
-  body, html {
+  body,
+  html {
     width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
     background: white !important;
   }
 }
-=======
-$positive: #39a900;
-$negative: #d32f2f;
-$info: #2196f3;
-$warning: #f9a825;
->>>>>>> origin/frontend-juanpablo

@@ -1,19 +1,10 @@
-<template>
+﻿<template>
   <q-page class="q-pa-md bg-grey-2">
     <div class="row q-col-gutter-md justify-center">
       <div class="col-12 col-md-10 col-lg-8">
-        
         <!-- Encabezado -->
         <div class="row items-center q-mb-md">
-          <q-btn
-            icon="arrow_back"
-            flat
-            round
-            dense
-            color="grey-8"
-            to="/app"
-            class="q-mr-sm"
-          />
+          <q-btn icon="arrow_back" flat round dense color="grey-8" to="/app" class="q-mr-sm" />
           <div>
             <h5 class="text-h5 text-weight-bold q-my-none text-positive">
               Nueva Solicitud de Paz y Salvo
@@ -27,7 +18,6 @@
         <!-- Formulario Principal -->
         <q-card flat bordered class="q-pa-lg rounded-borders bg-white">
           <q-form @submit.prevent="guardarSolicitud" class="q-gutter-y-md">
-            
             <!-- Datos del Contrato -->
             <div class="text-subtitle1 text-weight-bold text-grey-8 border-bottom q-pb-xs">
               1. Información del Contrato
@@ -41,7 +31,7 @@
                   dense
                   label="Número de Contrato *"
                   placeholder="Ej. C-2026-014"
-                  :rules="[val => !!val || 'El número de contrato es obligatorio']"
+                  :rules="[(val) => !!val || 'El número de contrato es obligatorio']"
                 />
               </div>
               <div class="col-12 col-sm-6">
@@ -51,7 +41,7 @@
                   dense
                   label="Dependencia / Centro *"
                   :options="opcionesDependencias"
-                  :rules="[val => !!val || 'Seleccione la dependencia']"
+                  :rules="[(val) => !!val || 'Seleccione la dependencia']"
                 />
               </div>
             </div>
@@ -64,7 +54,7 @@
               rows="3"
               label="Objeto Contractual *"
               placeholder="Descripción breve del objeto del contrato"
-              :rules="[val => !!val || 'El objeto contractual es obligatorio']"
+              :rules="[(val) => !!val || 'El objeto contractual es obligatorio']"
             />
 
             <div class="row q-col-gutter-sm">
@@ -76,7 +66,7 @@
                   type="date"
                   label="Fecha de Inicio *"
                   stack-label
-                  :rules="[val => !!val || 'Seleccione la fecha inicial']"
+                  :rules="[(val) => !!val || 'Seleccione la fecha inicial']"
                 />
               </div>
               <div class="col-12 col-sm-6">
@@ -87,7 +77,7 @@
                   type="date"
                   label="Fecha de Terminación *"
                   stack-label
-                  :rules="[val => !!val || 'Seleccione la fecha final']"
+                  :rules="[(val) => !!val || 'Seleccione la fecha final']"
                 />
               </div>
             </div>
@@ -105,7 +95,7 @@
               :options="opcionesSupervisores"
               option-label="nombre"
               option-value="id"
-              :rules="[val => !!val || 'Seleccione el supervisor']"
+              :rules="[(val) => !!val || 'Seleccione el supervisor']"
             >
               <template #prepend>
                 <q-icon name="supervisor_account" />
@@ -131,12 +121,7 @@
 
             <!-- Botones de Acción -->
             <div class="row justify-end q-gutter-sm q-mt-xl">
-              <q-btn
-                label="Cancelar"
-                flat
-                color="grey-7"
-                to="/app"
-              />
+              <q-btn label="Cancelar" flat color="grey-7" to="/app" />
               <q-btn
                 type="submit"
                 color="positive"
@@ -146,10 +131,8 @@
                 :loading="cargando"
               />
             </div>
-
           </q-form>
         </q-card>
-
       </div>
     </div>
   </q-page>
@@ -170,20 +153,20 @@ const form = ref({
   fechaInicio: '',
   fechaFin: '',
   supervisor: null,
-  adjunto: null
+  adjunto: null,
 })
 
 const opcionesDependencias = [
   'Centro de Comercio y Servicios',
   'Centro Industrial y del Desarrollo Tecnológico',
   'Despacho de Dirección Regional',
-  'Subdirección Centro Agroturístico'
+  'Subdirección Centro Agroturístico',
 ]
 
 const opcionesSupervisores = [
   { id: 1, nombre: 'Ing. María Alejandra Gómez - Supervisor Técnico' },
   { id: 2, nombre: 'Arq. Roberto Carlos Silva - Supervisor Infraestructura' },
-  { id: 3, nombre: 'Lic. Claudia Patricia Ruiz - Supervisora Administrativa' }
+  { id: 3, nombre: 'Lic. Claudia Patricia Ruiz - Supervisora Administrativa' },
 ]
 
 function guardarSolicitud() {
@@ -203,7 +186,7 @@ function guardarSolicitud() {
     supervisor: form.value.supervisor ? form.value.supervisor.nombre : '',
     solicitante: user.nombre || 'Contratista',
     estado: 'Pendiente',
-    fechaCreacion: new Date().toLocaleDateString('es-CO')
+    fechaCreacion: new Date().toLocaleDateString('es-CO'),
   }
 
   // Guardar en localStorage para persistencia temporal
@@ -217,7 +200,7 @@ function guardarSolicitud() {
       Notify.create({
         type: 'positive',
         message: 'Solicitud creada exitosamente',
-        position: 'top-right'
+        position: 'top-right',
       })
     } catch {
       // Ignorar si notify no está disponible

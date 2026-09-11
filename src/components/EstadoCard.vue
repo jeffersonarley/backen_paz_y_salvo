@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <q-card class="estado-card" :class="tipo" flat>
     <q-card-section class="row items-start no-wrap q-gutter-md q-pa-xl">
       <q-icon :name="icono" size="40px" :color="tipo === 'info' ? 'info' : 'negative'" />
@@ -34,7 +34,7 @@ defineProps({
   iconoGrande: { type: String, default: '' },
   boton: { type: String, default: '' },
   botonAccion: { type: Function, default: null },
-  tipo: { type: String, default: 'error' }
+  tipo: { type: String, default: 'error' },
 })
 </script>
 

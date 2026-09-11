@@ -1,4 +1,4 @@
-import { defineStore } from 'pinia'
+﻿import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 export const useSolicitudesStore = defineStore('solicitudes', () => {
@@ -11,11 +11,26 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
       fechaSolicitud: '2026-08-15',
       estado: 'En Trámite',
       firmas: [
-        { dependenciaCodigo: 'DEP-01', dependenciaNombre: 'Gestión Tecnológica', firmada: true, fechaFirma: '2026-08-16' },
-        { dependenciaCodigo: 'DEP-02', dependenciaNombre: 'Recursos Humanos', firmada: false, fechaFirma: null },
-        { dependenciaCodigo: 'DEP-03', dependenciaNombre: 'Infraestructura', firmada: false, fechaFirma: null }
-      ]
-    }
+        {
+          dependenciaCodigo: 'DEP-01',
+          dependenciaNombre: 'Gestión Tecnológica',
+          firmada: true,
+          fechaFirma: '2026-08-16',
+        },
+        {
+          dependenciaCodigo: 'DEP-02',
+          dependenciaNombre: 'Recursos Humanos',
+          firmada: false,
+          fechaFirma: null,
+        },
+        {
+          dependenciaCodigo: 'DEP-03',
+          dependenciaNombre: 'Infraestructura',
+          firmada: false,
+          fechaFirma: null,
+        },
+      ],
+    },
   ])
 
   function agregarSolicitud(nuevaSolicitud) {
@@ -23,15 +38,15 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
   }
 
   function registrarFirma(idSolicitud, codigoDependencia) {
-    const solicitud = solicitudes.value.find(s => s.id === idSolicitud)
+    const solicitud = solicitudes.value.find((s) => s.id === idSolicitud)
     if (solicitud) {
-      const firma = solicitud.firmas.find(f => f.dependenciaCodigo === codigoDependencia)
+      const firma = solicitud.firmas.find((f) => f.dependenciaCodigo === codigoDependencia)
       if (firma) {
         firma.firmada = true
         firma.fechaFirma = new Date().toISOString().split('T')[0]
       }
-      
-      const todasFirmadas = solicitud.firmas.every(f => f.firmada)
+
+      const todasFirmadas = solicitud.firmas.every((f) => f.firmada)
       if (todasFirmadas) {
         solicitud.estado = 'Aprobado'
       }
@@ -39,7 +54,7 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
   }
 
   function rechazarSolicitud(idSolicitud, observacion) {
-    const solicitud = solicitudes.value.find(s => s.id === idSolicitud)
+    const solicitud = solicitudes.value.find((s) => s.id === idSolicitud)
     if (solicitud) {
       solicitud.estado = 'Rechazado'
       solicitud.observacionRechazo = observacion
@@ -47,7 +62,7 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
   }
 
   function obtenerSolicitudPorId(id) {
-    return solicitudes.value.find(s => s.id === id || s.numeroContrato === id)
+    return solicitudes.value.find((s) => s.id === id || s.numeroContrato === id)
   }
 
   return {
@@ -55,6 +70,6 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
     agregarSolicitud,
     registrarFirma,
     rechazarSolicitud,
-    obtenerSolicitudPorId
+    obtenerSolicitudPorId,
   }
 })

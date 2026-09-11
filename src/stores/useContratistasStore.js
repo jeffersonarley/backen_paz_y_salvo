@@ -1,4 +1,4 @@
-import { defineStore } from 'pinia'
+﻿import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 export const useContratistasStore = defineStore('contratistas', () => {
@@ -8,15 +8,15 @@ export const useContratistasStore = defineStore('contratistas', () => {
       nombre: 'Juan Carlos Pérez',
       correo: 'juan.perez@correo.com',
       telefono: '3101234567',
-      password: 'password123'
+      password: 'password123',
     },
     {
       documento: '1095432189',
       nombre: 'María Fernanda Gómez',
       correo: 'maria.gomez@correo.com',
       telefono: '3207654321',
-      password: 'password123'
-    }
+      password: 'password123',
+    },
   ])
 
   function agregar(nuevoContratista) {
@@ -30,15 +30,13 @@ export const useContratistasStore = defineStore('contratistas', () => {
   }
 
   function eliminar(documento) {
-    contratistas.value = contratistas.value.filter(
-      item => item.documento !== documento
-    )
+    contratistas.value = contratistas.value.filter((item) => item.documento !== documento)
   }
 
   return {
     contratistas,
     agregar,
     editar,
-    eliminar
+    eliminar,
   }
 })
