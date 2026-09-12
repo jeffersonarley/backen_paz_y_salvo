@@ -1,4 +1,3 @@
-﻿
 <template>
   <q-page class="page-formato">
     <div class="toolbar no-print">
@@ -8,7 +7,6 @@
 
     <div class="documento">
       <div class="encabezado-topo">
-        <div class="espacio-izq"></div>
         <div class="logo-box">
           <img :src="logoSena" alt="Logo SENA" />
         </div>
@@ -20,15 +18,15 @@
       </div>
 
       <div class="titulo-seccion">PROCESO</div>
-      <div class="subtitulo-seccion blanco">GESTIÓN CONTRACTUAL</div>
-      <div class="titulo-seccion">NOMBRE DEL FORMATO</div>
+      <div class="subtitulo-seccion">GESTIÓN CONTRACTUAL</div>
+      <div class="subtitulo-seccion">NOMBRE DEL FORMATO</div>
 
       <div class="titulo-principal">
         ENTREGA DE BIENES E INFORMACIÓN DE EJECUCIÓN CONTRACTUAL POR EL CONTRATISTA
       </div>
 
       <div class="clasificacion-wrap">
-        <div class="titulo-seccion small-header">CLASIFICACIÓN DE LA INFORMACIÓN</div>
+        <div class="clasificacion-header">CLASIFICACIÓN DE LA INFORMACIÓN</div>
         <div class="fila-clasificacion">
           <div class="caja-clasificacion">
             <span>Pública</span>
@@ -45,30 +43,21 @@
         </div>
       </div>
 
-      <!-- Sección de datos corregida -->
       <div class="tabla-datos">
         <div class="fila-titulo">
-          <div class="campo campo-grande">
-            NOMBRES Y APELLIDOS DEL CONTRATISTA: {{ contratistaNombre }}
-          </div>
-          <div class="campo campo-chico">
-            <span class="label-sub">IDENTIFICACIÓN</span>
-            {{ identificacion }}
-          </div>
+          <div class="campo campo-grande">NOMBRES Y APELLIDOS DEL CONTRATISTA:</div>
+          <div class="campo campo-chico">IDENTIFICACIÓN</div>
         </div>
 
-        <div class="fila-tres">
-          <div class="campo">CIUDAD: {{ ciudad }}</div>
-          <div class="campo">FECHA: {{ fechaActual }}</div>
-          <div class="campo">REGIONAL: {{ regional }}</div>
+        <div class="fila-multi">
+          <div class="campo">CIUDAD</div>
+          <div class="campo">FECHA</div>
+          <div class="campo">REGIÓN</div>
         </div>
 
-        <div class="fila-unica">
-          <div class="campo">DIRECCIÓN U OFICINA DONDE SE EJECUTÓ EL CONTRATO: {{ direccion }}</div>
-        </div>
-
-        <div class="fila-unica">
-          <div class="campo">NÚMERO Y FECHA DEL CONTRATO: {{ numeroContrato }}</div>
+        <div class="fila-multi">
+          <div class="campo">DIRECCIÓN U OFICINA DONDE SE EJECUTÓ EL CONTRATO:</div>
+          <div class="campo">NÚMERO Y FECHA DEL CONTRATO</div>
         </div>
       </div>
 
@@ -81,130 +70,88 @@
         <div class="casilla"><span class="box"></span> TERMINACIÓN UNILATERAL</div>
       </div>
 
-      <!-- Tabla de Dependencias -->
       <div class="tabla-dependencias">
-        <div class="thead-dependencias">
-          <div class="col-dep-head">DEPENDENCIA SENA</div>
-          <div class="col-marca-head">Marcar<br>con x</div>
-          <div class="col-resp-grupo">
-            <div class="sub-resp-header">RESPONSABLES</div>
-            <div class="sub-resp-columns">
-              <div class="col-nombres-head">NOMBRES Y APELLIDOS</div>
-              <div class="col-firma-head-sub">FIRMA</div>
-            </div>
+        <div class="thead">
+          <div>DEPENDENCIA</div>
+          <div>RESPONSABLES</div>
+          <div>FIRMA</div>
+        </div>
+
+        <div class="tr">
+          <div class="dep-cell">GESTIÓN DE TIC</div>
+          <div class="resp-cell">Franklin Rolando Chacon Lopez</div>
+          <div class="firma-box"></div>
+        </div>
+        <div class="tr">
+          <div class="dep-cell">ADMINISTRACIÓN DE DOCUMENTOS</div>
+          <div class="resp-cell">Hilda Lucía Ramirez Alvarado</div>
+          <div class="firma-box"></div>
+        </div>
+        <div class="tr">
+          <div class="dep-cell">
+            ENTREGA CARNÉ (A SUPERVISOR DEL CONTRATO EN LAS REGIONES Y CONTRATOS DE FORMACIÓN)
           </div>
+          <div class="resp-cell">Jhon Fredy Sanabria Muñoz</div>
+          <div class="firma-box"></div>
         </div>
-
-        <!-- Fila 1 -->
-        <div class="tr-dep">
-          <div class="col-dep">GESTIÓN DE TIC</div>
-          <div class="col-marca"><div class="box-check">X</div></div>
-          <div class="col-nombres">Franklin Rolando Chacon Lopez</div>
-          <div class="col-firma"></div>
+        <div class="tr">
+          <div class="dep-cell">ALMACÉN E INVENTARIOS</div>
+          <div class="resp-cell">Generar reporte de https://miinventario.sena.edu.co</div>
+          <div class="firma-box"></div>
         </div>
-
-        <!-- Fila 2 -->
-        <div class="tr-dep">
-          <div class="col-dep">ADMINISTRACIÓN DE DOCUMENTOS</div>
-          <div class="col-marca"><div class="box-check">X</div></div>
-          <div class="col-nombres">Hilda Lucía Ramirez Alvarado</div>
-          <div class="col-firma"></div>
+        <div class="tr">
+          <div class="dep-cell">SERVICIOS GENERALES</div>
+          <div class="resp-cell">Juan David Silva Guerreros</div>
+          <div class="firma-box"></div>
         </div>
-
-        <!-- Fila 3 -->
-        <div class="tr-dep">
-          <div class="col-dep">ENTREGA CARNÉ (A SUPERVISOR DEL CONTRATO EN LAS REGIONES Y CONTRATOS DE FORMACIÓN)</div>
-          <div class="col-marca"><div class="box-check">X</div></div>
-          <div class="col-nombres">Jhon Fredy Sanabria Muñoz</div>
-          <div class="col-firma"></div>
+        <div class="tr">
+          <div class="dep-cell">CONTABILIDAD</div>
+          <div class="resp-cell">Zaida Leny Melgarejo Ballesteros</div>
+          <div class="firma-box"></div>
         </div>
-
-        <!-- Fila 4 -->
-        <div class="tr-dep">
-          <div class="col-dep">ALMACÉN E INVENTARIOS</div>
-          <div class="col-marca"><div class="box-check"></div></div>
-          <div class="col-nombres">Generar reporte de https://miinventario.sena.edu.co</div>
-          <div class="col-firma"></div>
+        <div class="tr">
+          <div class="dep-cell">TESORERÍA</div>
+          <div class="resp-cell">Nelcy Mabel Mayorga Pinto</div>
+          <div class="firma-box"></div>
         </div>
-
-        <!-- Fila 5 -->
-        <div class="tr-dep">
-          <div class="col-dep">SERVICIOS GENERALES</div>
-          <div class="col-marca"><div class="box-check"></div></div>
-          <div class="col-nombres">Juan David Silva Guerreros</div>
-          <div class="col-firma"></div>
+        <div class="tr">
+          <div class="dep-cell">COORDINACIÓN DE ÁREA/GRUPO/ACADÉMICA</div>
+          <div class="resp-cell">Jhon Fredy Sanabria Muñoz</div>
+          <div class="firma-box"></div>
         </div>
-
-        <!-- Fila 6 -->
-        <div class="tr-dep">
-          <div class="col-dep">CONTABILIDAD</div>
-          <div class="col-marca"><div class="box-check"></div></div>
-          <div class="col-nombres">Zaida Leny Melgarejo Ballesteros</div>
-          <div class="col-firma"></div>
+        <div class="tr">
+          <div class="dep-cell">BIBLIOTECA</div>
+          <div class="resp-cell">
+            María Juliana Calis Camacho / Yudith Milagros Martínez Bautista
+          </div>
+          <div class="firma-box"></div>
         </div>
-
-        <!-- Fila 7 -->
-        <div class="tr-dep">
-          <div class="col-dep">TESORERÍA</div>
-          <div class="col-marca"><div class="box-check"></div></div>
-          <div class="col-nombres">Nelcy Mabel Mayorga Pinto</div>
-          <div class="col-firma"></div>
+        <div class="tr">
+          <div class="dep-cell">OTRO (LÍDER SIGA)</div>
+          <div class="resp-cell">Zaida Jeleidy Garcia Jaimes</div>
+          <div class="firma-box"></div>
         </div>
-
-        <!-- Fila 8 -->
-        <div class="tr-dep">
-          <div class="col-dep">COORDINACIÓN DE ÁREA/GRUPO/ACADÉMICA</div>
-          <div class="col-marca"><div class="box-check"></div></div>
-          <div class="col-nombres">Jhon Fredy Sanabria Muñoz</div>
-          <div class="col-firma"></div>
+        <div class="tr">
+          <div class="dep-cell">OTRO (ADMINISTRACIÓN EDUCATIVA)</div>
+          <div class="resp-cell">Erika Johana Gómez Verdugo</div>
+          <div class="firma-box"></div>
         </div>
-
-        <!-- Fila 9 -->
-        <div class="tr-dep">
-          <div class="col-dep">BIBLIOTECA</div>
-          <div class="col-marca"><div class="box-check"></div></div>
-          <div class="col-nombres">María Juliana Calis Camacho / Yudith Milagros Martínez Bautista</div>
-          <div class="col-firma"></div>
+        <div class="tr">
+          <div class="dep-cell">
+            APOYO AL SEGUIMIENTO DE LOS PROCESOS ADMINISTRATIVOS Y DE NOVEDADES
+          </div>
+          <div class="resp-cell">Nelson Fabián Duarte Peñaloza / Elieen Erlys Hurtado Ariza</div>
+          <div class="firma-box"></div>
         </div>
-
-        <!-- Fila 10 -->
-        <div class="tr-dep">
-          <div class="col-dep">OTRO (LÍDER SIGA)</div>
-          <div class="col-marca"><div class="box-check"></div></div>
-          <div class="col-nombres">Zaida Jeleidy Garcia Jaimes</div>
-          <div class="col-firma"></div>
+        <div class="tr">
+          <div class="dep-cell">APOYO ETA PRODUCTIVA</div>
+          <div class="resp-cell">Karen Andrea Garcia Carreño</div>
+          <div class="firma-box"></div>
         </div>
-
-        <!-- Fila 11 -->
-        <div class="tr-dep">
-          <div class="col-dep">OTRO (ADMINISTRACIÓN EDUCATIVA)</div>
-          <div class="col-marca"><div class="box-check"></div></div>
-          <div class="col-nombres">Erika Johana Gómez Verdugo</div>
-          <div class="col-firma"></div>
-        </div>
-
-        <!-- Fila 12 -->
-        <div class="tr-dep">
-          <div class="col-dep">APOYO AL SEGUIMIENTO DE LOS PROCESOS ADMINISTRATIVOS Y DE NOVEDADES</div>
-          <div class="col-marca"><div class="box-check"></div></div>
-          <div class="col-nombres">Nelson Fabián Duarte Peñaloza / Elieen Erlys Hurtado Ariza</div>
-          <div class="col-firma"></div>
-        </div>
-
-        <!-- Fila 13 -->
-        <div class="tr-dep">
-          <div class="col-dep">APOYO ETA PRODUCTIVA</div>
-          <div class="col-marca"><div class="box-check"></div></div>
-          <div class="col-nombres">Karen Andrea Garcia Carreño</div>
-          <div class="col-firma"></div>
-        </div>
-
-        <!-- Fila 14 -->
-        <div class="tr-dep">
-          <div class="col-dep">SUPERVISOR DE CONTRATO</div>
-          <div class="col-marca"><div class="box-check"></div></div>
-          <div class="col-nombres">Jhon Fredy Sanabria Muñoz</div>
-          <div class="col-firma"></div>
+        <div class="tr">
+          <div class="dep-cell">SUPERVISOR DE CONTRATO</div>
+          <div class="resp-cell">Jhon Fredy Sanabria Muñoz</div>
+          <div class="firma-box"></div>
         </div>
       </div>
 
@@ -226,17 +173,7 @@
 
       <div class="firma-final">
         <div class="linea-firma-wrap">
-          <div class="firma-slot" tabindex="0" @click="abrirSelectorFirma" @paste="pegarFirma">
-            <img v-if="firmaUrl" :src="firmaUrl" alt="Firma del contratista" class="firma-preview" />
-            <span v-else class="firma-placeholder">Pegue la firma aquí</span>
-          </div>
-          <input
-            ref="firmaInput"
-            type="file"
-            accept="image/*"
-            class="hidden-input"
-            @change="cargarFirmaDesdeArchivo"
-          />
+          <div class="linea-firma"></div>
           <div class="texto-firma">Firma del Contratista</div>
         </div>
       </div>
@@ -245,87 +182,10 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useSolicitudesStore } from '../stores/useSolicitudesStore.js'
+import { useRouter } from 'vue-router'
 import logoSena from '../images/logo-sena.png'
 
 const router = useRouter()
-const route = useRoute()
-const store = useSolicitudesStore()
-const firmaInput = ref(null)
-const firmaUrl = ref('')
-
-const solicitudActual = computed(() => {
-  const codigo = route.query.codigo || ''
-  if (!codigo) return store.solicitudes?.[0] || null
-
-  return (
-    store.solicitudes?.find(
-      (item) =>
-        item.numeroSolicitud === codigo ||
-        item.solicitud === codigo ||
-        item.codigo === codigo ||
-        item.numeroContrato === codigo ||
-        item.contrato === codigo,
-    ) || store.solicitudes?.[0] || null
-  )
-})
-
-const contratistaNombre = computed(
-  () => solicitudActual.value?.contratista || solicitudActual.value?.nombreContratista || 'CONTRATISTA',
-)
-const identificacion = computed(
-  () => solicitudActual.value?.documentoContratista || solicitudActual.value?.documento || 'N/A',
-)
-const fechaActual = computed(
-  () => solicitudActual.value?.fecha || solicitudActual.value?.fechaSolicitud || new Date().toISOString().substring(0, 10),
-)
-const ciudad = computed(
-  () => solicitudActual.value?.ciudad || 'San Gil'
-)
-const regional = computed(
-  () => solicitudActual.value?.regional || 'Santander'
-)
-const direccion = computed(
-  () => solicitudActual.value?.direccion || 'Centro Agroturístico'
-)
-const numeroContrato = computed(
-  () => solicitudActual.value?.numeroContrato || solicitudActual.value?.contrato || 'N/A'
-)
-
-function abrirSelectorFirma() {
-  firmaInput.value?.click()
-}
-
-function cargarFirmaDesdeArchivo(event) {
-  const file = event.target.files?.[0]
-  if (!file) return
-
-  const reader = new FileReader()
-  reader.onload = () => {
-    firmaUrl.value = String(reader.result || '')
-  }
-  reader.readAsDataURL(file)
-}
-
-function pegarFirma(event) {
-  const items = event.clipboardData?.items || []
-  for (const item of items) {
-    if (item.type.startsWith('image/')) {
-      const file = item.getAsFile()
-      if (!file) continue
-
-      const reader = new FileReader()
-      reader.onload = () => {
-        firmaUrl.value = String(reader.result || '')
-      }
-      reader.readAsDataURL(file)
-      event.preventDefault()
-      return
-    }
-  }
-}
 
 function volver() {
   router.push({ name: 'solicitudes' })
@@ -372,24 +232,30 @@ function imprimir() {
 
 .encabezado-topo {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #111;
-  padding: 10px 16px 8px;
-  min-height: 90px;
+  border-bottom: 1px solid var(--b);
+  padding: 18px 24px 16px;
+  background: linear-gradient(180deg, #ffffff 0%, #f7fafc 100%);
+  position: relative;
 }
 
-.espacio-izq {
-  /* Espacio equilibrado a la izquierda para garantizar el centrado exacto del logo */
+.encabezado-topo::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  background: linear-gradient(180deg, #28b463 0%, #1f8f52 100%);
 }
 
 .logo-box {
+  flex: 1;
   display: flex;
   justify-content: center;
-  align-items: flex-start;
+  align-items: center;
   min-width: 0;
-  padding-top: 4px;
-  margin-left: 12%;
 }
 
 .logo-box img {
@@ -397,6 +263,8 @@ function imprimir() {
   height: auto;
   display: block;
   margin: 0 auto;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.06));
+  margin-left: 12px;
 }
 
 .version-box {
@@ -407,8 +275,8 @@ function imprimir() {
   font-size: 12px;
   line-height: 1.45;
   text-align: left;
-  margin-left: auto;
-  margin-top: 0;
+  background: linear-gradient(180deg, #f7fafc 0%, #eef4f9 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 .linea {
@@ -441,16 +309,6 @@ function imprimir() {
   text-transform: uppercase;
 }
 
-.subtitulo-seccion.blanco {
-  background: #fff;
-  color: #111;
-}
-
-.titulo-seccion.small-header {
-  font-size: 14px;
-  letter-spacing: 0.04em;
-}
-
 .titulo-principal {
   border-top: 1px solid var(--b);
   border-bottom: 1px solid var(--b);
@@ -469,12 +327,14 @@ function imprimir() {
 }
 
 .clasificacion-header {
-  background: #f5f5f5;
+  background: #eff4fa;
   text-align: center;
   font-size: 12px;
-  font-weight: 700;
-  padding: 6px 8px;
-  border-bottom: 1px solid #111;
+  font-weight: 800;
+  padding: 7px 8px;
+  border-bottom: 1px solid var(--b);
+  color: #1d2a39;
+  text-transform: uppercase;
 }
 
 .fila-clasificacion {
@@ -522,26 +382,15 @@ function imprimir() {
   background: #fff;
 }
 
-.fila-titulo {
+.fila-titulo,
+.fila-multi {
   display: grid;
   grid-template-columns: 3fr 1.2fr;
   border-bottom: 1px solid var(--b);
 }
 
-.fila-tres {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  border-bottom: 1px solid #111;
-}
-
-.fila-unica {
-  display: grid;
-  grid-template-columns: 1fr;
-  border-bottom: 1px solid #111;
-}
-
-.fila-unica:last-child {
-  border-bottom: none;
+.fila-multi {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .campo {
@@ -555,10 +404,6 @@ function imprimir() {
   background: #ffffff;
 }
 
-.fila-unica .campo {
-  border-right: none;
-}
-
 .campo:last-child {
   border-right: none;
 }
@@ -570,22 +415,15 @@ function imprimir() {
 
 .campo-chico {
   justify-content: center;
-  font-weight: 700;
+  font-weight: 800;
   text-transform: uppercase;
 }
 
-.label-sub {
-  font-weight: 700;
-}
-
 .titulo-seccion.small {
-  background: #0d0d0d;
-  color: #fff;
+  background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+  color: #ffffff;
   font-size: 14px;
-  font-weight: 700;
   letter-spacing: 0.04em;
-  text-align: center;
-  padding: 6px 10px;
 }
 
 .fila-checks {
@@ -621,32 +459,33 @@ function imprimir() {
   flex-shrink: 0;
 }
 
-/* Tabla de dependencias */
 .tabla-dependencias {
-  border-top: 1px solid #111;
+  border-top: 1px solid var(--b);
+  background: #ffffff;
 }
 
 .thead,
 .tr {
   display: grid;
   grid-template-columns: 1.3fr 1.7fr 0.7fr;
-  border-bottom: 1px solid #111;
+  border-bottom: 1px solid var(--b);
 }
 
 .thead {
-  background: #f4f4f4;
+  background: linear-gradient(180deg, #edf3f9 0%, #e6eef6 100%);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 800;
+  color: #18212d;
+  text-transform: uppercase;
 }
 
 .thead > div,
 .tr > div {
-  padding: 8px 9px;
-  min-height: 36px;
-  border-right: 1px solid #111;
+  padding: 9px 10px;
+  min-height: 42px;
+  border-right: 1px solid var(--b);
   display: flex;
   align-items: center;
-  padding: 6px 8px;
 }
 
 .thead > div:last-child,
@@ -656,14 +495,17 @@ function imprimir() {
 
 .dep-cell,
 .resp-cell {
-  font-size: 11px;
+  font-size: 11.5px;
+  line-height: 1.3;
 }
 
 .firma-box {
   min-width: 100%;
-  min-height: 28px;
-  border: 1px solid #111;
-  background: #fff;
+  min-height: 34px;
+  border: 1px solid var(--b);
+  border-radius: 8px;
+  background: linear-gradient(180deg, #ffffff 0%, #f3f7fb 100%);
+  margin: 2px 1px;
 }
 
 .tabla-baja {
@@ -699,6 +541,10 @@ function imprimir() {
   margin-top: 14px;
 }
 
+.supervisor-row {
+  grid-template-columns: 0.78fr 0.18fr 1.9fr;
+}
+
 .row:first-child {
   border-top: none;
 }
@@ -712,6 +558,7 @@ function imprimir() {
   display: flex;
   align-items: center;
   border-right: none;
+  color: #1d2a39;
 }
 
 .cell:last-child {
@@ -721,7 +568,7 @@ function imprimir() {
 .check-cell {
   justify-content: center;
   padding: 0;
-  border-left: 1px solid #111;
+  border-left: 1px solid var(--b);
 }
 
 .mini-check {
@@ -730,11 +577,26 @@ function imprimir() {
   border: 1px solid #1d8f42;
   background: #dff7e8;
   display: inline-block;
+  border-radius: 3px;
 }
 
 .label {
   background: transparent;
   border-right: none;
+}
+
+.supervisor-label {
+  padding-left: 8px;
+}
+
+.check-cell {
+  border-right: none;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.supervisor-name {
+  justify-content: flex-start;
 }
 
 .value {
@@ -774,34 +636,16 @@ function imprimir() {
   border: none;
 }
 
-.firma-slot {
+.linea-firma {
   width: 100%;
   height: 1px;
-  background: #111;
+  background: linear-gradient(90deg, #eff3f8 0%, #1d2a39 50%, #eff3f8 100%);
   border: none;
-  margin-bottom: 6px;
+  margin-bottom: 7px;
 }
 
-.firma-slot:hover {
-  border-color: #1b7f32;
-}
-
-.firma-preview {
-  max-width: 190px;
-  max-height: 56px;
-  object-fit: contain;
-  display: block;
-}
-
-.firma-placeholder {
-  font-size: 10px;
-  color: #666;
-  text-align: center;
-  line-height: 1.3;
-}
-
-.hidden-input {
-  display: none;
+.firma-final .linea-firma-wrap {
+  border: none;
 }
 
 .texto-firma {
@@ -809,285 +653,285 @@ function imprimir() {
   font-weight: 800;
   text-align: center;
   line-height: 1.1;
+  color: #1d2a39;
 }
 
-
-
-/* ===================== IMPRESIÓN ===================== */
+/* ===================== ESTILOS DE IMPRESIÓN ===================== */
 @media print {
-  /* Configuración de página (Carta, márgenes estrechos) */
   @page {
-    size: Letter portrait;
-    margin: 10mm 10mm 12mm;
+    size: letter portrait;
+    margin: 8mm 10mm;
   }
 
-  /* Forzar impresión de colores y fondos (encabezados oscuros, verde SENA) */
+  /* Forzar la impresión de fondos y colores en todos los navegadores */
   *,
   *::before,
   *::after {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
-
+    box-sizing: border-box;
   }
 
-  html, body {
+  :global(html),
+  :global(body) {
     background: #ffffff !important;
     margin: 0 !important;
     padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
   }
 
-  /* Quitar padding/fondo de la página en impresión */
-  .page-formato {
-    background: #ffffff !important;
+  /* Ocultar elementos de navegación de Quasar y barra de herramientas */
+  :global(.q-header),
+  :global(.q-drawer),
+  :global(.q-footer),
+  :global(.print-hide),
+  .toolbar,
+  .no-print {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    visibility: hidden !important;
+  }
+
+  /* Anular espaciados del layout de Quasar */
+  :global(.q-layout),
+  :global(.q-page-container) {
     padding: 0 !important;
+    margin: 0 !important;
     min-height: auto !important;
   }
 
-  /* Ocultar toolbar de acciones */
-  .toolbar.no-print,
-  .no-print {
-    display: none !important;
+  /* Contenedor de la página sin fondos degradados ni paddings */
+  .page-formato {
+    background: #ffffff !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    min-height: auto !important;
+    height: auto !important;
   }
 
-  /* El documento ocupa todo el ancho útil, sin sombras ni redondeo */
+  /* El documento se ajusta al ancho completo sin bordes redondeados ni sombras */
   .documento {
+    --b: #8fa8bf;
     width: 100% !important;
-    max-width: none !important;
+    max-width: 100% !important;
     margin: 0 !important;
-    border: 1px solid #8fa8bf !important;
+    border: 1px solid var(--b) !important;
     border-radius: 0 !important;
     box-shadow: none !important;
     overflow: visible !important;
+    background: #ffffff !important;
   }
 
-  /* Encabezado: conservar barra verde SENA, aligerar gradiente */
+  /* Encabezado superior */
   .encabezado-topo {
     border-radius: 0 !important;
     background: #ffffff !important;
-    padding: 10px 14px !important;
-  }
-  .encabezado-topo::before {
-    /* mantén el acento verde SENA */
-    background: #1f8f52 !important;
-  }
-  .logo-box img {
-    width: 110px !important;
-    margin-left: 0 !important;
+    padding: 8px 12px !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 
-  /* Aplanar gradientes de los encabezados para usar tinta plana */
+  .encabezado-topo::before {
+    background: #1f8f52 !important;
+    width: 5px !important;
+  }
+
+  .logo-box img {
+    width: 105px !important;
+    margin-left: 0 !important;
+    filter: none !important;
+  }
+
+  .version-box {
+    min-width: 160px !important;
+    padding: 4px 8px !important;
+    font-size: 10px !important;
+    border-radius: 4px !important;
+    background: #f7fafc !important;
+  }
+
+  /* Encabezados y títulos */
   .titulo-seccion,
   .titulo-seccion.small {
     background: #0f172a !important;
     color: #ffffff !important;
-    font-size: 15px !important;
-    padding: 8px 10px !important;
+    font-size: 13px !important;
+    padding: 6px 8px !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
   }
+
   .subtitulo-seccion {
     background: #edf3f8 !important;
-    padding: 6px 8px !important;
-    font-size: 13px !important;
+    padding: 5px 8px !important;
+    font-size: 11px !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
   }
+
   .titulo-principal {
     background: #f6f9fc !important;
-    font-size: 14px !important;
-    padding: 10px 12px !important;
+    font-size: 12px !important;
+    padding: 8px 10px !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
   }
 
   /* Clasificación de la información */
-  .clasificacion-header { background: #eff4fa !important; }
-  .caja-clasificacion { background: #ffffff !important; }
-  .check-box { background: #dff7e8 !important; }
-  .check-box.empty { background: #edf2f8 !important; }
+  .clasificacion-wrap {
+    background: #f9fbfd !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .clasificacion-header {
+    background: #eff4fa !important;
+    font-size: 10px !important;
+    padding: 4px 6px !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  .caja-clasificacion {
+    min-height: 30px !important;
+    padding: 4px 10px !important;
+    font-size: 10px !important;
+    background: #ffffff !important;
+  }
+
+  .check-box {
+    width: 18px !important;
+    height: 18px !important;
+    font-size: 10px !important;
+    background: #ebf9ef !important;
+    border: 1px solid #1f2a37 !important;
+  }
+
+  .check-box.empty {
+    background: #f7f9fb !important;
+  }
 
   /* Tabla de datos del contratista */
-  .tabla-datos,
-  .tabla-dependencias,
-  .tabla-baja { background: #ffffff !important; }
-
-  .fila-checks { background: #f9fbfd !important; }
-  .casilla { background: #ffffff !important; }
-
-  /* Encabezado de la tabla de dependencias */
-  .thead { background: #e6eef6 !important; }
-
-  /* Cajas de firma: conservar fondo claro y bordes */
-  .firma-box {
+  .tabla-datos {
     background: #ffffff !important;
-    border: 1px solid #8fa8bf !important;
-    border-radius: 0 !important;
-    min-height: 30px !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .campo {
+    min-height: 28px !important;
+    padding: 4px 8px !important;
+    font-size: 10px !important;
+    background: #ffffff !important;
+  }
+
+  /* Causal de terminación */
+  .fila-checks {
+    background: #f9fbfd !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .casilla {
+    min-height: 32px !important;
+    padding: 4px 6px !important;
+    font-size: 9.5px !important;
+    background: #ffffff !important;
+  }
+
+  .box {
+    width: 14px !important;
+    height: 14px !important;
+    border: 1px solid #1f2a37 !important;
+    border-radius: 3px !important;
+  }
+
+  /* Tabla de dependencias y firmas */
+  .tabla-dependencias {
+    background: #ffffff !important;
+  }
+
+  .thead {
+    background: #e6eef6 !important;
+    font-size: 10px !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  .thead > div,
+  .tr > div {
+    padding: 4px 6px !important;
+    min-height: 24px !important;
+  }
+
+  .tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .dep-cell,
+  .resp-cell {
+    font-size: 9.5px !important;
+    line-height: 1.25 !important;
+  }
+
+  .firma-box {
+    min-height: 24px !important;
+    background: #ffffff !important;
+    border: 1px solid var(--b) !important;
+    border-radius: 4px !important;
     margin: 1px 0 !important;
   }
 
-  /* Evitar cortes dentro de una fila de la tabla de dependencias */
-  .tabla-dependencias .tr {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
-
-  /* Evitar que quede una fila huérfana al final de página */
-  .tabla-dependencias .thead {
-    page-break-after: avoid !important;
-    break-after: avoid !important;
-  }
-
-  /* Mantener junto el título de sección con lo que sigue */
-  .titulo-seccion,
-  .titulo-seccion.small,
-  .subtitulo-seccion,
-  .clasificacion-header,
-  .fila-titulo {
-    page-break-after: avoid !important;
-    break-after: avoid !important;
-  }
-
-  /* Mantener unida la fila de "Otros" con la fila anterior */
-  .tabla-baja .otros-row {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
-
-  /* Firma final: mantener con su contenido y evitar página en blanco de cola */
-  .firma-final {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-    margin-top: 28px !important;
-    padding-bottom: 0 !important;
-  }
-  .linea-firma {
-    background: #1d2a39 !important;
-  }
-
-  /* Línea de "Otros" más nítida */
-  .linea-otros { background: #1f2a37 !important; }
-
-  /* Reducir un poco tamaños para que quepa bien en Carta */
-  .dep-cell,
-  .resp-cell { font-size: 10.5px !important; }
-  .campo { font-size: 10.5px !important; min-height: 36px !important; }
-  .cell { font-size: 11px !important; min-height: 38px !important; }
-
-  /* Bordes más finos y consistentes en impresión */
-  .documento,
-  .encabezado-topo,
-  .titulo-seccion,
-  .subtitulo-seccion,
-  .titulo-principal,
-  .clasificacion-wrap,
-  .clasificacion-header,
-  .fila-clasificacion,
-  .caja-clasificacion,
-  .tabla-datos,
-  .fila-titulo,
-  .fila-tres,
-  .fila-unica,
-  .campo,
-  .fila-checks,
-  .casilla,
-  .tabla-dependencias,
-  .thead-dependencias,
-  .tr-dep,
-  .tabla-baja,
-  .row,
-  .cell,
-  .otros-row .label,
-  .otros-row .value {
-    border-left: 1px solid #111;
-    border-right: 1px solid #111;
-    box-sizing: border-box;
-  }
-
-  .row {
-    border-top: 1px solid #111;
-  }
-
-  .caja-clasificacion:last-child,
-  .casilla:last-child,
-  .thead > div:last-child,
-  .tr > div:last-child,
-  .row > div:last-child,
-  .row .cell:last-child,
-  .cell:last-child,
-  .otros-row .value {
-    border-right: 1px solid #111 !important;
-  }
-
+  /* Tabla baja */
   .tabla-baja {
-    border: 1px solid #111;
-    border-top: none;
-    background: #fff;
+    background: #ffffff !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 
   .tabla-baja .row {
-    display: grid;
-    grid-template-columns: 1.18fr 2.82fr;
-    border-top: 1px solid #111;
-    min-height: 52px;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 
-  .tabla-baja .row:first-child {
-    border-top: none;
-  }
-
-  .tabla-baja .row .cell {
-    border-right: 1px solid #111;
-    padding: 8px 10px;
-  }
-
-  .tabla-baja .row .cell:last-child {
-    border-right: none;
+  .cell {
+    min-height: 28px !important;
+    padding: 4px 8px !important;
+    font-size: 10px !important;
   }
 
   .otros-row {
-    grid-template-columns: 150px 1fr;
-    column-gap: 0;
-    border-top: none;
-    min-height: 48px;
-  }
-
-  .otros-row .label {
-    padding-right: 0;
-    white-space: nowrap;
-    border-right: 1px solid #111;
-    align-items: center;
-    font-weight: 700;
+    min-height: 32px !important;
   }
 
   .linea-otros {
-    display: block;
-    width: 100%;
-    height: 1px;
-    background: #111;
-    margin-top: 11px;
+    background: #1f2a37 !important;
+    margin-top: 10px !important;
   }
 
-  .otros-row .value {
-    position: relative;
-    align-items: center;
-    padding: 0;
-    border-right: 1px solid #111;
-  }
-
-  .otros-row .value::after {
-    content: none;
-  }
-
+  /* Firma final */
   .firma-final {
-    justify-content: flex-end;
-    margin-top: 20px;
-    padding-right: 0;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    margin-top: 24px !important;
+    padding: 0 0 10px !important;
   }
 
   .linea-firma-wrap {
-    width: 240px;
-    margin-top: 0;
+    width: 220px !important;
+    margin-top: 0 !important;
   }
 
   .linea-firma {
-    width: 100%;
-    height: 1px;
-    background: #111;
+    background: #1d2a39 !important;
+    margin-bottom: 4px !important;
+  }
+
+  .texto-firma {
+    font-size: 10.5px !important;
   }
 }
 </style>
