@@ -5,7 +5,8 @@ const dependenciaController = require('../controllers/dependenciaController');
 
 // RF-012: gestión de dependencias y responsables de área (Supervisor)
 router.post('/', verificarToken, verificarRol('Supervisor'), dependenciaController.crearDependencia);
-router.get('/', verificarToken, verificarRol('Supervisor', 'Administrador'), dependenciaController.obtenerDependencias);
+// Cualquier usuario autenticado puede consultar las dependencias (el Contratista las selecciona al crear un contrato)
+router.get('/', verificarToken, dependenciaController.obtenerDependencias);
 router.put('/:id', verificarToken, verificarRol('Supervisor'), dependenciaController.actualizarDependencia);
 router.post('/:id/responsable', verificarToken, verificarRol('Supervisor'), dependenciaController.asignarResponsable);
 

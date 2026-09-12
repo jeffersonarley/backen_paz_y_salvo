@@ -1,11 +1,34 @@
 const mongoose = require('mongoose');
 const Contrato = require('../models/Contrato');
+const DependenciaArea = require('../models/DependenciaArea');
 const BienEntregado = require('../models/BienEntregado');
 const TrazabilidadFirma = require('../models/TrazabilidadFirma');
 const { getFormatoVigente } = require('../services/formatoCache');
 const { registrar } = require('../services/auditoriaService');
 const asyncHandler = require('../utils/asyncHandler');
 const AppError = require('../utils/AppError');
+
+// Helper: resolver la dependencia por su ObjectId o por su nombre
+async function resolverDependencia(valor) {
+    const valorTexto = String(valor || '').trim();
+    if (!valorTexto) {
+        throw new AppError('La dependencia es obligatoria.', 400);
+    }
+
+    if (mongoose.isValidObjectId(valorTexto)) {
+        const porId = await DependenciaArea.findById(valorTexto);
+        if (!porId) {
+            throw new AppError('La dependencia indicada no existe.', 404);
+        }
+        return porId;
+    }
+
+    const porNombre = await DependenciaArea.findOne({ nombre_dependencia: valorTexto });
+    if (!porNombre) {
+        throw new AppError('La dependencia indicada no existe.', 404);
+    }
+    return porNombre;
+}
 
 // Diagrama 2: Registro contractual e inventario (transacción atómica + fallback)
 exports.crearContrato = asyncHandler(async (req, res) => {
@@ -20,9 +43,7 @@ exports.crearContrato = asyncHandler(async (req, res) => {
         throw new AppError('Todos los campos obligatorios del contrato (numero, telefono, dependencia) deben estar diligenciados.', 400);
     }
 
-    if (!mongoose.isValidObjectId(dependencia)) {
-        throw new AppError('La dependencia debe ser un identificador (ObjectId) válido de DependenciaArea.', 400);
-    }
+    const dependenciaArea = await resolverDependencia(dependencia);
 
     if (!bienes || !Array.isArray(bienes) || bienes.length === 0) {
         throw new AppError('Debe incluir al menos un bien en el inventario.', 400);
@@ -52,7 +73,7 @@ exports.crearContrato = asyncHandler(async (req, res) => {
         nombre_contratista: req.usuario.nombre || req.usuario.nombre_completo || 'Contratista',
         correo_contratista: req.usuario.correo || req.usuario.correo_institucional || req.usuario.email,
         telefono,
-        dependencia,
+        dependencia: dependenciaArea._id,
         usuario: usuarioId,
         supervisor: req.usuario.supervisor_id || null,
         estado: 'Borrador',
@@ -190,10 +211,8 @@ exports.actualizarContrato = asyncHandler(async (req, res) => {
     if (numero !== undefined) contrato.numero_contrato = numero;
     if (telefono !== undefined) contrato.telefono = telefono;
     if (dependencia !== undefined) {
-        if (!mongoose.isValidObjectId(dependencia)) {
-            throw new AppError('La dependencia debe ser un ObjectId válido.', 400);
-        }
-        contrato.dependencia = dependencia;
+        const dependenciaArea = await resolverDependencia(dependencia);
+        contrato.dependencia = dependenciaArea._id;
     }
 
     await contrato.save();

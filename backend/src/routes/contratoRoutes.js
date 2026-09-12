@@ -11,7 +11,7 @@ const validarCampos = require('../middlewares/validarCampos');
 const validarContrato = [
   body('numero').trim().notEmpty().withMessage('El número de contrato es obligatorio.'),
   body('telefono').trim().notEmpty().withMessage('El teléfono es obligatorio.'),
-  body('dependencia').isMongoId().withMessage('La dependencia debe ser un ObjectId válido.'),
+  body('dependencia').trim().notEmpty().withMessage('La dependencia es obligatoria.'),
   body('bienes').isArray({ min: 1 }).withMessage('Debe incluir al menos un bien.'),
   body('bienes.*.descripcion').trim().notEmpty().withMessage('Cada bien debe tener descripción.'),
   body('bienes.*.codigo_inventario').trim().notEmpty().withMessage('Cada bien debe tener código de inventario.'),

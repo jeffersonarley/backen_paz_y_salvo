@@ -15,6 +15,7 @@ del supervisor, ronda de firmas por dependencia con criptografía (SHA-256), mot
 - Variables de entorno (`.env`)
 
 ```bash
+cd backend
 npm install
 npm run dev          # arranque con nodemon
 # o
@@ -25,6 +26,18 @@ npm test             # suite de tests (Jest + supertest)
 npm run seed:admin        # crea el Administrador inicial (idempotente)
 npm run seed:supervisor   # crea un Supervisor de prueba
 npm run migrar            # migra/limpieza de datos legacy
+```
+
+### Frontend (`frontend/`)
+
+SPA en **Vue 3 + Quasar + Vite**. Se ejecuta en el puerto `5173` con proxy de `/api`
+hacia el backend en `http://localhost:3000`.
+
+```bash
+cd frontend
+npm install
+npm run dev          # Vite dev server (http://localhost:5173)
+npm run build        # genera dist/ para producción
 ```
 
 ### Variables de entorno (`.env`)
@@ -53,60 +66,80 @@ RATE_LIMIT_MAX=10  # peticiones por ventana de 15 min en el login
 
 ```
 pre_backend_proyect/
-├── server.js                      # Punto de entrada (conexión + listen)
-├── .env                           # Configuración (no versionado)
-├── .env.example                   # Plantilla de variables de entorno
-├── scripts/
-│   ├── seedAdmin.js               # Seed del Administrador inicial
-│   ├── seedSupervisor.js          # Seed de un supervisor de prueba
-│   └── migrarDatos.js             # Migración de datos legacy
-├── tests/
-│   └── api.test.js                # Suite Jest + supertest
-└── src/
-    ├── app.js                     # Aplicación Express (exportable para tests)
-    ├── config/
-    │   ├── db.js                  # Conexión a MongoDB (mongoose)
-    │   └── swagger.js             # Documentación OpenAPI
-    ├── middlewares/
-    │   ├── authMiddleware.js      # verificarToken, verificarRol, verificarJerarquia
-    │   ├── errorHandler.js        # Manejo centralizado de errores
-    │   └── validarCampos.js       # Recolector de errores de express-validator
-    ├── utils/
-    │   ├── AppError.js            # Error operativo con código HTTP
-    │   ├── asyncHandler.js        # Envoltorio async para controladores
-    │   └── validarPassword.js     # Política de contraseñas
-    ├── models/                    # Esquemas de MongoDB
-    │   ├── Usuario.js
-    │   ├── Contrato.js
-    │   ├── BienEntregado.js
-    │   ├── DependenciaArea.js
-    │   ├── TrazabilidadFirma.js
-    │   ├── FormatoConfig.js
-    │   └── HistorialAuditoria.js
-    ├── controllers/               # Lógica de negocio por módulo
-    │   ├── authController.js
-    │   ├── usuarioController.js
-    │   ├── contratoController.js
-    │   ├── supervisionController.js
-    │   ├── dependenciaController.js
-    │   ├── firmasController.js
-    │   ├── formatoController.js
-    │   ├── reporteController.js
-    │   └── auditoriaController.js
-    ├── services/                  # Lógica reutilizable
-    │   ├── emailService.js        # Nodemailer centralizado
-    │   ├── pdfService.js          # PDFKit + destrucción biométrica de firma
-    │   ├── formatoCache.js        # Caché en RAM de la plantilla vigente
-    │   └── auditoriaService.js    # Registro de trazabilidad (RNF-003)
-    └── routes/                    # Definición de endpoints
-        ├── authRoutes.js
-        ├── usuarioRoutes.js
-        ├── contratoRoutes.js
-        ├── supervisionRoutes.js
-        ├── dependenciaRoutes.js
-        ├── firmasRoutes.js
-        ├── formatoRoutes.js
-        └── auditoriaRoutes.js
+├── backend/                         # API REST (Node + Express + MongoDB)
+│   ├── server.js                    # Punto de entrada (conexión + listen)
+│   ├── .env                         # Configuración (no versionado)
+│   ├── .env.example                 # Plantilla de variables de entorno
+│   ├── scripts/
+│   │   ├── seedAdmin.js             # Seed del Administrador inicial
+│   │   ├── seedSupervisor.js        # Seed de un supervisor de prueba
+│   │   └── migrarDatos.js           # Migración de datos legacy
+│   ├── tests/
+│   │   └── api.test.js              # Suite Jest + supertest
+│   └── src/
+│       ├── app.js                   # Aplicación Express (exportable para tests)
+│       ├── config/
+│       │   ├── db.js                # Conexión a MongoDB (mongoose)
+│       │   └── swagger.js           # Documentación OpenAPI
+│       ├── middlewares/
+│       │   ├── authMiddleware.js    # verificarToken, verificarRol, verificarJerarquia
+│       │   ├── errorHandler.js      # Manejo centralizado de errores
+│       │   └── validarCampos.js     # Recolector de errores de express-validator
+│       ├── utils/
+│       │   ├── AppError.js          # Error operativo con código HTTP
+│       │   ├── asyncHandler.js      # Envoltorio async para controladores
+│       │   └── validarPassword.js   # Política de contraseñas
+│       ├── models/                  # Esquemas de MongoDB
+│       │   ├── Usuario.js
+│       │   ├── Contrato.js
+│       │   ├── BienEntregado.js
+│       │   ├── DependenciaArea.js
+│       │   ├── TrazabilidadFirma.js
+│       │   ├── FormatoConfig.js
+│       │   └── HistorialAuditoria.js
+│       ├── controllers/             # Lógica de negocio por módulo
+│       │   ├── authController.js
+│       │   ├── usuarioController.js
+│       │   ├── contratoController.js
+│       │   ├── supervisionController.js
+│       │   ├── dependenciaController.js
+│       │   ├── firmasController.js
+│       │   ├── formatoController.js
+│       │   ├── reporteController.js
+│       │   └── auditoriaController.js
+│       ├── services/                # Lógica reutilizable
+│       │   ├── emailService.js      # Nodemailer centralizado
+│       │   ├── pdfService.js        # PDFKit + destrucción biométrica de firma
+│       │   ├── formatoCache.js      # Caché en RAM de la plantilla vigente
+│       │   └── auditoriaService.js  # Registro de trazabilidad (RNF-003)
+│       └── routes/                  # Definición de endpoints
+│           ├── authRoutes.js
+│           ├── usuarioRoutes.js
+│           ├── contratoRoutes.js
+│           ├── supervisionRoutes.js
+│           ├── dependenciaRoutes.js
+│           ├── firmasRoutes.js
+│           ├── formatoRoutes.js
+│           └── auditoriaRoutes.js
+└── frontend/                        # SPA en Vue 3 + Quasar + Vite
+    ├── index.html
+    ├── vite.config.js               # Proxy /api → http://localhost:3000
+    ├── .env.example
+    └── src/
+        ├── App.vue
+        ├── main.js
+        ├── layouts/MainLayout.vue
+        ├── router/index.js
+        ├── constants/               # roles, demoAccounts, storage
+        ├── services/                # Capa Axios (auth, contratos, dependencias...)
+        └── pages/
+            ├── LoginPage.vue
+            ├── DashboardPage.vue
+            ├── ContratosPage.vue
+            ├── ContratoFormPage.vue
+            ├── DependenciasPage.vue
+            ├── UsuariosPage.vue
+            └── FirmasPage.vue
 ```
 
 ---
