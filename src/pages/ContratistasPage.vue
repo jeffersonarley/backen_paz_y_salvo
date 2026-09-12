@@ -173,6 +173,7 @@ const dialogoEliminar = ref(false)
 const documentoEliminar = ref('')
 const editando = ref(false)
 const indiceEditar = ref(null)
+const filtro = ref('') // <--- Agregada aquí para que la plantilla deje de dar el aviso
 
 const contratista = ref({
   documento: '',

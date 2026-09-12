@@ -1,4 +1,5 @@
-﻿<template>
+﻿
+<template>
   <q-page class="page-formato">
     <div class="toolbar no-print">
       <q-btn flat color="primary" icon="arrow_back" label="Volver" @click="volver" />
@@ -7,6 +8,7 @@
 
     <div class="documento">
       <div class="encabezado-topo">
+        <div class="espacio-izq"></div>
         <div class="logo-box">
           <img :src="logoSena" alt="Logo SENA" />
         </div>
@@ -18,15 +20,15 @@
       </div>
 
       <div class="titulo-seccion">PROCESO</div>
-      <div class="subtitulo-seccion">GESTIÓN CONTRACTUAL</div>
-      <div class="subtitulo-seccion">NOMBRE DEL FORMATO</div>
+      <div class="subtitulo-seccion blanco">GESTIÓN CONTRACTUAL</div>
+      <div class="titulo-seccion">NOMBRE DEL FORMATO</div>
 
       <div class="titulo-principal">
         ENTREGA DE BIENES E INFORMACIÓN DE EJECUCIÓN CONTRACTUAL POR EL CONTRATISTA
       </div>
 
       <div class="clasificacion-wrap">
-        <div class="clasificacion-header">CLASIFICACIÓN DE LA INFORMACIÓN</div>
+        <div class="titulo-seccion small-header">CLASIFICACIÓN DE LA INFORMACIÓN</div>
         <div class="fila-clasificacion">
           <div class="caja-clasificacion">
             <span>Pública</span>
@@ -43,21 +45,30 @@
         </div>
       </div>
 
+      <!-- Sección de datos corregida -->
       <div class="tabla-datos">
         <div class="fila-titulo">
-          <div class="campo campo-grande">NOMBRES Y APELLIDOS DEL CONTRATISTA:</div>
-          <div class="campo campo-chico">IDENTIFICACIÓN</div>
+          <div class="campo campo-grande">
+            NOMBRES Y APELLIDOS DEL CONTRATISTA: {{ contratistaNombre }}
+          </div>
+          <div class="campo campo-chico">
+            <span class="label-sub">IDENTIFICACIÓN</span>
+            {{ identificacion }}
+          </div>
         </div>
 
-        <div class="fila-multi">
-          <div class="campo">CIUDAD</div>
-          <div class="campo">FECHA</div>
-          <div class="campo">REGIÓN</div>
+        <div class="fila-tres">
+          <div class="campo">CIUDAD: {{ ciudad }}</div>
+          <div class="campo">FECHA: {{ fechaActual }}</div>
+          <div class="campo">REGIONAL: {{ regional }}</div>
         </div>
 
-        <div class="fila-multi">
-          <div class="campo">DIRECCIÓN U OFICINA DONDE SE EJECUTÓ EL CONTRATO:</div>
-          <div class="campo">NÚMERO Y FECHA DEL CONTRATO</div>
+        <div class="fila-unica">
+          <div class="campo">DIRECCIÓN U OFICINA DONDE SE EJECUTÓ EL CONTRATO: {{ direccion }}</div>
+        </div>
+
+        <div class="fila-unica">
+          <div class="campo">NÚMERO Y FECHA DEL CONTRATO: {{ numeroContrato }}</div>
         </div>
       </div>
 
@@ -70,88 +81,130 @@
         <div class="casilla"><span class="box"></span> TERMINACIÓN UNILATERAL</div>
       </div>
 
+      <!-- Tabla de Dependencias -->
       <div class="tabla-dependencias">
-        <div class="thead">
-          <div>DEPENDENCIA</div>
-          <div>RESPONSABLES</div>
-          <div>FIRMA</div>
+        <div class="thead-dependencias">
+          <div class="col-dep-head">DEPENDENCIA SENA</div>
+          <div class="col-marca-head">Marcar<br>con x</div>
+          <div class="col-resp-grupo">
+            <div class="sub-resp-header">RESPONSABLES</div>
+            <div class="sub-resp-columns">
+              <div class="col-nombres-head">NOMBRES Y APELLIDOS</div>
+              <div class="col-firma-head-sub">FIRMA</div>
+            </div>
+          </div>
         </div>
 
-        <div class="tr">
-          <div class="dep-cell">GESTIÓN DE TIC</div>
-          <div class="resp-cell">Franklin Rolando Chacon Lopez</div>
-          <div class="firma-box"></div>
+        <!-- Fila 1 -->
+        <div class="tr-dep">
+          <div class="col-dep">GESTIÓN DE TIC</div>
+          <div class="col-marca"><div class="box-check">X</div></div>
+          <div class="col-nombres">Franklin Rolando Chacon Lopez</div>
+          <div class="col-firma"></div>
         </div>
-        <div class="tr">
-          <div class="dep-cell">ADMINISTRACIÓN DE DOCUMENTOS</div>
-          <div class="resp-cell">Hilda Lucía Ramirez Alvarado</div>
-          <div class="firma-box"></div>
+
+        <!-- Fila 2 -->
+        <div class="tr-dep">
+          <div class="col-dep">ADMINISTRACIÓN DE DOCUMENTOS</div>
+          <div class="col-marca"><div class="box-check">X</div></div>
+          <div class="col-nombres">Hilda Lucía Ramirez Alvarado</div>
+          <div class="col-firma"></div>
         </div>
-        <div class="tr">
-          <div class="dep-cell">
-            ENTREGA CARNÉ (A SUPERVISOR DEL CONTRATO EN LAS REGIONES Y CONTRATOS DE FORMACIÓN)
-          </div>
-          <div class="resp-cell">Jhon Fredy Sanabria Muñoz</div>
-          <div class="firma-box"></div>
+
+        <!-- Fila 3 -->
+        <div class="tr-dep">
+          <div class="col-dep">ENTREGA CARNÉ (A SUPERVISOR DEL CONTRATO EN LAS REGIONES Y CONTRATOS DE FORMACIÓN)</div>
+          <div class="col-marca"><div class="box-check">X</div></div>
+          <div class="col-nombres">Jhon Fredy Sanabria Muñoz</div>
+          <div class="col-firma"></div>
         </div>
-        <div class="tr">
-          <div class="dep-cell">ALMACÉN E INVENTARIOS</div>
-          <div class="resp-cell">Generar reporte de https://miinventario.sena.edu.co</div>
-          <div class="firma-box"></div>
+
+        <!-- Fila 4 -->
+        <div class="tr-dep">
+          <div class="col-dep">ALMACÉN E INVENTARIOS</div>
+          <div class="col-marca"><div class="box-check"></div></div>
+          <div class="col-nombres">Generar reporte de https://miinventario.sena.edu.co</div>
+          <div class="col-firma"></div>
         </div>
-        <div class="tr">
-          <div class="dep-cell">SERVICIOS GENERALES</div>
-          <div class="resp-cell">Juan David Silva Guerreros</div>
-          <div class="firma-box"></div>
+
+        <!-- Fila 5 -->
+        <div class="tr-dep">
+          <div class="col-dep">SERVICIOS GENERALES</div>
+          <div class="col-marca"><div class="box-check"></div></div>
+          <div class="col-nombres">Juan David Silva Guerreros</div>
+          <div class="col-firma"></div>
         </div>
-        <div class="tr">
-          <div class="dep-cell">CONTABILIDAD</div>
-          <div class="resp-cell">Zaida Leny Melgarejo Ballesteros</div>
-          <div class="firma-box"></div>
+
+        <!-- Fila 6 -->
+        <div class="tr-dep">
+          <div class="col-dep">CONTABILIDAD</div>
+          <div class="col-marca"><div class="box-check"></div></div>
+          <div class="col-nombres">Zaida Leny Melgarejo Ballesteros</div>
+          <div class="col-firma"></div>
         </div>
-        <div class="tr">
-          <div class="dep-cell">TESORERÍA</div>
-          <div class="resp-cell">Nelcy Mabel Mayorga Pinto</div>
-          <div class="firma-box"></div>
+
+        <!-- Fila 7 -->
+        <div class="tr-dep">
+          <div class="col-dep">TESORERÍA</div>
+          <div class="col-marca"><div class="box-check"></div></div>
+          <div class="col-nombres">Nelcy Mabel Mayorga Pinto</div>
+          <div class="col-firma"></div>
         </div>
-        <div class="tr">
-          <div class="dep-cell">COORDINACIÓN DE ÁREA/GRUPO/ACADÉMICA</div>
-          <div class="resp-cell">Jhon Fredy Sanabria Muñoz</div>
-          <div class="firma-box"></div>
+
+        <!-- Fila 8 -->
+        <div class="tr-dep">
+          <div class="col-dep">COORDINACIÓN DE ÁREA/GRUPO/ACADÉMICA</div>
+          <div class="col-marca"><div class="box-check"></div></div>
+          <div class="col-nombres">Jhon Fredy Sanabria Muñoz</div>
+          <div class="col-firma"></div>
         </div>
-        <div class="tr">
-          <div class="dep-cell">BIBLIOTECA</div>
-          <div class="resp-cell">
-            María Juliana Calis Camacho / Yudith Milagros Martínez Bautista
-          </div>
-          <div class="firma-box"></div>
+
+        <!-- Fila 9 -->
+        <div class="tr-dep">
+          <div class="col-dep">BIBLIOTECA</div>
+          <div class="col-marca"><div class="box-check"></div></div>
+          <div class="col-nombres">María Juliana Calis Camacho / Yudith Milagros Martínez Bautista</div>
+          <div class="col-firma"></div>
         </div>
-        <div class="tr">
-          <div class="dep-cell">OTRO (LÍDER SIGA)</div>
-          <div class="resp-cell">Zaida Jeleidy Garcia Jaimes</div>
-          <div class="firma-box"></div>
+
+        <!-- Fila 10 -->
+        <div class="tr-dep">
+          <div class="col-dep">OTRO (LÍDER SIGA)</div>
+          <div class="col-marca"><div class="box-check"></div></div>
+          <div class="col-nombres">Zaida Jeleidy Garcia Jaimes</div>
+          <div class="col-firma"></div>
         </div>
-        <div class="tr">
-          <div class="dep-cell">OTRO (ADMINISTRACIÓN EDUCATIVA)</div>
-          <div class="resp-cell">Erika Johana Gómez Verdugo</div>
-          <div class="firma-box"></div>
+
+        <!-- Fila 11 -->
+        <div class="tr-dep">
+          <div class="col-dep">OTRO (ADMINISTRACIÓN EDUCATIVA)</div>
+          <div class="col-marca"><div class="box-check"></div></div>
+          <div class="col-nombres">Erika Johana Gómez Verdugo</div>
+          <div class="col-firma"></div>
         </div>
-        <div class="tr">
-          <div class="dep-cell">
-            APOYO AL SEGUIMIENTO DE LOS PROCESOS ADMINISTRATIVOS Y DE NOVEDADES
-          </div>
-          <div class="resp-cell">Nelson Fabián Duarte Peñaloza / Elieen Erlys Hurtado Ariza</div>
-          <div class="firma-box"></div>
+
+        <!-- Fila 12 -->
+        <div class="tr-dep">
+          <div class="col-dep">APOYO AL SEGUIMIENTO DE LOS PROCESOS ADMINISTRATIVOS Y DE NOVEDADES</div>
+          <div class="col-marca"><div class="box-check"></div></div>
+          <div class="col-nombres">Nelson Fabián Duarte Peñaloza / Elieen Erlys Hurtado Ariza</div>
+          <div class="col-firma"></div>
         </div>
-        <div class="tr">
-          <div class="dep-cell">APOYO ETA PRODUCTIVA</div>
-          <div class="resp-cell">Karen Andrea Garcia Carreño</div>
-          <div class="firma-box"></div>
+
+        <!-- Fila 13 -->
+        <div class="tr-dep">
+          <div class="col-dep">APOYO ETA PRODUCTIVA</div>
+          <div class="col-marca"><div class="box-check"></div></div>
+          <div class="col-nombres">Karen Andrea Garcia Carreño</div>
+          <div class="col-firma"></div>
         </div>
-        <div class="tr">
-          <div class="dep-cell">SUPERVISOR DE CONTRATO</div>
-          <div class="resp-cell">Jhon Fredy Sanabria Muñoz</div>
-          <div class="firma-box"></div>
+
+        <!-- Fila 14 -->
+        <div class="tr-dep">
+          <div class="col-dep">SUPERVISOR DE CONTRATO</div>
+          <div class="col-marca"><div class="box-check"></div></div>
+          <div class="col-nombres">Jhon Fredy Sanabria Muñoz</div>
+          <div class="col-firma"></div>
         </div>
       </div>
 
@@ -173,7 +226,17 @@
 
       <div class="firma-final">
         <div class="linea-firma-wrap">
-          <div class="linea-firma"></div>
+          <div class="firma-slot" tabindex="0" @click="abrirSelectorFirma" @paste="pegarFirma">
+            <img v-if="firmaUrl" :src="firmaUrl" alt="Firma del contratista" class="firma-preview" />
+            <span v-else class="firma-placeholder">Pegue la firma aquí</span>
+          </div>
+          <input
+            ref="firmaInput"
+            type="file"
+            accept="image/*"
+            class="hidden-input"
+            @change="cargarFirmaDesdeArchivo"
+          />
           <div class="texto-firma">Firma del Contratista</div>
         </div>
       </div>
@@ -182,10 +245,87 @@
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router'
+import { computed, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useSolicitudesStore } from '../stores/useSolicitudesStore.js'
 import logoSena from '../images/logo-sena.png'
 
 const router = useRouter()
+const route = useRoute()
+const store = useSolicitudesStore()
+const firmaInput = ref(null)
+const firmaUrl = ref('')
+
+const solicitudActual = computed(() => {
+  const codigo = route.query.codigo || ''
+  if (!codigo) return store.solicitudes?.[0] || null
+
+  return (
+    store.solicitudes?.find(
+      (item) =>
+        item.numeroSolicitud === codigo ||
+        item.solicitud === codigo ||
+        item.codigo === codigo ||
+        item.numeroContrato === codigo ||
+        item.contrato === codigo,
+    ) || store.solicitudes?.[0] || null
+  )
+})
+
+const contratistaNombre = computed(
+  () => solicitudActual.value?.contratista || solicitudActual.value?.nombreContratista || 'CONTRATISTA',
+)
+const identificacion = computed(
+  () => solicitudActual.value?.documentoContratista || solicitudActual.value?.documento || 'N/A',
+)
+const fechaActual = computed(
+  () => solicitudActual.value?.fecha || solicitudActual.value?.fechaSolicitud || new Date().toISOString().substring(0, 10),
+)
+const ciudad = computed(
+  () => solicitudActual.value?.ciudad || 'San Gil'
+)
+const regional = computed(
+  () => solicitudActual.value?.regional || 'Santander'
+)
+const direccion = computed(
+  () => solicitudActual.value?.direccion || 'Centro Agroturístico'
+)
+const numeroContrato = computed(
+  () => solicitudActual.value?.numeroContrato || solicitudActual.value?.contrato || 'N/A'
+)
+
+function abrirSelectorFirma() {
+  firmaInput.value?.click()
+}
+
+function cargarFirmaDesdeArchivo(event) {
+  const file = event.target.files?.[0]
+  if (!file) return
+
+  const reader = new FileReader()
+  reader.onload = () => {
+    firmaUrl.value = String(reader.result || '')
+  }
+  reader.readAsDataURL(file)
+}
+
+function pegarFirma(event) {
+  const items = event.clipboardData?.items || []
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      const file = item.getAsFile()
+      if (!file) continue
+
+      const reader = new FileReader()
+      reader.onload = () => {
+        firmaUrl.value = String(reader.result || '')
+      }
+      reader.readAsDataURL(file)
+      event.preventDefault()
+      return
+    }
+  }
+}
 
 function volver() {
   router.push({ name: 'solicitudes' })
@@ -232,30 +372,24 @@ function imprimir() {
 
 .encabezado-topo {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  border-bottom: 1px solid var(--b);
-  padding: 18px 24px 16px;
-  background: linear-gradient(180deg, #ffffff 0%, #f7fafc 100%);
-  position: relative;
+  border-bottom: 1px solid #111;
+  padding: 10px 16px 8px;
+  min-height: 90px;
 }
 
-.encabezado-topo::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 6px;
-  background: linear-gradient(180deg, #28b463 0%, #1f8f52 100%);
+.espacio-izq {
+  /* Espacio equilibrado a la izquierda para garantizar el centrado exacto del logo */
 }
 
 .logo-box {
-  flex: 1;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   min-width: 0;
+  padding-top: 4px;
+  margin-left: 12%;
 }
 
 .logo-box img {
@@ -263,8 +397,6 @@ function imprimir() {
   height: auto;
   display: block;
   margin: 0 auto;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.06));
-  margin-left: 12px;
 }
 
 .version-box {
@@ -275,8 +407,8 @@ function imprimir() {
   font-size: 12px;
   line-height: 1.45;
   text-align: left;
-  background: linear-gradient(180deg, #f7fafc 0%, #eef4f9 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  margin-left: auto;
+  margin-top: 0;
 }
 
 .linea {
@@ -309,6 +441,16 @@ function imprimir() {
   text-transform: uppercase;
 }
 
+.subtitulo-seccion.blanco {
+  background: #fff;
+  color: #111;
+}
+
+.titulo-seccion.small-header {
+  font-size: 14px;
+  letter-spacing: 0.04em;
+}
+
 .titulo-principal {
   border-top: 1px solid var(--b);
   border-bottom: 1px solid var(--b);
@@ -327,14 +469,12 @@ function imprimir() {
 }
 
 .clasificacion-header {
-  background: #eff4fa;
+  background: #f5f5f5;
   text-align: center;
   font-size: 12px;
-  font-weight: 800;
-  padding: 7px 8px;
-  border-bottom: 1px solid var(--b);
-  color: #1d2a39;
-  text-transform: uppercase;
+  font-weight: 700;
+  padding: 6px 8px;
+  border-bottom: 1px solid #111;
 }
 
 .fila-clasificacion {
@@ -382,15 +522,26 @@ function imprimir() {
   background: #fff;
 }
 
-.fila-titulo,
-.fila-multi {
+.fila-titulo {
   display: grid;
   grid-template-columns: 3fr 1.2fr;
   border-bottom: 1px solid var(--b);
 }
 
-.fila-multi {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+.fila-tres {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  border-bottom: 1px solid #111;
+}
+
+.fila-unica {
+  display: grid;
+  grid-template-columns: 1fr;
+  border-bottom: 1px solid #111;
+}
+
+.fila-unica:last-child {
+  border-bottom: none;
 }
 
 .campo {
@@ -404,6 +555,10 @@ function imprimir() {
   background: #ffffff;
 }
 
+.fila-unica .campo {
+  border-right: none;
+}
+
 .campo:last-child {
   border-right: none;
 }
@@ -415,15 +570,22 @@ function imprimir() {
 
 .campo-chico {
   justify-content: center;
-  font-weight: 800;
+  font-weight: 700;
   text-transform: uppercase;
 }
 
+.label-sub {
+  font-weight: 700;
+}
+
 .titulo-seccion.small {
-  background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
-  color: #ffffff;
+  background: #0d0d0d;
+  color: #fff;
   font-size: 14px;
+  font-weight: 700;
   letter-spacing: 0.04em;
+  text-align: center;
+  padding: 6px 10px;
 }
 
 .fila-checks {
@@ -459,53 +621,49 @@ function imprimir() {
   flex-shrink: 0;
 }
 
+/* Tabla de dependencias */
 .tabla-dependencias {
-  border-top: 1px solid var(--b);
-  background: #ffffff;
+  border-top: 1px solid #111;
 }
 
 .thead,
 .tr {
   display: grid;
   grid-template-columns: 1.3fr 1.7fr 0.7fr;
-  border-bottom: 1px solid var(--b);
+  border-bottom: 1px solid #111;
 }
 
 .thead {
-  background: linear-gradient(180deg, #edf3f9 0%, #e6eef6 100%);
+  background: #f4f4f4;
   font-size: 12px;
-  font-weight: 800;
-  color: #18212d;
-  text-transform: uppercase;
+  font-weight: 700;
 }
 
-.thead>div,
-.tr>div {
-  padding: 9px 10px;
-  min-height: 42px;
-  border-right: 1px solid var(--b);
+.thead > div,
+.tr > div {
+  padding: 8px 9px;
+  min-height: 36px;
+  border-right: 1px solid #111;
   display: flex;
   align-items: center;
+  padding: 6px 8px;
 }
 
-.thead>div:last-child,
-.tr>div:last-child {
+.thead > div:last-child,
+.tr > div:last-child {
   border-right: none;
 }
 
 .dep-cell,
 .resp-cell {
-  font-size: 11.5px;
-  line-height: 1.3;
+  font-size: 11px;
 }
 
 .firma-box {
   min-width: 100%;
-  min-height: 34px;
-  border: 1px solid var(--b);
-  border-radius: 8px;
-  background: linear-gradient(180deg, #ffffff 0%, #f3f7fb 100%);
-  margin: 2px 1px;
+  min-height: 28px;
+  border: 1px solid #111;
+  background: #fff;
 }
 
 .tabla-baja {
@@ -541,10 +699,6 @@ function imprimir() {
   margin-top: 14px;
 }
 
-.supervisor-row {
-  grid-template-columns: 0.78fr 0.18fr 1.9fr;
-}
-
 .row:first-child {
   border-top: none;
 }
@@ -558,7 +712,6 @@ function imprimir() {
   display: flex;
   align-items: center;
   border-right: none;
-  color: #1d2a39;
 }
 
 .cell:last-child {
@@ -568,7 +721,7 @@ function imprimir() {
 .check-cell {
   justify-content: center;
   padding: 0;
-  border-left: 1px solid var(--b);
+  border-left: 1px solid #111;
 }
 
 .mini-check {
@@ -577,26 +730,11 @@ function imprimir() {
   border: 1px solid #1d8f42;
   background: #dff7e8;
   display: inline-block;
-  border-radius: 3px;
 }
 
 .label {
   background: transparent;
   border-right: none;
-}
-
-.supervisor-label {
-  padding-left: 8px;
-}
-
-.check-cell {
-  border-right: none;
-  justify-content: center;
-  font-weight: 700;
-}
-
-.supervisor-name {
-  justify-content: flex-start;
 }
 
 .value {
@@ -636,16 +774,34 @@ function imprimir() {
   border: none;
 }
 
-.linea-firma {
+.firma-slot {
   width: 100%;
   height: 1px;
-  background: linear-gradient(90deg, #eff3f8 0%, #1d2a39 50%, #eff3f8 100%);
+  background: #111;
   border: none;
-  margin-bottom: 7px;
+  margin-bottom: 6px;
 }
 
-.firma-final .linea-firma-wrap {
-  border: none;
+.firma-slot:hover {
+  border-color: #1b7f32;
+}
+
+.firma-preview {
+  max-width: 190px;
+  max-height: 56px;
+  object-fit: contain;
+  display: block;
+}
+
+.firma-placeholder {
+  font-size: 10px;
+  color: #666;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.hidden-input {
+  display: none;
 }
 
 .texto-firma {
@@ -653,7 +809,6 @@ function imprimir() {
   font-weight: 800;
   text-align: center;
   line-height: 1.1;
-  color: #1d2a39;
 }
 
 
@@ -821,26 +976,118 @@ function imprimir() {
   .titulo-principal,
   .clasificacion-wrap,
   .clasificacion-header,
+  .fila-clasificacion,
   .caja-clasificacion,
   .tabla-datos,
   .fila-titulo,
-  .fila-multi,
+  .fila-tres,
+  .fila-unica,
   .campo,
   .fila-checks,
   .casilla,
   .tabla-dependencias,
-  .thead,
-  .tr,
+  .thead-dependencias,
+  .tr-dep,
   .tabla-baja,
   .row,
-  .cell {
-    border-color: #8fa8bf !important;
+  .cell,
+  .otros-row .label,
+  .otros-row .value {
+    border-left: 1px solid #111;
+    border-right: 1px solid #111;
+    box-sizing: border-box;
+  }
+
+  .row {
+    border-top: 1px solid #111;
+  }
+
+  .caja-clasificacion:last-child,
+  .casilla:last-child,
+  .thead > div:last-child,
+  .tr > div:last-child,
+  .row > div:last-child,
+  .row .cell:last-child,
+  .cell:last-child,
+  .otros-row .value {
+    border-right: 1px solid #111 !important;
+  }
+
+  .tabla-baja {
+    border: 1px solid #111;
+    border-top: none;
+    background: #fff;
+  }
+
+  .tabla-baja .row {
+    display: grid;
+    grid-template-columns: 1.18fr 2.82fr;
+    border-top: 1px solid #111;
+    min-height: 52px;
+  }
+
+  .tabla-baja .row:first-child {
+    border-top: none;
+  }
+
+  .tabla-baja .row .cell {
+    border-right: 1px solid #111;
+    padding: 8px 10px;
+  }
+
+  .tabla-baja .row .cell:last-child {
+    border-right: none;
+  }
+
+  .otros-row {
+    grid-template-columns: 150px 1fr;
+    column-gap: 0;
+    border-top: none;
+    min-height: 48px;
+  }
+
+  .otros-row .label {
+    padding-right: 0;
+    white-space: nowrap;
+    border-right: 1px solid #111;
+    align-items: center;
+    font-weight: 700;
+  }
+
+  .linea-otros {
+    display: block;
+    width: 100%;
+    height: 1px;
+    background: #111;
+    margin-top: 11px;
+  }
+
+  .otros-row .value {
+    position: relative;
+    align-items: center;
+    padding: 0;
+    border-right: 1px solid #111;
+  }
+
+  .otros-row .value::after {
+    content: none;
+  }
+
+  .firma-final {
+    justify-content: flex-end;
+    margin-top: 20px;
+    padding-right: 0;
+  }
+
+  .linea-firma-wrap {
+    width: 240px;
+    margin-top: 0;
+  }
+
+  .linea-firma {
+    width: 100%;
+    height: 1px;
+    background: #111;
   }
 }
-
-/* Vista previa de impresión en Chrome/Edge: oculta la toolbar al usar Ctrl+P */
-@media print {
-  .no-print { display: none !important; }
-}
-
 </style>

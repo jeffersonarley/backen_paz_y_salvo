@@ -48,7 +48,7 @@
       <template #body-cell-estado="props">
         <q-td :props="props" class="text-center">
           <q-badge :color="obtenerColorEstado(props.row.estado)" class="q-pa-xs text-weight-bold">
-            {{ props.row.estado || 'En Trámite' }}
+            {{ props.row.estado || 'Pendiente' }}
           </q-badge>
         </q-td>
       </template>
@@ -197,14 +197,7 @@ const $q = useQuasar()
 const router = useRouter()
 const store = useSolicitudesStore()
 
-const OPCIONES_ESTADO = [
-  'Pendiente',
-  'En Trámite',
-  'En revisión',
-  'Firmado',
-  'Rechazado',
-  'Finalizado',
-]
+const OPCIONES_ESTADO = ['Pendiente', 'En revisión', 'Firmado', 'Rechazado', 'Finalizado']
 
 const formRef = ref(null)
 const filtro = ref('')
@@ -224,7 +217,7 @@ const solicitud = ref({
   dependencia: '',
   responsable: '',
   fecha: new Date().toISOString().substring(0, 10),
-  estado: 'En Trámite',
+  estado: 'Pendiente',
 })
 
 const columns = [
@@ -259,7 +252,7 @@ const columns = [
   {
     name: 'estado',
     label: 'Estado',
-    field: (row) => row.estado || 'En Trámite',
+    field: (row) => row.estado || 'Pendiente',
     align: 'center',
     sortable: true,
   },
@@ -275,8 +268,6 @@ function obtenerColorEstado(estado) {
   switch (estado) {
     case 'Pendiente':
       return 'warning'
-    case 'En Trámite':
-      return 'red-8'
     case 'En revisión':
       return 'primary'
     case 'Firmado':
@@ -286,7 +277,7 @@ function obtenerColorEstado(estado) {
     case 'Rechazado':
       return 'negative'
     default:
-      return 'red-8'
+      return 'warning'
   }
 }
 
@@ -359,7 +350,7 @@ function editarSolicitud(fila) {
     dependencia: fila.dependencia || fila.nombreDependencia || '',
     responsable: fila.responsable || fila.supervisor || '',
     fecha: fila.fecha || new Date().toISOString().substring(0, 10),
-    estado: fila.estado || 'En Trámite',
+    estado: fila.estado || 'Pendiente',
   }
 
   codigoEditar.value = codigoExistente
@@ -412,7 +403,7 @@ function limpiarFormulario() {
     dependencia: '',
     responsable: '',
     fecha: new Date().toISOString().substring(0, 10),
-    estado: 'En Trámite',
+    estado: 'Pendiente',
   }
   dialogo.value = false
   editando.value = false
