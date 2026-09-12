@@ -11,8 +11,27 @@ const errorHandler = (err, req, res, next) => {
     error = new AppError(mensaje, 400);
   }
 
+  // ID de Mongo con formato inválido (ej: /api/contratos/abc123)
+  if (error.name === 'CastError') {
+    error = new AppError(`Identificador inválido: ${error.value}`, 400);
+  }
+
+  // Llave duplicada (índice único de Mongo)
   if (error.code === 11000) {
     error = new AppError('Registro duplicado: el valor ya existe en el sistema.', 400);
+  }
+
+  // JSON mal formado en el body de la petición (express.json())
+  if (error.type === 'entity.parse.failed' || error instanceof SyntaxError && error.status === 400 && 'body' in error) {
+    error = new AppError('El cuerpo de la petición no es un JSON válido.', 400);
+  }
+
+  // Token JWT inválido o expirado (por si algún flujo no lo captura antes)
+  if (error.name === 'JsonWebTokenError') {
+    error = new AppError('Token no válido.', 401);
+  }
+  if (error.name === 'TokenExpiredError') {
+    error = new AppError('El token ha expirado. Inicie sesión de nuevo.', 401);
   }
 
   const statusCode = error.statusCode || 500;

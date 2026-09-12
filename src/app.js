@@ -4,6 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const errorHandler = require('./middlewares/errorHandler');
+const AppError = require('./utils/AppError');
 const { swaggerUi, swaggerDocument } = require('./config/swagger');
 
 const Usuario = require('./models/Usuario');
@@ -75,8 +76,8 @@ app.use('/api/formatos', require('./routes/formatoRoutes'));
 app.use('/api/auditoria', require('./routes/auditoriaRoutes'));
 
 // 404 para rutas no encontradas
-app.use((req, res) => {
-    res.status(404).json({ mensaje: 'Ruta no encontrada.' });
+app.use((req, res, next) => {
+    next(new AppError('Ruta no encontrada.', 404));
 });
 
 // Manejador central de errores
