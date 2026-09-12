@@ -198,63 +198,85 @@ function imprimir() {
 
 <style scoped>
 .page-formato {
-  background: #e7e7e7;
+  background: linear-gradient(180deg, #edf3f8 0%, #e6edf4 100%);
   min-height: 100vh;
-  padding: 18px 12px;
-  font-family: Arial, Helvetica, sans-serif;
-  color: #111;
+  padding: 26px 16px 32px;
+  font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+  color: #18212d;
 }
 
 .toolbar {
   max-width: 1180px;
-  margin: 0 auto 14px;
+  margin: 0 auto 18px;
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(4px);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
 }
 
 .documento {
+  --b: #8fa8bf;
   width: min(1180px, 100%);
   margin: 0 auto;
-  background: #fff;
-  border: 1px solid #111;
-  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.08);
+  background: #ffffff;
+  border: 1px solid var(--b);
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow: 0 22px 46px rgba(15, 23, 42, 0.12);
 }
 
 .encabezado-topo {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #111;
-  padding: 10px 16px 8px;
-  min-height: 90px;
+  border-bottom: 1px solid var(--b);
+  padding: 18px 24px 16px;
+  background: linear-gradient(180deg, #ffffff 0%, #f7fafc 100%);
+  position: relative;
+}
+
+.encabezado-topo::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  background: linear-gradient(180deg, #28b463 0%, #1f8f52 100%);
 }
 
 .logo-box {
   flex: 1;
   display: flex;
   justify-content: center;
-  align-items: flex-start;
+  align-items: center;
   min-width: 0;
-  padding-top: 4px;
-  margin-left: 12%;
 }
 
 .logo-box img {
-  width: 110px;
+  width: 128px;
   height: auto;
   display: block;
   margin: 0 auto;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.06));
+  margin-left: 12px;
 }
 
 .version-box {
-  min-width: 150px;
-  border: 1px solid #111;
-  padding: 6px 10px;
+  min-width: 180px;
+  border: 1px solid var(--b);
+  border-radius: 12px;
+  padding: 8px 12px;
   font-size: 12px;
-  line-height: 1.6;
+  line-height: 1.45;
   text-align: left;
-  margin-left: auto;
-  margin-top: 0;
+  background: linear-gradient(180deg, #f7fafc 0%, #eef4f9 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 .linea {
@@ -265,46 +287,54 @@ function imprimir() {
 }
 
 .titulo-seccion {
-  background: #0d0d0d;
-  color: #fff;
+  background: linear-gradient(180deg, #1f2d3d 0%, #0f172a 100%);
+  color: #ffffff;
   text-align: center;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.08em;
-  padding: 7px 12px;
-  font-size: 18px;
+  padding: 10px 12px;
+  font-size: 17px;
+  text-transform: uppercase;
 }
 
 .subtitulo-seccion {
-  background: #f2f2f2;
-  border-top: 1px solid #111;
-  border-bottom: 1px solid #111;
+  background: linear-gradient(180deg, #f7fafd 0%, #edf3f8 100%);
+  border-top: 1px solid var(--b);
+  border-bottom: 1px solid var(--b);
   text-align: center;
   font-size: 14px;
-  font-weight: 700;
-  padding: 7px 10px;
+  font-weight: 800;
+  padding: 8px 10px;
+  color: #243447;
+  text-transform: uppercase;
 }
 
 .titulo-principal {
-  border-top: 1px solid #111;
-  border-bottom: 1px solid #111;
+  border-top: 1px solid var(--b);
+  border-bottom: 1px solid var(--b);
   text-align: center;
-  font-size: 15px;
-  font-weight: 700;
-  padding: 10px 16px;
+  font-size: 16px;
+  font-weight: 900;
+  padding: 14px 18px;
   line-height: 1.4;
+  color: #122033;
+  background: linear-gradient(180deg, #fcfdff 0%, #f6f9fc 100%);
 }
 
 .clasificacion-wrap {
-  border-bottom: 1px solid #111;
+  border-bottom: 1px solid var(--b);
+  background: #f9fbfd;
 }
 
 .clasificacion-header {
-  background: #f5f5f5;
+  background: #eff4fa;
   text-align: center;
   font-size: 12px;
-  font-weight: 700;
-  padding: 6px 8px;
-  border-bottom: 1px solid #111;
+  font-weight: 800;
+  padding: 7px 8px;
+  border-bottom: 1px solid var(--b);
+  color: #1d2a39;
+  text-transform: uppercase;
 }
 
 .fila-clasificacion {
@@ -316,11 +346,12 @@ function imprimir() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 38px;
-  padding: 8px 12px;
+  min-height: 44px;
+  padding: 8px 14px;
   font-size: 12px;
-  font-weight: 600;
-  border-right: 1px solid #111;
+  font-weight: 700;
+  border-right: 1px solid var(--b);
+  background: #ffffff;
 }
 
 .caja-clasificacion:last-child {
@@ -328,30 +359,34 @@ function imprimir() {
 }
 
 .check-box {
-  width: 22px;
-  height: 22px;
-  border: 1px solid #111;
+  width: 24px;
+  height: 24px;
+  border: 1px solid #1f2a37;
+  border-radius: 6px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-size: 12px;
-  font-weight: 700;
-  background: #fff;
+  font-weight: 800;
+  background: linear-gradient(180deg, #ebf9ef 0%, #dff7e8 100%);
+  color: #1b6a3f;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .check-box.empty {
-  background: #f8f8f8;
+  background: linear-gradient(180deg, #f7f9fb 0%, #edf2f8 100%);
 }
 
 .tabla-datos {
-  border-bottom: 1px solid #111;
+  border-bottom: 1px solid var(--b);
+  background: #fff;
 }
 
 .fila-titulo,
 .fila-multi {
   display: grid;
   grid-template-columns: 3fr 1.2fr;
-  border-bottom: 1px solid #111;
+  border-bottom: 1px solid var(--b);
 }
 
 .fila-multi {
@@ -359,13 +394,14 @@ function imprimir() {
 }
 
 .campo {
-  min-height: 34px;
-  padding: 7px 10px;
-  border-right: 1px solid #111;
+  min-height: 42px;
+  padding: 8px 12px;
+  border-right: 1px solid var(--b);
   display: flex;
   align-items: center;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 11.5px;
+  font-weight: 700;
+  background: #ffffff;
 }
 
 .campo:last-child {
@@ -373,19 +409,19 @@ function imprimir() {
 }
 
 .campo-grande {
-  font-weight: 700;
+  font-weight: 800;
   text-transform: uppercase;
 }
 
 .campo-chico {
   justify-content: center;
-  font-weight: 700;
+  font-weight: 800;
   text-transform: uppercase;
 }
 
 .titulo-seccion.small {
-  background: #0d0d0d;
-  color: #fff;
+  background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+  color: #ffffff;
   font-size: 14px;
   letter-spacing: 0.04em;
 }
@@ -393,19 +429,21 @@ function imprimir() {
 .fila-checks {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  border-top: 1px solid #111;
-  border-bottom: 1px solid #111;
+  border-top: 1px solid var(--b);
+  border-bottom: 1px solid var(--b);
+  background: #f9fbfd;
 }
 
 .casilla {
-  border-right: 1px solid #111;
-  padding: 10px 8px;
+  border-right: 1px solid var(--b);
+  padding: 10px 10px;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 54px;
+  min-height: 58px;
+  color: #1d2a39;
 }
 
 .casilla:last-child {
@@ -413,70 +451,78 @@ function imprimir() {
 }
 
 .box {
-  width: 16px;
-  height: 16px;
-  border: 1px solid #111;
-  background: #fff;
+  width: 17px;
+  height: 17px;
+  border: 1px solid #1f2a37;
+  border-radius: 4px;
+  background: #ffffff;
   flex-shrink: 0;
 }
 
 .tabla-dependencias {
-  border-top: 1px solid #111;
+  border-top: 1px solid var(--b);
+  background: #ffffff;
 }
 
 .thead,
 .tr {
   display: grid;
   grid-template-columns: 1.3fr 1.7fr 0.7fr;
-  border-bottom: 1px solid #111;
+  border-bottom: 1px solid var(--b);
 }
 
 .thead {
-  background: #f4f4f4;
+  background: linear-gradient(180deg, #edf3f9 0%, #e6eef6 100%);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 800;
+  color: #18212d;
+  text-transform: uppercase;
 }
 
-.thead > div,
-.tr > div {
-  padding: 8px 9px;
-  min-height: 36px;
-  border-right: 1px solid #111;
+.thead>div,
+.tr>div {
+  padding: 9px 10px;
+  min-height: 42px;
+  border-right: 1px solid var(--b);
   display: flex;
   align-items: center;
 }
 
-.thead > div:last-child,
-.tr > div:last-child {
+.thead>div:last-child,
+.tr>div:last-child {
   border-right: none;
 }
 
 .dep-cell,
 .resp-cell {
-  font-size: 11px;
+  font-size: 11.5px;
+  line-height: 1.3;
 }
 
 .firma-box {
   min-width: 100%;
-  min-height: 28px;
-  border: 1px solid #111;
-  background: #fff;
+  min-height: 34px;
+  border: 1px solid var(--b);
+  border-radius: 8px;
+  background: linear-gradient(180deg, #ffffff 0%, #f3f7fb 100%);
+  margin: 2px 1px;
 }
 
 .tabla-baja {
-  border: 1px solid #111;
+  border: 1px solid var(--b);
   border-top: none;
-  background: #fff;
+  background: #ffffff;
+  overflow: hidden;
 }
 
 .row {
   display: grid;
   grid-template-columns: 1.25fr 2.4fr;
-  border-top: 1px solid #111;
+  border-top: 1px solid var(--b);
 }
 
 .otros-row {
-  min-height: 44px;
+  min-height: 50px;
   grid-template-columns: 90px 1fr;
   column-gap: 0;
   border-top: none;
@@ -491,7 +537,7 @@ function imprimir() {
   display: block;
   width: 100%;
   height: 1px;
-  background: #111;
+  background: #1f2a37;
   margin-top: 14px;
 }
 
@@ -504,14 +550,15 @@ function imprimir() {
 }
 
 .cell {
-  min-height: 42px;
-  padding: 8px 10px 6px;
+  min-height: 44px;
+  padding: 10px 12px 8px;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 800;
   line-height: 1.2;
   display: flex;
   align-items: center;
   border-right: none;
+  color: #1d2a39;
 }
 
 .cell:last-child {
@@ -521,7 +568,7 @@ function imprimir() {
 .check-cell {
   justify-content: center;
   padding: 0;
-  border-left: 1px solid #111;
+  border-left: 1px solid var(--b);
 }
 
 .mini-check {
@@ -530,6 +577,7 @@ function imprimir() {
   border: 1px solid #1d8f42;
   background: #dff7e8;
   display: inline-block;
+  border-radius: 3px;
 }
 
 .label {
@@ -554,7 +602,8 @@ function imprimir() {
 .value {
   border-right: none;
   position: relative;
-  min-height: 42px;
+  min-height: 44px;
+  background: #fdfeff;
 }
 
 .otros-row .value {
@@ -573,13 +622,13 @@ function imprimir() {
 .firma-final {
   display: flex;
   justify-content: flex-end;
-  padding: 0 0 12px;
-  margin-top: 32px;
+  padding: 0 0 18px;
+  margin-top: 60px;
   border: none;
 }
 
 .linea-firma-wrap {
-  width: 230px;
+  width: 240px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -590,9 +639,9 @@ function imprimir() {
 .linea-firma {
   width: 100%;
   height: 1px;
-  background: #111;
+  background: linear-gradient(90deg, #eff3f8 0%, #1d2a39 50%, #eff3f8 100%);
   border: none;
-  margin-bottom: 6px;
+  margin-bottom: 7px;
 }
 
 .firma-final .linea-firma-wrap {
@@ -601,51 +650,177 @@ function imprimir() {
 
 .texto-firma {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 800;
   text-align: center;
   line-height: 1.1;
+  color: #1d2a39;
 }
 
+
+
+/* ===================== IMPRESIÓN ===================== */
 @media print {
+  /* Configuración de página (Carta, márgenes estrechos) */
   @page {
-    size: A4 portrait;
-    margin: 8mm 8mm 9mm 8mm;
+    size: Letter portrait;
+    margin: 10mm 10mm 12mm;
   }
 
-  html,
-  body {
+  /* Forzar impresión de colores y fondos (encabezados oscuros, verde SENA) */
+  *,
+  *::before,
+  *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+
+  }
+
+  html, body {
+    background: #ffffff !important;
     margin: 0 !important;
     padding: 0 !important;
-    background: #fff;
   }
 
+  /* Quitar padding/fondo de la página en impresión */
+  .page-formato {
+    background: #ffffff !important;
+    padding: 0 !important;
+    min-height: auto !important;
+  }
+
+  /* Ocultar toolbar de acciones */
+  .toolbar.no-print,
   .no-print {
     display: none !important;
   }
 
-  .page-formato {
-    background: white;
-    padding: 0;
-    margin: 0;
-    min-height: auto;
-  }
-
+  /* El documento ocupa todo el ancho útil, sin sombras ni redondeo */
   .documento {
-    box-shadow: none;
-    border: 1px solid #111;
-    width: 100%;
-    max-width: 100%;
-    margin: 0;
-    box-sizing: border-box;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    border: 1px solid #8fa8bf !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
   }
 
+  /* Encabezado: conservar barra verde SENA, aligerar gradiente */
+  .encabezado-topo {
+    border-radius: 0 !important;
+    background: #ffffff !important;
+    padding: 10px 14px !important;
+  }
+  .encabezado-topo::before {
+    /* mantén el acento verde SENA */
+    background: #1f8f52 !important;
+  }
+  .logo-box img {
+    width: 110px !important;
+    margin-left: 0 !important;
+  }
+
+  /* Aplanar gradientes de los encabezados para usar tinta plana */
+  .titulo-seccion,
+  .titulo-seccion.small {
+    background: #0f172a !important;
+    color: #ffffff !important;
+    font-size: 15px !important;
+    padding: 8px 10px !important;
+  }
+  .subtitulo-seccion {
+    background: #edf3f8 !important;
+    padding: 6px 8px !important;
+    font-size: 13px !important;
+  }
+  .titulo-principal {
+    background: #f6f9fc !important;
+    font-size: 14px !important;
+    padding: 10px 12px !important;
+  }
+
+  /* Clasificación de la información */
+  .clasificacion-header { background: #eff4fa !important; }
+  .caja-clasificacion { background: #ffffff !important; }
+  .check-box { background: #dff7e8 !important; }
+  .check-box.empty { background: #edf2f8 !important; }
+
+  /* Tabla de datos del contratista */
+  .tabla-datos,
+  .tabla-dependencias,
+  .tabla-baja { background: #ffffff !important; }
+
+  .fila-checks { background: #f9fbfd !important; }
+  .casilla { background: #ffffff !important; }
+
+  /* Encabezado de la tabla de dependencias */
+  .thead { background: #e6eef6 !important; }
+
+  /* Cajas de firma: conservar fondo claro y bordes */
+  .firma-box {
+    background: #ffffff !important;
+    border: 1px solid #8fa8bf !important;
+    border-radius: 0 !important;
+    min-height: 30px !important;
+    margin: 1px 0 !important;
+  }
+
+  /* Evitar cortes dentro de una fila de la tabla de dependencias */
+  .tabla-dependencias .tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Evitar que quede una fila huérfana al final de página */
+  .tabla-dependencias .thead {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  /* Mantener junto el título de sección con lo que sigue */
+  .titulo-seccion,
+  .titulo-seccion.small,
+  .subtitulo-seccion,
+  .clasificacion-header,
+  .fila-titulo {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  /* Mantener unida la fila de "Otros" con la fila anterior */
+  .tabla-baja .otros-row {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Firma final: mantener con su contenido y evitar página en blanco de cola */
+  .firma-final {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    margin-top: 28px !important;
+    padding-bottom: 0 !important;
+  }
+  .linea-firma {
+    background: #1d2a39 !important;
+  }
+
+  /* Línea de "Otros" más nítida */
+  .linea-otros { background: #1f2a37 !important; }
+
+  /* Reducir un poco tamaños para que quepa bien en Carta */
+  .dep-cell,
+  .resp-cell { font-size: 10.5px !important; }
+  .campo { font-size: 10.5px !important; min-height: 36px !important; }
+  .cell { font-size: 11px !important; min-height: 38px !important; }
+
+  /* Bordes más finos y consistentes en impresión */
   .documento,
+  .encabezado-topo,
   .titulo-seccion,
   .subtitulo-seccion,
   .titulo-principal,
   .clasificacion-wrap,
   .clasificacion-header,
-  .fila-clasificacion,
   .caja-clasificacion,
   .tabla-datos,
   .fila-titulo,
@@ -658,104 +833,14 @@ function imprimir() {
   .tr,
   .tabla-baja,
   .row,
-  .cell,
-  .otros-row .label,
-  .otros-row .value {
-    border-left: 1px solid #111;
-    border-right: 1px solid #111;
-    box-sizing: border-box;
-  }
-
-  .row {
-    border-top: 1px solid #111;
-  }
-
-  .caja-clasificacion:last-child,
-  .casilla:last-child,
-  .thead > div:last-child,
-  .tr > div:last-child,
-  .row > div:last-child,
-  .row .cell:last-child,
-  .cell:last-child,
-  .otros-row .value {
-    border-right: 1px solid #111 !important;
-  }
-
-  .tabla-baja {
-    border: 1px solid #111;
-    border-top: none;
-    background: #fff;
-  }
-
-  .tabla-baja .row {
-    display: grid;
-    grid-template-columns: 1.18fr 2.82fr;
-    border-top: 1px solid #111;
-    min-height: 52px;
-  }
-
-  .tabla-baja .row:first-child {
-    border-top: none;
-  }
-
-  .tabla-baja .row .cell {
-    border-right: 1px solid #111;
-    padding: 8px 10px;
-  }
-
-  .tabla-baja .row .cell:last-child {
-    border-right: none;
-  }
-
-  .otros-row {
-    grid-template-columns: 150px 1fr;
-    column-gap: 0;
-    border-top: none;
-    min-height: 48px;
-  }
-
-  .otros-row .label {
-    padding-right: 0;
-    white-space: nowrap;
-    border-right: 1px solid #111;
-    align-items: center;
-    font-weight: 700;
-  }
-
-  .linea-otros {
-    display: block;
-    width: 100%;
-    height: 1px;
-    background: #111;
-    margin-top: 11px;
-  }
-
-  .otros-row .value {
-    position: relative;
-    align-items: center;
-    padding: 0;
-    border-right: 1px solid #111;
-  }
-
-  .otros-row .value::after {
-    content: none;
-  }
-
-  .firma-final {
-    justify-content: flex-end;
-    margin-top: 20px;
-    padding-right: 0;
-  }
-
-  .linea-firma-wrap {
-    width: 240px;
-    margin-top: 0;
-  }
-
-  .linea-firma {
-    width: 100%;
-    height: 1px;
-    background: #111;
+  .cell {
+    border-color: #8fa8bf !important;
   }
 }
+
+/* Vista previa de impresión en Chrome/Edge: oculta la toolbar al usar Ctrl+P */
+@media print {
+  .no-print { display: none !important; }
+}
+
 </style>
