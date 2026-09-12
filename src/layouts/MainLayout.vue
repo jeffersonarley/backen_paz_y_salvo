@@ -1,119 +1,197 @@
-<template>
-  <q-layout view="hHh lpR fFf" class="app-bg">
-
-    <q-header elevated class="bg-primary text-white">
+﻿<template>
+  <q-layout view="lHh Lpr lFf">
+    <!-- Barra superior (con print-hide para que no salga al imprimir) -->
+    <q-header elevated class="bg-primary text-white print-hide">
       <q-toolbar>
-        <q-btn flat dense round icon="menu" @click="leftDrawerOpen = !leftDrawerOpen" />
+        <q-btn
+          flat
+          dense
+          round
+          icon="menu"
+          aria-label="Abrir menú"
+          @click="leftDrawerOpen = !leftDrawerOpen"
+        />
 
-        <q-avatar class="q-ml-sm">
-          <img class="header-logo" src="../images/logo-sena.png" alt="Logo SENA">
+        <q-avatar class="q-ml-md">
+          <img class="header-logo" src="../images/logo-sena.png" alt="Logo SENA" />
         </q-avatar>
 
         <q-toolbar-title>
-          <div class="text-weight-bold text-subtitle1">GCCON-F-088</div>
-          <div class="text-caption">Sistema de Gestión de Firmas Digitales</div>
+          <div class="text-weight-bold">GCCON-F-088</div>
+          <div class="text-caption">Paz y Salvo Contractual</div>
         </q-toolbar-title>
 
-        <q-btn flat round dense icon="notifications" class="q-mr-sm" title="Notificaciones" @click="router.push('/app/notificaciones')" />
+        <!-- Botón de Usuario con Menú Desplegable -->
+        <q-btn flat round icon="account_circle">
+          <q-menu auto-close>
+            <q-list style="min-width: 150px">
+              <q-item clickable :to="{ name: 'perfil' }">
+                <q-item-section avatar>
+                  <q-icon name="person" />
+                </q-item-section>
+                <q-item-section>Mi Perfil</q-item-section>
+              </q-item>
 
-        <q-btn-dropdown flat no-caps color="white" icon="account_circle" :label="auth.nombre || 'usuario'">
-          <q-list>
-            <q-item clickable @click="router.push('/app/perfil')">
-              <q-item-section>
-                <q-item-label>Mi perfil</q-item-label>
-                <q-item-label caption>{{ auth.rol }}</q-item-label>
-              </q-item-section>
-            </q-item>
-            <q-separator />
-            <q-item clickable @click="cerrarSesion">
-              <q-item-section>
-                <q-item-label class="text-negative">Cerrar sesión</q-item-label>
-              </q-item-section>
-            </q-item>
-          </q-list>
-        </q-btn-dropdown>
+              <q-separator />
+
+              <q-item clickable @click="cerrarSesion">
+                <q-item-section avatar>
+                  <q-icon name="logout" color="negative" />
+                </q-item-section>
+                <q-item-section class="text-negative text-weight-bold">
+                  Cerrar Sesión
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-menu>
+        </q-btn>
       </q-toolbar>
     </q-header>
 
-    <q-drawer v-model="leftDrawerOpen" show-if-above bordered :width="250" class="bg-primary">
-      <div class="sidenav-user">
-        <q-avatar color="white" text-color="primary" size="44px">
-          <q-icon name="person" />
-        </q-avatar>
-        <div class="col">
-          <div class="text-white text-weight-bold ellipsis">{{ auth.nombre || 'Usuario' }}</div>
-          <div class="text-white text-caption">{{ auth.rol }}</div>
-        </div>
-      </div>
+    <!-- Menú lateral (con print-hide para que desaparezca al imprimir) -->
+    <q-drawer
+      v-model="leftDrawerOpen"
+      show-if-above
+      bordered
+      :width="250"
+      class="bg-grey-1 print-hide"
+    >
+      <q-list padding>
+        <q-item-label header class="text-primary text-weight-bold"> MENÚ PRINCIPAL </q-item-label>
 
-      <q-list class="sidenav-list">
         <q-item
           v-for="item in menuItems"
-          :key="item.path"
+          :key="item.name"
           clickable
-          :active="route.path === item.path"
-          active-class="sidenav-active"
-          @click="router.push(item.path)"
+          v-ripple
+          :to="item.to"
+          :exact="item.exact"
+          active-class="text-primary text-weight-bold bg-green-1"
+          @click="cerrarDrawerEnMovil"
         >
           <q-item-section avatar>
-            <q-icon :name="item.icono" />
+            <q-icon :name="item.icon" />
           </q-item-section>
-          <q-item-section>
-            <span class="text-body1">{{ item.titulo }}</span>
-          </q-item-section>
+          <q-item-section>{{ item.label }}</q-item-section>
         </q-item>
 
-        <q-separator color="white" class="opacity-30 q-my-sm" />
+        <q-separator class="q-my-sm" />
 
-        <q-item clickable @click="cerrarSesion">
+        <q-item
+          clickable
+          v-ripple
+          :to="{ name: 'perfil' }"
+          active-class="text-primary text-weight-bold bg-green-1"
+          @click="cerrarDrawerEnMovil"
+        >
           <q-item-section avatar>
-            <q-icon name="logout" />
+            <q-icon name="person" />
           </q-item-section>
-          <q-item-section>
-            <span class="text-body1">Salir</span>
-          </q-item-section>
+          <q-item-section>Perfil</q-item-section>
         </q-item>
       </q-list>
     </q-drawer>
 
-    <q-page-container class="page-shell">
+    <!-- Contenido -->
+    <q-page-container>
       <router-view />
     </q-page-container>
   </q-layout>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { useAuthStore } from '../stores/authStore'
+import { computed, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { useQuasar } from 'quasar'
+import { useAuthStore } from '../stores/authStore.js'
 
-const leftDrawerOpen = ref(true)
+const normalizarRol = (valor) =>
+  String(valor || '')
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, '_')
+
+const $q = useQuasar()
+const leftDrawerOpen = ref($q.screen.gt.sm)
 const router = useRouter()
-const route = useRoute()
 const auth = useAuthStore()
 
-const todos = [
-  { path: '/app', titulo: 'Inicio', icono: 'home', roles: ['Administrador', 'Supervisor', 'ResponsableArea', 'Contratista'] },
-  { path: '/app/supervisores', titulo: 'Supervisores', icono: 'supervisor_account', roles: ['Administrador'] },
-  { path: '/app/contratistas', titulo: 'Contratistas', icono: 'badge', roles: ['Administrador', 'Supervisor'] },
-  { path: '/app/usuarios', titulo: 'Usuarios', icono: 'group', roles: ['Administrador', 'Supervisor'] },
-  { path: '/app/contratos', titulo: 'Contratos', icono: 'description', roles: ['Administrador', 'Supervisor', 'Contratista'] },
-  { path: '/app/dependencias', titulo: 'Dependencias', icono: 'business', roles: ['Administrador', 'Supervisor'] },
-  { path: '/app/solicitudes', titulo: 'Solicitudes', icono: 'assignment', roles: ['Administrador', 'Supervisor', 'Contratista', 'ResponsableArea'] },
-  { path: '/app/reportes', titulo: 'Reportes', icono: 'bar_chart', roles: ['Administrador'] },
-  { path: '/app/perfil', titulo: 'Perfil', icono: 'person', roles: ['Administrador', 'Supervisor', 'ResponsableArea', 'Contratista'] },
-  { path: '/app/notificaciones', titulo: 'Notificaciones', icono: 'notifications', roles: ['Administrador', 'Supervisor', 'ResponsableArea', 'Contratista'] }
+// Reacciona en vivo si la pantalla cambia de tamaño (p. ej. al usar
+// las DevTools en modo responsivo, o al rotar/redimensionar la ventana)
+watch(
+  () => $q.screen.gt.sm,
+  (esPantallaGrande) => {
+    leftDrawerOpen.value = esPantallaGrande
+  }
+)
+
+const menuBase = [
+  {
+    name: 'dashboard',
+    label: 'Dashboard',
+    to: { name: 'dashboard' },
+    icon: 'dashboard',
+    exact: true,
+    roles: ['ADMINISTRADOR', 'SUPERVISOR', 'CONTRATISTA', 'RESPONSABLE_AREA'],
+  },
+  {
+    name: 'usuarios',
+    label: 'Usuarios',
+    to: { name: 'usuarios' },
+    icon: 'people',
+    exact: false,
+    roles: ['ADMINISTRADOR'],
+  },
+  {
+    name: 'contratistas',
+    label: 'Contratistas',
+    to: { name: 'contratistas' },
+    icon: 'description',
+    exact: false,
+    roles: ['ADMINISTRADOR', 'SUPERVISOR'],
+  },
+  {
+    name: 'dependencias',
+    label: 'Dependencias',
+    to: { name: 'dependencias' },
+    icon: 'business',
+    exact: false,
+    roles: ['ADMINISTRADOR', 'SUPERVISOR'],
+  },
+  {
+    name: 'solicitudes',
+    label: 'Solicitudes',
+    to: { name: 'solicitudes' },
+    icon: 'assignment',
+    exact: false,
+    roles: ['ADMINISTRADOR', 'SUPERVISOR', 'CONTRATISTA', 'RESPONSABLE_AREA'],
+  },
+  {
+    name: 'firmas',
+    label: 'Firmas',
+    to: { name: 'firmas' },
+    icon: 'draw',
+    exact: false,
+    roles: ['ADMINISTRADOR', 'SUPERVISOR', 'RESPONSABLE_AREA'],
+  },
 ]
 
 const menuItems = computed(() => {
-  const rol = auth.rol
-  return todos.filter((item) => item.roles.includes(rol))
+  const rolActual = normalizarRol(auth.usuario?.rol)
+  if (!rolActual) return []
+
+  return menuBase.filter((item) => item.roles.some((rol) => normalizarRol(rol) === rolActual))
 })
 
 function cerrarSesion() {
   auth.logout()
-  window.location.hash = '#/'
-  window.location.reload()
+  router.push('/login')
+}
+
+function cerrarDrawerEnMovil() {
+  if ($q.screen.lt.md) {
+    leftDrawerOpen.value = false
+  }
 }
 </script>
 
@@ -124,36 +202,5 @@ function cerrarSesion() {
   height: auto;
 }
 
-.sidenav-user {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.sidenav-list .q-item {
-  color: #ffffff;
-  min-height: 48px;
-}
-
-.sidenav-active {
-  background-color: rgba(255, 255, 255, 0.18);
-}
-
-.app-bg {
-  background:
-    repeating-linear-gradient(
-      135deg,
-      rgba(57, 169, 0, 0.04) 0px,
-      rgba(57, 169, 0, 0.04) 24px,
-      rgba(255, 255, 255, 0) 24px,
-      rgba(255, 255, 255, 0) 48px
-    ),
-    linear-gradient(135deg, #edf0ef 0%, #f7f8f7 50%, #e6ebe8 100%);
-}
-
-.page-shell {
-  min-height: calc(100vh - 56px);
-}
+/* Reglas definitivas para impresión y PDF */
 </style>

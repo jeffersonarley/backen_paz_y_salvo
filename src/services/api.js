@@ -1,4 +1,4 @@
-import axios from 'axios'
+﻿import axios from 'axios'
 
 /*
  * Cliente HTTP central para consumir la API de Paz y Salvo (backend_paz_y_salvo).
@@ -11,8 +11,8 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 const api = axios.create({
   baseURL: API_URL,
   headers: {
-    'Content-Type': 'application/json'
-  }
+    'Content-Type': 'application/json',
+  },
 })
 
 api.interceptors.request.use((config) => {
@@ -40,7 +40,7 @@ api.interceptors.response.use(
 
     error.mensaje = mensaje
     return Promise.reject(error)
-  }
+  },
 )
 
 export default api

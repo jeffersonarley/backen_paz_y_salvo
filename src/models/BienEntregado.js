@@ -1,26 +1,29 @@
-const mongoose = require('mongoose');
+﻿const mongoose = require('mongoose')
 
-const bienEntregadoSchema = new mongoose.Schema({
+const bienEntregadoSchema = new mongoose.Schema(
+  {
     contrato_id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Contrato'
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Contrato',
     },
     descripcion: {
-        type: String,
-        required: [true, 'La descripción del bien es obligatoria'],
-        trim: true
+      type: String,
+      required: [true, 'La descripción del bien es obligatoria'],
+      trim: true,
     },
     codigo_inventario: {
-        type: String,
-        trim: true
+      type: String,
+      trim: true,
     },
     cantidad: {
-        type: Number,
-        default: 1
-    }
-}, {
+      type: Number,
+      default: 1,
+    },
+  },
+  {
     timestamps: true,
-    collection: 'bienes_entregados'
-});
+    collection: 'bienes_entregados',
+  },
+)
 
-module.exports = mongoose.model('BienEntregado', bienEntregadoSchema);
+module.exports = mongoose.model('BienEntregado', bienEntregadoSchema)

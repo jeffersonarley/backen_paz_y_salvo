@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="firma-canvas">
     <q-toolbar class="q-pa-none q-mb-sm">
       <q-space />
@@ -55,7 +55,7 @@ function obtenerPosicion(event) {
   const rect = canvasRef.value.getBoundingClientRect()
   return {
     x: event.clientX - rect.left,
-    y: event.clientY - rect.top
+    y: event.clientY - rect.top,
   }
 }
 

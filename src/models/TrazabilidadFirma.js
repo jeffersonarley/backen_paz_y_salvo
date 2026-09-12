@@ -1,33 +1,36 @@
-const mongoose = require('mongoose');
+﻿const mongoose = require('mongoose')
 
-const trazabilidadFirmaSchema = new mongoose.Schema({
+const trazabilidadFirmaSchema = new mongoose.Schema(
+  {
     contrato_id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Contrato'
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Contrato',
     },
     area_id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'DependenciaArea'
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'DependenciaArea',
     },
     usuario_id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Usuario'
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Usuario',
     },
     estado: {
-        type: String,
-        enum: ['Pendiente', 'Aprobado', 'Rechazado'],
-        default: 'Pendiente'
+      type: String,
+      enum: ['Pendiente', 'Aprobado', 'Rechazado'],
+      default: 'Pendiente',
     },
     observacion_rechazo: {
-        type: String,
-        default: null
+      type: String,
+      default: null,
     },
     fecha_firma: {
-        type: Date
-    }
-}, {
+      type: Date,
+    },
+  },
+  {
     timestamps: true,
-    collection: 'trazabilidad_firmas'
-});
+    collection: 'trazabilidad_firmas',
+  },
+)
 
-module.exports = mongoose.model('TrazabilidadFirma', trazabilidadFirmaSchema);
+module.exports = mongoose.model('TrazabilidadFirma', trazabilidadFirmaSchema)

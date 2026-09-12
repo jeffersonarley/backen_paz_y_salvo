@@ -1,29 +1,34 @@
-const mongoose = require('mongoose');
+﻿const mongoose = require('mongoose')
 
-const formatoConfigSchema = new mongoose.Schema({
+const formatoConfigSchema = new mongoose.Schema(
+  {
     codigo_formato: {
-        type: String,
-        default: 'GCCON-F-088'
+      type: String,
+      default: 'GCCON-F-088',
     },
     numero_version: {
-        type: Number,
-        required: true,
-        default: 1
+      type: Number,
+      required: true,
+      default: 1,
     },
     fecha_vigencia: {
-        type: Date,
-        default: Date.now
+      type: Date,
+      default: Date.now,
     },
     texto_encabezado: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
     },
-    campos_obligatorios: [{
-        type: String
-    }]
-}, {
+    campos_obligatorios: [
+      {
+        type: String,
+      },
+    ],
+  },
+  {
     timestamps: true,
-    collection: 'formato_config'
-});
+    collection: 'formato_config',
+  },
+)
 
-module.exports = mongoose.model('FormatoConfig', formatoConfigSchema);
+module.exports = mongoose.model('FormatoConfig', formatoConfigSchema)

@@ -1,10 +1,17 @@
-<template>
+﻿<template>
   <div class="sesion-wrap">
     <div class="sesion-card">
       <q-icon name="schedule" size="96px" color="primary" />
       <div class="sesion-titulo">Su sesión ha expirado.</div>
       <div class="sesion-mensaje">Debe iniciar sesión nuevamente.</div>
-      <q-btn no-caps unelevated color="primary" label="Volver al inicio" class="q-mt-lg" @click="volverInicio" />
+      <q-btn
+        no-caps
+        unelevated
+        color="primary"
+        label="Volver al inicio"
+        class="q-mt-lg"
+        @click="volverInicio"
+      />
     </div>
   </div>
 </template>
