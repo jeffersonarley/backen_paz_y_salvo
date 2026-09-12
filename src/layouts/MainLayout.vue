@@ -67,6 +67,7 @@
           :to="item.to"
           :exact="item.exact"
           active-class="text-primary text-weight-bold bg-green-1"
+          @click="cerrarDrawerEnMovil"
         >
           <q-item-section avatar>
             <q-icon :name="item.icon" />
@@ -81,6 +82,7 @@
           v-ripple
           :to="{ name: 'perfil' }"
           active-class="text-primary text-weight-bold bg-green-1"
+          @click="cerrarDrawerEnMovil"
         >
           <q-item-section avatar>
             <q-icon name="person" />
@@ -98,8 +100,9 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useQuasar } from 'quasar'
 import { useAuthStore } from '../stores/authStore.js'
 
 const normalizarRol = (valor) =>
@@ -108,9 +111,19 @@ const normalizarRol = (valor) =>
     .toUpperCase()
     .replace(/\s+/g, '_')
 
-const leftDrawerOpen = ref(true)
+const $q = useQuasar()
+const leftDrawerOpen = ref($q.screen.gt.sm)
 const router = useRouter()
 const auth = useAuthStore()
+
+// Reacciona en vivo si la pantalla cambia de tamaño (p. ej. al usar
+// las DevTools en modo responsivo, o al rotar/redimensionar la ventana)
+watch(
+  () => $q.screen.gt.sm,
+  (esPantallaGrande) => {
+    leftDrawerOpen.value = esPantallaGrande
+  }
+)
 
 const menuBase = [
   {
@@ -173,6 +186,12 @@ const menuItems = computed(() => {
 function cerrarSesion() {
   auth.logout()
   router.push('/login')
+}
+
+function cerrarDrawerEnMovil() {
+  if ($q.screen.lt.md) {
+    leftDrawerOpen.value = false
+  }
 }
 </script>
 

@@ -13,14 +13,10 @@
     ],
   },
 
-  // Redirección inicial
+  // Redirección inicial: siempre debe arrancar en el login
   {
     path: '/',
-    redirect: () => {
-      const usuarioRaw = localStorage.getItem('gccon_user')
-      const usuario = usuarioRaw ? JSON.parse(usuarioRaw) : null
-      return usuario ? '/app/solicitudes' : '/login'
-    },
+    redirect: '/login',
   },
 
   {

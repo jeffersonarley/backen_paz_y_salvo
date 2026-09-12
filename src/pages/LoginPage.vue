@@ -1,6 +1,5 @@
 ﻿<template>
-  <q-page class="login-page" :style="loginBgStyle">
-    <div class="login-overlay"></div>
+  <q-page class="login-page">
     <q-card class="login-card">
       <img :src="logoSena" class="logo" alt="Logo SENA" />
 
@@ -88,18 +87,11 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Notify } from 'quasar'
 import { useAuthStore } from '../stores/authStore.js'
 import logoSena from '../images/logo-sena.png'
-
-// Imágenes de fondo institucionales (SENA) por rol
-import bgDefault from '../images/roles/bg-default.svg'
-import bgAdministrador from '../images/roles/bg-administrador.svg'
-import bgSupervisor from '../images/roles/bg-supervisor.svg'
-import bgContratista from '../images/roles/bg-contratista.svg'
-import bgResponsableArea from '../images/roles/bg-responsable-area.svg'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -109,24 +101,6 @@ const credencial = ref('')
 const password = ref('')
 const verPassword = ref(false)
 const cargando = ref(false)
-
-// Mapa rol -> imagen de fondo
-const fondosPorRol = {
-  ADMINISTRADOR: bgAdministrador,
-  SUPERVISOR: bgSupervisor,
-  CONTRATISTA: bgContratista,
-  RESPONSABLE_AREA: bgResponsableArea,
-}
-
-// Fondo actual según el rol seleccionado (o el fondo por defecto si no hay ninguno)
-const fondoActual = computed(() => {
-  const valorRol = rolSeleccionado.value?.value
-  return fondosPorRol[valorRol] || bgDefault
-})
-
-const loginBgStyle = computed(() => ({
-  backgroundImage: `url(${fondoActual.value})`,
-}))
 
 const opcionesRoles = [
   {
@@ -217,25 +191,15 @@ function ingresar() {
   justify-content: center;
   align-items: center;
   position: relative;
-  background-color: #1f6e1f;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  transition: background-image 0.5s ease-in-out;
-}
-
-.login-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.15);
-  pointer-events: none;
+  background-color: #ffffff;
 }
 
 .login-card {
   position: relative;
   z-index: 1;
-  width: 400px;
-  padding: 35px 30px;
+  width: 480px;
+  max-width: 92vw;
+  padding: 48px 42px;
   border-radius: 18px;
   text-align: center;
   background: #ffffff;

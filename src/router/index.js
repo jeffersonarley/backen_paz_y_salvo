@@ -37,9 +37,6 @@ export default defineRouter(() => {
     }
 
     if (to.name === 'login') {
-      if (usuario) {
-        return { name: 'solicitudes' }
-      }
       return true
     }
 
