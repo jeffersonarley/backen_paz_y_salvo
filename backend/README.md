@@ -272,9 +272,11 @@ La jerarquía se valida con el middleware `verificarJerarquia` (`src/middlewares
 
 ## 6. Seguridad y robustez
 
-- **Rate limiting** (`express-rate-limit`): limita peticiones en `/api/auth/login` y
-  `/api/auth/recuperar` (por IP, `RATE_LIMIT_MAX` por ventana de 15 min).
-- **Helmet**: cabeceras HTTP de seguridad en toda la API.
+- **Rate limiting** (`express-rate-limit`): límite global por IP en toda `/api`
+  (`API_RATE_LIMIT_MAX` por ventana de 15 min) + límite estricto en `/api/auth/login` y
+  `/api/auth/recuperar` contra fuerza bruta (`RATE_LIMIT_MAX`), con cabeceras `RateLimit-*`.
+- **Helmet**: cabeceras HTTP de seguridad en toda la API (CSP, HSTS con `preload`,
+  `Referrer-Policy`, `X-Frame-Options: DENY`, `X-Content-Type-Options`).
 - **CORS**: lista blanca de orígenes configurada con `CORS_ORIGIN`.
 - **Política de contraseñas** (`src/utils/validarPassword.js`): mínimo 8 caracteres, una
   mayúscula, una minúscula y un número; aplicada en creación, restablecimiento y cambio.
