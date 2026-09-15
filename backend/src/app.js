@@ -4,15 +4,36 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const errorHandler = require('./middlewares/errorHandler');
+const { apiLimiter } = require('./middlewares/rateLimiter');
 const { swaggerUi, swaggerDocument } = require('./config/swagger');
 
 const Usuario = require('./models/Usuario');
 
 const app = express();
 
-// Middlewares de seguridad y utilidades
-app.use(helmet());
+// Capa 1 — Seguridad HTTP con Helmet (cabeceras seguras)
+app.use(helmet({
+    crossOriginEmbedderPolicy: false,
+    contentSecurityPolicy: {
+        useDefaults: true,
+        directives: {
+            defaultSrc: ["'self'"],
+            styleSrc: ["'self'", "'unsafe-inline'", 'https:'],
+            imgSrc: ["'self'", 'data:', 'https:'],
+            fontSrc: ["'self'", 'https:', 'data:'],
+            objectSrc: ["'none'"],
+            upgradeInsecureRequests: null
+        }
+    },
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+    hsts: { maxAge: 15552000, includeSubDomains: true, preload: true },
+    frameguard: { action: 'deny' },
+    dnsPrefetchControl: { allow: false }
+}));
 app.use(morgan('dev'));
+
+// Capa 2 — Límite global de peticiones para toda la API (abuso/DoS)
+app.use('/api', apiLimiter);
 
 // CORS con lista blanca desde CORS_ORIGIN (separada por comas)
 const origenesPermitidos = (process.env.CORS_ORIGIN || '').split(',').map(o => o.trim()).filter(Boolean);
