@@ -55,6 +55,29 @@ CORS_ORIGIN=http://localhost:3000    # lista blanca de orígenes (separada por c
 RATE_LIMIT_MAX=10  # peticiones por ventana de 15 min en el login
 ```
 
+### Instalación desde cero (clonar en una máquina nueva)
+
+> El archivo `.env` **no está versionado** (está en `.gitignore`), por eso al clonar
+> el repositorio no existe y el backend necesita crearlo para conectarse a MongoDB.
+
+```bash
+# 1. Backend
+cd backend
+cp .env.example .env      # edita MONGODB_URI si usas Atlas u otra BD
+npm install
+npm run seed:admin        # crea el usuario Administrador (necesario para el login)
+npm run seed:supervisor   # opcional: crea un Supervisor de prueba
+npm run dev               # http://localhost:3000
+
+# 2. Frontend (en otra terminal)
+cd frontend
+npm install
+npm run dev               # http://localhost:5173 (proxy /api -> :3000)
+```
+
+Accesos iniciales: el `seed:admin` crea `admin@institucion.edu.co` (contraseña por
+defecto `AdminSeguro123!`, configurable en `.env` con `SEED_ADMIN_*`).
+
 > **Nota sobre transacciones:** las transacciones atómicas de MongoDB requieren un
 > *replica set*. Si `mongod` corre en modo standalone, el backend usa automáticamente un
 > fallback secuencial con compensación. Para habilitar transacciones reales, inicia:
