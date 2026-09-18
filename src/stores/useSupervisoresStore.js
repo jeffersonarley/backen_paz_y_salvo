@@ -1,4 +1,4 @@
-﻿import { defineStore } from 'pinia'
+import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 
 export const useSupervisoresStore = defineStore('supervisores', () => {
@@ -10,9 +10,26 @@ export const useSupervisoresStore = defineStore('supervisores', () => {
       : [
           {
             documento: '1098765432',
-            nombre: 'Ana María Gómez',
-            correo: 'agomez@sena.edu.co',
+            nombre: 'Ing. Carlos Supervisor',
+            correo: 'supervisor@gccon.com',
             telefono: '3101234567',
+            cargo: 'Supervisor de Contratos TIC',
+            password: '123',
+          },
+          {
+            documento: '1097654321',
+            nombre: 'Dra. Ana María Gómez',
+            correo: 'agomez@sena.edu.co',
+            telefono: '3187654321',
+            cargo: 'Supervisora Senior de Contratación',
+            password: '123',
+          },
+          {
+            documento: '1096543219',
+            nombre: 'Ing. Fernando Ramírez',
+            correo: 'f.ramirez@sena.edu.co',
+            telefono: '3209876543',
+            cargo: 'Supervisor de Infraestructura y Obras',
             password: '123',
           },
         ],
