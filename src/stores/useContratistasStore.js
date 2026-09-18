@@ -1,8 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import api from '../services/api'
 
 export const useContratistasStore = defineStore('contratistas', () => {
-  const contratistas = ref([
+  const contratistas = ref([])
+  const cargando = ref(false)
+
+  const contratistasBase = [
     {
       documento: '1098765432',
       nombre: 'Juan Carlos Pérez Gómez',
@@ -43,10 +47,63 @@ export const useContratistasStore = defineStore('contratistas', () => {
       cargo: 'Técnico de Mantenimiento de Hardware',
       password: '123',
     },
-  ])
+  ]
 
-  function agregar(nuevoContratista) {
-    contratistas.value.push(nuevoContratista)
+  contratistas.value = [...contratistasBase]
+
+  async function cargarContratistas() {
+    cargando.value = true
+    try {
+      const resp = await api.get('/usuarios?rol=Contratista')
+      if (Array.isArray(resp.data) && resp.data.length > 0) {
+        const desdeAtlas = resp.data.map((u) => ({
+          _id: u._id || u.id,
+          id: u._id || u.id,
+          documento:
+            u.documento || u.telefono || '109' + Math.floor(1000000 + Math.random() * 9000000),
+          nombre: u.nombre_completo || u.nombre,
+          correo: u.correo_institucional || u.correo,
+          telefono: u.telefono || '3100000000',
+          cargo: u.cargo || 'Contratista',
+          password: '123',
+        }))
+
+        const mapa = new Map()
+        contratistasBase.forEach((c) => mapa.set(c.correo.toLowerCase(), c))
+        desdeAtlas.forEach((c) => mapa.set(c.correo.toLowerCase(), c))
+        contratistas.value = Array.from(mapa.values())
+      }
+    } catch (err) {
+      console.warn('Cargando contratistas locales:', err.message)
+    } finally {
+      cargando.value = false
+    }
+  }
+
+  // Cargar inmediatamente
+  cargarContratistas()
+
+  async function agregar(nuevoContratista) {
+    // 1. Agregar a la lista reactiva inmediatamente
+    contratistas.value.push({ ...nuevoContratista })
+
+    // 2. Guardar en MongoDB Atlas
+    try {
+      await api.post('/usuarios', {
+        nombre: nuevoContratista.nombre,
+        nombre_completo: nuevoContratista.nombre,
+        correo: nuevoContratista.correo,
+        correo_institucional: nuevoContratista.correo,
+        documento: nuevoContratista.documento,
+        telefono: nuevoContratista.telefono,
+        cargo: nuevoContratista.cargo || 'Contratista',
+        password: nuevoContratista.password || '12345678',
+        rol: 'Contratista',
+      })
+      await cargarContratistas()
+    } catch (err) {
+      console.error('Error al guardar contratista en Atlas:', err)
+    }
   }
 
   function editar(indice, datosActualizados) {
@@ -55,12 +112,22 @@ export const useContratistasStore = defineStore('contratistas', () => {
     }
   }
 
-  function eliminar(documento) {
+  async function eliminar(documento) {
+    const itemEncontrado = contratistas.value.find((item) => item.documento === documento)
     contratistas.value = contratistas.value.filter((item) => item.documento !== documento)
+
+    try {
+      const idParaBorrar = itemEncontrado?._id || itemEncontrado?.id || documento
+      await api.delete(`/usuarios/${idParaBorrar}`)
+    } catch (err) {
+      console.error('Error al eliminar contratista en Atlas:', err)
+    }
   }
 
   return {
     contratistas,
+    cargando,
+    cargarContratistas,
     agregar,
     editar,
     eliminar,
