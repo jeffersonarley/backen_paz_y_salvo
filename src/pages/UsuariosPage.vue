@@ -34,7 +34,7 @@
       :rows="rows"
       :columns="columns"
       :filter="filtro"
-      row-key="documento"
+      row-key="id"
       flat
       bordered
       no-data-label="No hay usuarios registrados"
@@ -71,7 +71,7 @@
             dense
             color="negative"
             icon="delete"
-            @click="eliminarUsuario(props.row.documento)"
+            @click="eliminarUsuario(props.row)"
           >
             <q-tooltip>Eliminar Usuario</q-tooltip>
           </q-btn>
@@ -262,14 +262,17 @@ function normalizarRolParaUI(rolBackend) {
   return rolBackend || 'Contratista'
 }
 
+const usuarioEliminar = ref(null)
+
 async function cargarUsuarios() {
   cargando.value = true
   try {
     const resp = await api.get('/usuarios')
-    if (Array.isArray(resp.data)) {
-      rows.value = resp.data.map((u) => ({
-        id: u._id || u.id,
-        documento: u.documento || u.telefono || '—',
+    const lista = Array.isArray(resp.data) ? resp.data : (resp.data?.usuarios || [])
+    if (Array.isArray(lista)) {
+      rows.value = lista.map((u, idx) => ({
+        id: (u._id || u.id || `usr_${idx}`).toString(),
+        documento: u.documento || u.telefono || `DOC-${idx + 1}`,
         nombre: u.nombre_completo || u.nombre || '—',
         correo: u.correo_institucional || u.correo || '—',
         telefono: u.telefono || '—',
@@ -291,7 +294,8 @@ async function guardarUsuario() {
   const rolBackend = normalizarRolParaBackend(usuario.value.rol)
 
   if (!editando.value) {
-    const existeDocumento = rows.value.some((item) => item.documento === usuario.value.documento)
+    const doc = (usuario.value.documento || '').trim()
+    const existeDocumento = doc && rows.value.some((item) => item.documento === doc)
 
     if (existeDocumento) {
       $q.notify({
@@ -361,19 +365,21 @@ function nuevoUsuario() {
 
 function editarUsuario(fila) {
   usuario.value = { ...fila, password: '' }
-  indiceEditar.value = rows.value.findIndex((item) => item.documento === fila.documento)
+  indiceEditar.value = rows.value.findIndex((item) => item.id === fila.id)
   editando.value = true
   dialogo.value = true
 }
 
-function eliminarUsuario(documento) {
-  documentoEliminar.value = documento
+function eliminarUsuario(fila) {
+  usuarioEliminar.value = fila
+  documentoEliminar.value = fila.nombre || fila.documento
   dialogoEliminar.value = true
 }
 
 async function confirmarEliminar() {
   try {
-    await api.delete(`/usuarios/${documentoEliminar.value}`)
+    const idParaBorrar = usuarioEliminar.value?.id || usuarioEliminar.value?._id || documentoEliminar.value
+    await api.delete(`/usuarios/${idParaBorrar}`)
     $q.notify({
       type: 'info',
       message: 'Usuario eliminado correctamente de MongoDB Atlas.',

@@ -119,7 +119,7 @@ const routes = [
     path: '/app/no-permisos',
     name: 'no-permisos',
     component: () => import('@/pages/NoPermisosPage.vue'),
-    meta: { titulo: 'Sin permisos', roles: ['ADMINISTRADOR', 'SUPERVISOR', 'CONTRATISTA'] },
+    meta: { titulo: 'Sin permisos' },
   },
   {
     path: '/:catchAll(.*)*',

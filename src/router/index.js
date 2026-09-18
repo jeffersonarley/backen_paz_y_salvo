@@ -1,4 +1,4 @@
-﻿import { defineRouter } from '#q-app'
+import { defineRouter } from '#q-app'
 import {
   createMemoryHistory,
   createRouter,
@@ -21,11 +21,14 @@ export default defineRouter(() => {
     history: createHistory(import.meta.env.QUASAR_VUE_ROUTER_BASE),
   })
 
-  const normalizarRol = (valor) =>
-    String(valor || '')
-      .trim()
-      .toUpperCase()
-      .replace(/\s+/g, '_')
+  const normalizarRol = (valor) => {
+    const v = String(valor || '').trim().toUpperCase().replace(/[\s_-]+/g, '')
+    if (v.includes('ADMIN')) return 'ADMINISTRADOR'
+    if (v.includes('SUPER')) return 'SUPERVISOR'
+    if (v.includes('RESPONSABLE')) return 'RESPONSABLE_AREA'
+    if (v.includes('CONTRAT')) return 'CONTRATISTA'
+    return v
+  }
 
   // Navigation Guard moderno (retornos directos sin callbacks next)
   Router.beforeEach((to) => {

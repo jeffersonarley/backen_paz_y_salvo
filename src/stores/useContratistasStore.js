@@ -55,12 +55,12 @@ export const useContratistasStore = defineStore('contratistas', () => {
     cargando.value = true
     try {
       const resp = await api.get('/usuarios?rol=Contratista')
-      if (Array.isArray(resp.data) && resp.data.length > 0) {
-        const desdeAtlas = resp.data.map((u) => ({
-          _id: u._id || u.id,
-          id: u._id || u.id,
-          documento:
-            u.documento || u.telefono || '109' + Math.floor(1000000 + Math.random() * 9000000),
+      const lista = Array.isArray(resp.data) ? resp.data : (resp.data?.usuarios || [])
+      if (Array.isArray(lista)) {
+        const desdeAtlas = lista.map((u, idx) => ({
+          _id: (u._id || u.id || `con_${idx}`).toString(),
+          id: (u._id || u.id || `con_${idx}`).toString(),
+          documento: u.documento || u.telefono || `DOC-C${idx + 1}`,
           nombre: u.nombre_completo || u.nombre,
           correo: u.correo_institucional || u.correo,
           telefono: u.telefono || '3100000000',

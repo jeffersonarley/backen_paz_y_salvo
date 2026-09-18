@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <q-page class="q-pa-lg">
     <!-- Encabezado -->
     <div class="row items-center justify-between q-mb-lg">
@@ -40,7 +40,7 @@
       :rows="store.contratistas || []"
       :columns="columns"
       :filter="filtro"
-      row-key="documento"
+      row-key="id"
       flat
       bordered
       no-data-label="No hay contratistas registrados"
@@ -242,7 +242,7 @@ function guardarContratista() {
       message: 'Contratista actualizado correctamente.',
     })
   } else {
-    store.agregar({ ...contratista.value })
+    await store.agregar({ ...contratista.value })
     $q.notify({
       type: 'positive',
       message: 'Contratista registrado correctamente.',

@@ -3,10 +3,12 @@ import { ref, computed } from 'vue'
 import api from '../services/api'
 
 function normalizarRol(valor) {
-  return String(valor || '')
-    .trim()
-    .toUpperCase()
-    .replace(/\s+/g, '_')
+  const v = String(valor || '').trim().toUpperCase().replace(/[\s_-]+/g, '')
+  if (v.includes('ADMIN')) return 'ADMINISTRADOR'
+  if (v.includes('SUPER')) return 'SUPERVISOR'
+  if (v.includes('RESPONSABLE')) return 'RESPONSABLE_AREA'
+  if (v.includes('CONTRAT')) return 'CONTRATISTA'
+  return v
 }
 
 export const useAuthStore = defineStore('auth', () => {

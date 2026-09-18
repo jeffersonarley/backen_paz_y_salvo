@@ -144,6 +144,15 @@ function alCambiarRol(opcion) {
   }
 }
 
+const normalizarRol = (valor) => {
+  const v = String(valor || '').trim().toUpperCase().replace(/[\s_-]+/g, '')
+  if (v.includes('ADMIN')) return 'ADMINISTRADOR'
+  if (v.includes('SUPER')) return 'SUPERVISOR'
+  if (v.includes('RESPONSABLE')) return 'RESPONSABLE_AREA'
+  if (v.includes('CONTRAT')) return 'CONTRATISTA'
+  return v
+}
+
 async function ingresar() {
   if (!credencial.value || !password.value) return
 
@@ -162,8 +171,8 @@ async function ingresar() {
     return
   }
 
-  const rolSeleccionadoReal = resultado.user?.rol || rolSeleccionado.value?.value || 'ADMINISTRADOR'
-  rolSeleccionado.value = opcionesRoles.find((rol) => rol.value === rolSeleccionadoReal) || null
+  const rolSeleccionadoReal = normalizarRol(resultado.user?.rol || rolSeleccionado.value?.value || 'ADMINISTRADOR')
+  rolSeleccionado.value = opcionesRoles.find((rol) => normalizarRol(rol.value) === rolSeleccionadoReal) || null
 
   try {
     Notify.create({
@@ -176,9 +185,11 @@ async function ingresar() {
     // Ignorar si la notificación falla
   }
 
-  router.push('/app/solicitudes').catch(() => {
+  try {
+    await router.push('/app/solicitudes')
+  } catch {
     window.location.hash = '#/app/solicitudes'
-  })
+  }
 
   cargando.value = false
 }

@@ -31,11 +31,12 @@ api.interceptors.response.use(
     const mensaje = error.response?.data?.mensaje || 'Error de conexión con el servidor.'
 
     // Sesión expirada en rutas protegidas (no en el login, que devuelve 401 por credenciales).
-    if (status === 401 && !url.includes('/api/auth/login')) {
+    if (status === 401 && !url.includes('auth/login')) {
       localStorage.removeItem('auth_token')
-      localStorage.removeItem('auth_usuario')
-      window.location.hash = '#/sesion'
-      window.location.reload()
+      localStorage.removeItem('gccon_user')
+      if (!window.location.hash.includes('login')) {
+        window.location.hash = '#/login'
+      }
     }
 
     error.mensaje = mensaje

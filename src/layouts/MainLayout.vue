@@ -105,11 +105,14 @@ import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useAuthStore } from '../stores/authStore.js'
 
-const normalizarRol = (valor) =>
-  String(valor || '')
-    .trim()
-    .toUpperCase()
-    .replace(/\s+/g, '_')
+const normalizarRol = (valor) => {
+  const v = String(valor || '').trim().toUpperCase().replace(/[\s_-]+/g, '')
+  if (v.includes('ADMIN')) return 'ADMINISTRADOR'
+  if (v.includes('SUPER')) return 'SUPERVISOR'
+  if (v.includes('RESPONSABLE')) return 'RESPONSABLE_AREA'
+  if (v.includes('CONTRAT')) return 'CONTRATISTA'
+  return v
+}
 
 const $q = useQuasar()
 const leftDrawerOpen = ref($q.screen.gt.sm)
