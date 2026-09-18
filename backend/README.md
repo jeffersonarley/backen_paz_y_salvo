@@ -76,7 +76,19 @@ npm run dev               # http://localhost:5173 (proxy /api -> :3000)
 ```
 
 Accesos iniciales: el `seed:admin` crea `admin@institucion.edu.co` (contraseña por
-defecto `AdminSeguro123!`, configurable en `.env` con `SEED_ADMIN_*`).
+defecto `AdminSeguro123!`, configurable en `.env` con `SEED_ADMIN_*`). Los usuarios
+migrados a Atlas conservan sus contraseñas originales.
+
+> **Problemas de conexión o error 500 en el login (Atlas):**
+> - Si el backend imprime `❌ Error al conectar a MongoDB` o el navegador responde
+>   con error 500 al hacer login, en la mayoría de los casos es la **lista de IPs**
+>   de Atlas: agrega tu IP en *Atlas → Network Access → Add IP Address* (o permite
+>   `0.0.0.0/0`).
+> - Roles legacy (p. ej. `ADMINISTRADOR` en vez de `Administrador`) rompen la
+>   validación del `login` con error 400/500. El modelo ya los normaliza; para
+>   corregir los datos guardados ejecuta: `npm run normalizar-roles`
+>   (o `DB_URI=mongodb+srv://... npm run normalizar-roles` para otra BD).
+> - Credenciales documentadas: `admin@institucion.edu.co` / `AdminSeguro123!`.
 
 > **Nota sobre transacciones:** las transacciones atómicas de MongoDB requieren un
 > *replica set*. Si `mongod` corre en modo standalone, el backend usa automáticamente un

@@ -142,7 +142,8 @@
     "dev": "nodemon server.js",
     "seed:admin": "node scripts/seedAdmin.js",
     "seed:supervisor": "node scripts/seedSupervisor.js",
-    "migrar": "node scripts/migrarDatos.js"
+    "migrar": "node scripts/migrarDatos.js",
+    "normalizar-roles": "node scripts/normalizarRoles.js"
   },
   "jest": {
     "testEnvironment": "node",

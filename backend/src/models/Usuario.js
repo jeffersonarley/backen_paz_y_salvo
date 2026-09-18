@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const normalizarRol = require('../utils/normalizarRol');
 
 const usuarioSchema = new mongoose.Schema({
     nombre_completo: {
@@ -20,7 +21,8 @@ const usuarioSchema = new mongoose.Schema({
     rol: {
         type: String,
         enum: ['Administrador', 'Supervisor', 'ResponsableArea', 'Contratista'],
-        default: 'Contratista'
+        default: 'Contratista',
+        set: normalizarRol
     },
     telefono: {
         type: String,
