@@ -156,6 +156,7 @@ export const useAuthStore = defineStore('auth', () => {
         correo: emailLimpio,
         correo_institucional: emailLimpio,
         password: password,
+        contraseña: password,
       })
 
       if (resp.data?.token && resp.data?.usuario) {
