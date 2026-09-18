@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <q-page class="login-page">
     <q-card class="login-card">
       <img :src="logoSena" class="logo" alt="Logo SENA" />
@@ -144,12 +144,12 @@ function alCambiarRol(opcion) {
   }
 }
 
-function ingresar() {
+async function ingresar() {
   if (!credencial.value || !password.value) return
 
   cargando.value = true
 
-  const resultado = auth.login(credencial.value, password.value)
+  const resultado = await auth.login(credencial.value, password.value)
 
   if (!resultado.success) {
     cargando.value = false

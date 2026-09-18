@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <q-page class="q-pa-lg">
     <!-- Encabezado -->
     <div class="row items-center justify-between q-mb-lg">
@@ -183,10 +183,13 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useQuasar } from 'quasar'
+import api from '../services/api'
+import { useAuthStore } from '../stores/authStore.js'
 
 const $q = useQuasar()
+const auth = useAuthStore()
 
 const columns = [
   {
@@ -225,16 +228,7 @@ const columns = [
   },
 ]
 
-const rows = ref([
-  {
-    documento: '1098765432',
-    nombre: 'Paula Valentina Rache',
-    correo: 'paula.rache@sena.edu.co',
-    telefono: '3100000000',
-    rol: 'Administrador',
-  },
-])
-
+const rows = ref([])
 const filtro = ref('')
 const dialogo = ref(false)
 const dialogoEliminar = ref(false)
@@ -242,6 +236,7 @@ const documentoEliminar = ref('')
 const editando = ref(false)
 const indiceEditar = ref(null)
 const mostrarPassword = ref(false)
+const cargando = ref(false)
 
 const roles = ['Administrador', 'Supervisor', 'Responsable de Área', 'Contratista']
 
@@ -254,7 +249,47 @@ const usuario = ref({
   password: '',
 })
 
-function guardarUsuario() {
+function normalizarRolParaBackend(rolUI) {
+  if (rolUI === 'Responsable de Área') return 'ResponsableArea'
+  return rolUI || 'Contratista'
+}
+
+function normalizarRolParaUI(rolBackend) {
+  if (rolBackend === 'ResponsableArea' || rolBackend === 'RESPONSABLE_AREA') return 'Responsable de Área'
+  if (rolBackend === 'ADMINISTRADOR') return 'Administrador'
+  if (rolBackend === 'SUPERVISOR') return 'Supervisor'
+  if (rolBackend === 'CONTRATISTA') return 'Contratista'
+  return rolBackend || 'Contratista'
+}
+
+async function cargarUsuarios() {
+  cargando.value = true
+  try {
+    const resp = await api.get('/usuarios')
+    if (Array.isArray(resp.data)) {
+      rows.value = resp.data.map((u) => ({
+        id: u._id || u.id,
+        documento: u.documento || u.telefono || '—',
+        nombre: u.nombre_completo || u.nombre || '—',
+        correo: u.correo_institucional || u.correo || '—',
+        telefono: u.telefono || '—',
+        rol: normalizarRolParaUI(u.rol),
+      }))
+    }
+  } catch (err) {
+    console.warn('Error al cargar usuarios desde Atlas:', err)
+  } finally {
+    cargando.value = false
+  }
+}
+
+onMounted(() => {
+  cargarUsuarios()
+})
+
+async function guardarUsuario() {
+  const rolBackend = normalizarRolParaBackend(usuario.value.rol)
+
   if (!editando.value) {
     const existeDocumento = rows.value.some((item) => item.documento === usuario.value.documento)
 
@@ -267,31 +302,52 @@ function guardarUsuario() {
     }
   }
 
-  if (editando.value) {
-    rows.value[indiceEditar.value] = {
-      documento: usuario.value.documento,
-      nombre: usuario.value.nombre,
-      correo: usuario.value.correo,
-      telefono: usuario.value.telefono,
-      rol: usuario.value.rol,
+  try {
+    if (editando.value) {
+      const uEditado = rows.value[indiceEditar.value]
+      if (uEditado?.id) {
+        await api.patch(`/usuarios/${uEditado.id}`, {
+          nombre_completo: usuario.value.nombre,
+          telefono: usuario.value.telefono,
+          rol: rolBackend,
+        })
+      }
+      $q.notify({
+        type: 'positive',
+        message: 'Usuario actualizado correctamente en MongoDB Atlas.',
+      })
+    } else {
+      // Guardar en MongoDB Atlas
+      await api.post('/usuarios', {
+        nombre: usuario.value.nombre,
+        nombre_completo: usuario.value.nombre,
+        correo: usuario.value.correo,
+        correo_institucional: usuario.value.correo,
+        documento: usuario.value.documento,
+        telefono: usuario.value.telefono,
+        rol: rolBackend,
+        password: usuario.value.password || '12345678',
+      })
+
+      // Registrar para inicio de sesión local también
+      auth.registrarUsuarioLocal({
+        nombre: usuario.value.nombre,
+        correo: usuario.value.correo,
+        password: usuario.value.password || '123',
+        rol: rolBackend.toUpperCase(),
+      })
+
+      $q.notify({
+        type: 'positive',
+        message: 'Usuario registrado exitosamente en MongoDB Atlas.',
+      })
     }
-
+    await cargarUsuarios()
+  } catch (err) {
+    console.error('Error al guardar en MongoDB Atlas:', err)
     $q.notify({
-      type: 'positive',
-      message: 'Usuario actualizado correctamente.',
-    })
-  } else {
-    rows.value.push({
-      documento: usuario.value.documento,
-      nombre: usuario.value.nombre,
-      correo: usuario.value.correo,
-      telefono: usuario.value.telefono,
-      rol: usuario.value.rol,
-    })
-
-    $q.notify({
-      type: 'positive',
-      message: 'Usuario registrado correctamente.',
+      type: 'negative',
+      message: err.response?.data?.mensaje || 'Error al guardar usuario en base de datos.',
     })
   }
 
@@ -315,13 +371,22 @@ function eliminarUsuario(documento) {
   dialogoEliminar.value = true
 }
 
-function confirmarEliminar() {
-  rows.value = rows.value.filter((u) => u.documento !== documentoEliminar.value)
+async function confirmarEliminar() {
+  try {
+    await api.delete(`/usuarios/${documentoEliminar.value}`)
+    $q.notify({
+      type: 'info',
+      message: 'Usuario eliminado correctamente de MongoDB Atlas.',
+    })
+    await cargarUsuarios()
+  } catch (err) {
+    console.error('Error al eliminar:', err)
+    $q.notify({
+      type: 'negative',
+      message: 'Error al eliminar usuario en base de datos.',
+    })
+  }
   dialogoEliminar.value = false
-  $q.notify({
-    type: 'info',
-    message: 'Usuario eliminado.',
-  })
 }
 
 function cancelar() {

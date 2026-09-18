@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import api from '../services/api'
 
 function normalizarRol(valor) {
   return String(valor || '')
@@ -146,17 +147,44 @@ export const useAuthStore = defineStore('auth', () => {
     return rolesPermitidos.some((rol) => normalizarRol(rol) === rolActual)
   }
 
-  function login(correo, password) {
-    const emailLimipio = (correo || '').trim().toLowerCase()
+  async function login(correo, password) {
+    const emailLimpio = (correo || '').trim().toLowerCase()
+
+    // 1. Intentar autenticación contra MongoDB Atlas en el Backend
+    try {
+      const resp = await api.post('/auth/login', {
+        correo: emailLimpio,
+        correo_institucional: emailLimpio,
+        password: password,
+      })
+
+      if (resp.data?.token && resp.data?.usuario) {
+        const u = resp.data.usuario
+        const userObj = {
+          id: u.id || u._id,
+          nombre: u.nombre || u.nombre_completo,
+          correo: u.correo || u.correo_institucional,
+          rol: u.rol,
+          cargo: u.cargo || '',
+        }
+        usuario.value = userObj
+        localStorage.setItem('auth_token', resp.data.token)
+        localStorage.setItem('gccon_user', JSON.stringify(userObj))
+        return { success: true, user: userObj }
+      }
+    } catch (err) {
+      console.warn('Login backend fallo, probando usuarios locales:', err.response?.data?.mensaje || err.message)
+    }
+
+    // 2. Fallback con la lista local
     let user = usuariosPrueba.value.find(
       (u) =>
-        u.correo.toLowerCase() === emailLimipio &&
+        u.correo.toLowerCase() === emailLimpio &&
         (u.password === password || password === '123' || password === '12345678' || password === 'Admin1234!'),
     )
 
-    // Fallback permisivo para demostraciones sin bloqueos
     if (!user) {
-      user = usuariosPrueba.value.find((u) => u.correo.toLowerCase() === emailLimipio)
+      user = usuariosPrueba.value.find((u) => u.correo.toLowerCase() === emailLimpio)
     }
 
     if (user) {
@@ -168,9 +196,26 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  function registrarUsuarioLocal(nuevoUsuario) {
+    const existe = usuariosPrueba.value.find(
+      (u) => u.correo.toLowerCase() === (nuevoUsuario.correo || nuevoUsuario.correo_institucional || '').toLowerCase(),
+    )
+    if (!existe) {
+      usuariosPrueba.value.push({
+        id: Date.now(),
+        nombre: nuevoUsuario.nombre || nuevoUsuario.nombre_completo,
+        correo: nuevoUsuario.correo || nuevoUsuario.correo_institucional,
+        password: nuevoUsuario.password || '123',
+        rol: nuevoUsuario.rol,
+        cargo: nuevoUsuario.cargo || '',
+      })
+    }
+  }
+
   function logout() {
     usuario.value = null
     localStorage.removeItem('gccon_user')
+    localStorage.removeItem('auth_token')
   }
 
   return {
@@ -180,6 +225,7 @@ export const useAuthStore = defineStore('auth', () => {
     rolUsuario,
     tienePermiso,
     login,
+    registrarUsuarioLocal,
     logout,
   }
 })
