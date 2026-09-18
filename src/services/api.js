@@ -1,4 +1,4 @@
-﻿import axios from 'axios'
+import axios from 'axios'
 
 /*
  * Cliente HTTP central para consumir la API de Paz y Salvo (backend_paz_y_salvo).
@@ -6,7 +6,7 @@
  * - Expulsa al usuario (limpia sesión) cuando el token expira (HTTP 401).
  */
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
 const api = axios.create({
   baseURL: API_URL,
