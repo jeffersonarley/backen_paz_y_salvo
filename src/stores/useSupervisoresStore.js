@@ -53,8 +53,13 @@ export const useSupervisoresStore = defineStore('supervisores', () => {
         }))
 
         const mapa = new Map()
-        supervisoresBase.forEach((s) => mapa.set(s.correo.toLowerCase(), s))
+        // MongoDB Atlas primero para que los nuevos queden arriba
         desdeAtlas.forEach((s) => mapa.set(s.correo.toLowerCase(), s))
+        supervisoresBase.forEach((s) => {
+          if (!mapa.has(s.correo.toLowerCase())) {
+            mapa.set(s.correo.toLowerCase(), s)
+          }
+        })
         supervisores.value = Array.from(mapa.values())
       }
     } catch (err) {
@@ -68,7 +73,7 @@ export const useSupervisoresStore = defineStore('supervisores', () => {
   cargarSupervisores()
 
   async function agregar(nuevo) {
-    supervisores.value.push({ ...nuevo })
+    supervisores.value.unshift({ ...nuevo })
 
     try {
       await api.post('/usuarios', {

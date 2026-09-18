@@ -69,8 +69,13 @@ export const useContratistasStore = defineStore('contratistas', () => {
         }))
 
         const mapa = new Map()
-        contratistasBase.forEach((c) => mapa.set(c.correo.toLowerCase(), c))
+        // MongoDB Atlas primero para que los nuevos queden arriba
         desdeAtlas.forEach((c) => mapa.set(c.correo.toLowerCase(), c))
+        contratistasBase.forEach((c) => {
+          if (!mapa.has(c.correo.toLowerCase())) {
+            mapa.set(c.correo.toLowerCase(), c)
+          }
+        })
         contratistas.value = Array.from(mapa.values())
       }
     } catch (err) {
@@ -84,8 +89,8 @@ export const useContratistasStore = defineStore('contratistas', () => {
   cargarContratistas()
 
   async function agregar(nuevoContratista) {
-    // 1. Agregar a la lista reactiva inmediatamente
-    contratistas.value.push({ ...nuevoContratista })
+    // 1. Agregar a la lista reactiva inmediatamente arriba
+    contratistas.value.unshift({ ...nuevoContratista })
 
     // 2. Guardar en MongoDB Atlas
     try {
