@@ -1,0 +1,9 @@
+const express = require('express');
+const router = express.Router();
+const supervisionController = require('../controller/supervisionController');
+const { verificarToken, verificarRol } = require('../middlewares/authMiddleware');
+
+// Endpoint del Diagrama 3 (exclusivo Supervisor)
+router.put('/evaluar/:id', verificarToken, verificarRol('Supervisor'), supervisionController.evaluarContrato);
+
+module.exports = router;
