@@ -38,9 +38,12 @@
       :rows="rows"
       :columns="columns"
       :filter="filtro"
-      row-key="numeroSolicitud"
+      row-key="id"
       flat
       bordered
+      :loading="store.cargando"
+      :rows-per-page-options="[10, 25, 50, 0]"
+      :pagination="{ rowsPerPage: 25 }"
       no-data-label="No hay solicitudes registradas"
       no-results-label="No se encontraron coincidencias"
     >
@@ -200,7 +203,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useQuasar } from 'quasar'
 import { useRouter } from 'vue-router'
 import { useSolicitudesStore } from '../stores/useSolicitudesStore.js'
@@ -210,6 +213,12 @@ const $q = useQuasar()
 const router = useRouter()
 const store = useSolicitudesStore()
 const auth = useAuthStore()
+
+onMounted(() => {
+  if (store.cargarSolicitudes) {
+    store.cargarSolicitudes()
+  }
+})
 
 const puedeFirmar = computed(() => auth.tienePermiso(['RESPONSABLE_AREA']))
 

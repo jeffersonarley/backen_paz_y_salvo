@@ -1,8 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import api from '../services/api'
 
 export const useSolicitudesStore = defineStore('solicitudes', () => {
-  const solicitudes = ref([
+  const solicitudesBase = [
     {
       id: 'SOL-2026-001',
       numeroSolicitud: 'SOL-2026-001',
@@ -156,15 +157,91 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
         },
       ],
     },
-  ])
+  ]
 
-  function agregarSolicitud(nuevaSolicitud) {
-    // Asegurarnos de que tenga un id o numeroSolicitud unificado
+  const solicitudes = ref([...solicitudesBase])
+  const cargando = ref(false)
+
+  async function cargarSolicitudes() {
+    cargando.value = true
+    try {
+      const resp = await api.get('/contratos')
+      const lista = Array.isArray(resp.data) ? resp.data : (resp.data?.contratos || [])
+      if (Array.isArray(lista) && lista.length > 0) {
+        const desdeAtlas = lista.map((c, idx) => {
+          const num = c.numero_contrato || `CNT-${idx + 1}`
+          const nom = c.nombre_contratista || c.usuario?.nombre_completo || 'Contratista'
+          const dep = c.dependencia?.nombre_dependencia || (typeof c.dependencia === 'string' ? c.dependencia : 'Gestión Tecnológica')
+          const sup = c.supervisor?.nombre_completo || 'Supervisor Asignado'
+          const fch = c.createdAt ? new Date(c.createdAt).toISOString().split('T')[0] : '2026-09-17'
+          const est = c.estado === 'EnProceso' ? 'En revisión' : (c.estado || 'Pendiente')
+
+          return {
+            _id: c._id,
+            id: num,
+            numeroSolicitud: `SOL-${String(num).replace(/\D/g, '').slice(-4).padStart(4, '0') || '00' + (idx + 1)}`,
+            documentoContratista: c.telefono || '—',
+            contratista: nom,
+            nombreContratista: nom,
+            numeroContrato: num,
+            dependencia: dep,
+            responsable: sup,
+            fecha: fch,
+            fechaSolicitud: fch,
+            estado: est,
+            firmas: [
+              {
+                dependenciaCodigo: 'DEP-01',
+                dependenciaNombre: dep,
+                firmada: est === 'Firmado' || est === 'Finalizado',
+                fechaFirma: est === 'Firmado' || est === 'Finalizado' ? fch : null,
+              }
+            ]
+          }
+        })
+
+        const mapa = new Map()
+        // Priorizar contratos de Atlas al inicio
+        desdeAtlas.forEach((s) => mapa.set((s.numeroContrato || s.id).toLowerCase(), s))
+        solicitudesBase.forEach((s) => {
+          if (!mapa.has((s.numeroContrato || s.id).toLowerCase())) {
+            mapa.set((s.numeroContrato || s.id).toLowerCase(), s)
+          }
+        })
+        solicitudes.value = Array.from(mapa.values())
+      }
+    } catch (err) {
+      console.warn('Cargando solicitudes locales:', err.message)
+    } finally {
+      cargando.value = false
+    }
+  }
+
+  cargarSolicitudes()
+
+  async function agregarSolicitud(nuevaSolicitud) {
     const solicitudAInsertar = {
       ...nuevaSolicitud,
       id: nuevaSolicitud.numeroSolicitud || nuevaSolicitud.id || `SOL-2026-${Date.now()}`,
     }
-    solicitudes.value.push(solicitudAInsertar)
+    solicitudes.value.unshift(solicitudAInsertar)
+    try {
+      await api.post('/contratos', {
+        numero: nuevaSolicitud.numeroContrato || `CNT-${Date.now().toString().slice(-4)}`,
+        telefono: nuevaSolicitud.telefono || '3001234567',
+        dependencia: nuevaSolicitud.dependencia || 'Sistemas e Informática',
+        bienes: [
+          {
+            descripcion: 'Equipo de cómputo y accesorios de oficina',
+            codigo_inventario: `INV-${Date.now().toString().slice(-4)}`,
+            estado_bien: 'Bueno'
+          }
+        ]
+      })
+      await cargarSolicitudes()
+    } catch (err) {
+      console.warn('Registro de contrato local en fallback:', err.message)
+    }
   }
 
   function actualizarSolicitud(idBusqueda, datosActualizados) {
@@ -179,10 +256,20 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
     }
   }
 
-  function eliminarSolicitud(idBusqueda) {
+  async function eliminarSolicitud(idBusqueda) {
+    const sol = solicitudes.value.find(
+      (s) => (s.id || s.numeroSolicitud || s.solicitud || s.numeroContrato) === idBusqueda,
+    )
     solicitudes.value = solicitudes.value.filter(
       (s) => (s.id || s.numeroSolicitud || s.solicitud || s.numeroContrato) !== idBusqueda,
     )
+    if (sol?._id) {
+      try {
+        await api.delete(`/contratos/${sol._id}`)
+      } catch (err) {
+        console.warn('Eliminación local:', err.message)
+      }
+    }
   }
 
   function registrarFirma(idSolicitud, codigoDependencia) {
@@ -217,6 +304,8 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
 
   return {
     solicitudes,
+    cargando,
+    cargarSolicitudes,
     agregarSolicitud,
     actualizarSolicitud,
     eliminarSolicitud,

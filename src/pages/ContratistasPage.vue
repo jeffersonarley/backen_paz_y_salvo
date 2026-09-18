@@ -43,6 +43,8 @@
       row-key="id"
       flat
       bordered
+      :rows-per-page-options="[10, 25, 50, 0]"
+      :pagination="{ rowsPerPage: 25 }"
       no-data-label="No hay contratistas registrados"
       no-results-label="No se encontraron coincidencias"
     >
