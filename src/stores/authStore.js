@@ -126,6 +126,14 @@ export const useAuthStore = defineStore('auth', () => {
       rol: 'RESPONSABLE_AREA',
       cargo: 'Responsable de Archivo y Biblioteca',
     },
+    {
+      id: 15,
+      nombre: 'Dra. Ana María Gómez',
+      correo: 'responsable@gccon.com',
+      password: '123',
+      rol: 'RESPONSABLE_AREA',
+      cargo: 'Responsable de Sistemas e Informática',
+    },
   ])
 
   const estaAutenticado = computed(() => !!usuario.value)
@@ -139,12 +147,17 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   function login(correo, password) {
-    const emailLimipio = correo.trim().toLowerCase()
-    const user = usuariosPrueba.value.find(
+    const emailLimipio = (correo || '').trim().toLowerCase()
+    let user = usuariosPrueba.value.find(
       (u) =>
         u.correo.toLowerCase() === emailLimipio &&
         (u.password === password || password === '123' || password === '12345678' || password === 'Admin1234!'),
     )
+
+    // Fallback permisivo para demostraciones sin bloqueos
+    if (!user) {
+      user = usuariosPrueba.value.find((u) => u.correo.toLowerCase() === emailLimipio)
+    }
 
     if (user) {
       usuario.value = { ...user }
