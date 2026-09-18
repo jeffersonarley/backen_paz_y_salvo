@@ -1,4 +1,4 @@
-﻿const routes = [
+const routes = [
   // Ruta pública de inicio de sesión
   {
     path: '/login',
@@ -49,6 +49,12 @@
         meta: { titulo: 'Usuarios', roles: ['ADMINISTRADOR'] },
       },
       {
+        path: 'supervisores',
+        name: 'supervisores',
+        component: () => import('@/pages/SupervisoresPage.vue'),
+        meta: { titulo: 'Supervisores', roles: ['ADMINISTRADOR'] },
+      },
+      {
         path: 'contratistas',
         name: 'contratistas',
         component: () => import('@/pages/ContratistasPage.vue'),
@@ -93,7 +99,7 @@
         component: () => import('@/pages/FirmasPage.vue'),
         meta: {
           titulo: 'Gestionar Firmas',
-          roles: ['ADMINISTRADOR', 'SUPERVISOR', 'RESPONSABLE_AREA'],
+          roles: ['RESPONSABLE_AREA'],
         },
       },
       {

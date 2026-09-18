@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <q-layout view="lHh Lpr lFf">
     <!-- Barra superior (con print-hide para que no salga al imprimir) -->
     <q-header elevated class="bg-primary text-white print-hide">
@@ -143,6 +143,14 @@ const menuBase = [
     roles: ['ADMINISTRADOR'],
   },
   {
+    name: 'supervisores',
+    label: 'Supervisores',
+    to: { name: 'supervisores' },
+    icon: 'supervisor_account',
+    exact: false,
+    roles: ['ADMINISTRADOR'],
+  },
+  {
     name: 'contratistas',
     label: 'Contratistas',
     to: { name: 'contratistas' },
@@ -172,7 +180,7 @@ const menuBase = [
     to: { name: 'firmas' },
     icon: 'draw',
     exact: false,
-    roles: ['ADMINISTRADOR', 'SUPERVISOR', 'RESPONSABLE_AREA'],
+    roles: ['RESPONSABLE_AREA'],
   },
 ]
 

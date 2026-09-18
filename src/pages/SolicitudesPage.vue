@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <q-page class="q-pa-lg">
     <!-- Encabezado -->
     <div class="row items-center justify-between q-mb-lg">
@@ -56,6 +56,18 @@
       <!-- Columna de Acciones -->
       <template #body-cell-acciones="props">
         <q-td :props="props" class="q-gutter-xs text-center">
+          <q-btn
+            v-if="esResponsableArea"
+            flat
+            round
+            dense
+            color="positive"
+            icon="draw"
+            @click="irAFirmar(props.row)"
+          >
+            <q-tooltip>Firmar / Pegar Firma</q-tooltip>
+          </q-btn>
+
           <q-btn
             flat
             round
@@ -192,10 +204,14 @@ import { ref, computed } from 'vue'
 import { useQuasar } from 'quasar'
 import { useRouter } from 'vue-router'
 import { useSolicitudesStore } from '../stores/useSolicitudesStore.js'
+import { useAuthStore } from '../stores/authStore.js'
 
 const $q = useQuasar()
 const router = useRouter()
 const store = useSolicitudesStore()
+const auth = useAuthStore()
+
+const esResponsableArea = computed(() => auth.tienePermiso(['RESPONSABLE_AREA']))
 
 const OPCIONES_ESTADO = ['Pendiente', 'En revisión', 'Firmado', 'Rechazado', 'Finalizado']
 
@@ -279,6 +295,15 @@ function obtenerColorEstado(estado) {
     default:
       return 'warning'
   }
+}
+
+function irAFirmar(fila) {
+  const codigo =
+    fila.numeroSolicitud || fila.solicitud || fila.codigo || fila.numeroContrato || fila.contrato
+  router.push({
+    name: 'firmas',
+    query: { codigo: codigo },
+  })
 }
 
 function verCertificado(fila) {
