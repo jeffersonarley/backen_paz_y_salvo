@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <q-page class="q-pa-lg">
     <div class="row items-center justify-between q-mb-lg">
       <div>
@@ -317,7 +317,7 @@ async function cargar() {
       contratista: c.nombre_contratista,
       dependencia: c.dependencia?.nombre_dependencia || '—',
       fecha: c.createdAt ? new Date(c.createdAt).toLocaleDateString('es-CO') : '—',
-      estado: c.estado,
+      estado: (c.estado === 'Pendiente de Firmas' || c.estado === 'EnProceso') ? 'En revisión' : c.estado,
     }))
   } catch (error) {
     $q.notify({
@@ -396,8 +396,8 @@ function badgeColor(estado) {
       return 'green-1'
     case 'Rechazado':
       return 'red-1'
+    case 'En revisión':
     case 'Pendiente de Firmas':
-      return 'yellow-1'
     case 'EnProceso':
       return 'light-blue-1'
     default:
@@ -412,8 +412,8 @@ function badgeText(estado) {
       return 'green-9'
     case 'Rechazado':
       return 'red-9'
+    case 'En revisión':
     case 'Pendiente de Firmas':
-      return 'yellow-9'
     case 'EnProceso':
       return 'light-blue-9'
     default:
