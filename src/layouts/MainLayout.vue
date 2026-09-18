@@ -183,7 +183,7 @@ const menuBase = [
     to: { name: 'firmas' },
     icon: 'draw',
     exact: false,
-    roles: ['ADMINISTRADOR', 'SUPERVISOR', 'RESPONSABLE_AREA'],
+    roles: ['RESPONSABLE_AREA'],
   },
 ]
 

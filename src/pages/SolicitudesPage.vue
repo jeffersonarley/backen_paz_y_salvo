@@ -211,7 +211,7 @@ const router = useRouter()
 const store = useSolicitudesStore()
 const auth = useAuthStore()
 
-const puedeFirmar = computed(() => auth.tienePermiso(['ADMINISTRADOR', 'RESPONSABLE_AREA', 'SUPERVISOR']))
+const puedeFirmar = computed(() => auth.tienePermiso(['RESPONSABLE_AREA']))
 
 const OPCIONES_ESTADO = ['Pendiente', 'En revisión', 'Firmado', 'Rechazado', 'Finalizado']
 
