@@ -219,7 +219,7 @@ const columns = [
   },
 ]
 
-function guardarSupervisor() {
+async function guardarSupervisor() {
   if (!editando.value) {
     const existeDocumento = store.supervisores.some(
       (item) => item.documento === supervisor.value.documento,

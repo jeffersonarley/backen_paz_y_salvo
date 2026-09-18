@@ -220,7 +220,7 @@ const columns = [
   },
 ]
 
-function guardarContratista() {
+async function guardarContratista() {
   const lista = store.contratistas
 
   if (!editando.value) {
