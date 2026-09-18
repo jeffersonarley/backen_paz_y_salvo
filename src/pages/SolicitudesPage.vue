@@ -57,7 +57,7 @@
       <template #body-cell-acciones="props">
         <q-td :props="props" class="q-gutter-xs text-center">
           <q-btn
-            v-if="esResponsableArea"
+            v-if="puedeFirmar"
             flat
             round
             dense
@@ -211,7 +211,7 @@ const router = useRouter()
 const store = useSolicitudesStore()
 const auth = useAuthStore()
 
-const esResponsableArea = computed(() => auth.tienePermiso(['RESPONSABLE_AREA']))
+const puedeFirmar = computed(() => auth.tienePermiso(['ADMINISTRADOR', 'RESPONSABLE_AREA', 'SUPERVISOR']))
 
 const OPCIONES_ESTADO = ['Pendiente', 'En revisión', 'Firmado', 'Rechazado', 'Finalizado']
 
