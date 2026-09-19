@@ -1,26 +1,54 @@
 <template>
   <q-page class="q-pa-lg">
-    <div class="text-h4 text-weight-bold text-grey-9 q-mb-lg">Notificaciones</div>
+    <div class="row items-center justify-between q-mb-lg">
+      <div>
+        <div class="text-h4 text-weight-bold text-grey-9">Notificaciones del Sistema</div>
+        <div class="text-subtitle1 text-grey-7">
+          Eventos automáticos de radicación, revisiones, firmas y finalización de trámites
+        </div>
+      </div>
+      <q-btn
+        flat
+        round
+        icon="refresh"
+        color="primary"
+        @click="cargar"
+        :loading="cargando"
+      >
+        <q-tooltip>Actualizar notificaciones</q-tooltip>
+      </q-btn>
+    </div>
 
-    <q-card flat bordered class="bg-white q-pa-md">
-      <q-list v-if="items.length" separator>
-        <q-item v-for="(n, i) in items" :key="i" dense>
+    <q-card flat bordered class="bg-white q-pa-md shadow-1 rounded-borders">
+      <div v-if="cargando" class="text-center q-pa-xl">
+        <q-spinner-dots color="primary" size="40px" />
+        <div class="text-caption text-grey-6 q-mt-sm">Cargando eventos...</div>
+      </div>
+
+      <q-list v-else-if="items.length" separator>
+        <q-item v-for="(n, i) in items" :key="i" class="q-py-md">
           <q-item-section avatar>
             <div class="notif-icono" :style="{ background: n.bg, color: n.color }">
               <q-icon :name="n.icono" size="24px" />
             </div>
           </q-item-section>
           <q-item-section>
-            <q-item-label class="text-body1">{{ n.titulo }}</q-item-label>
-            <q-item-label caption>{{ n.descripcion }}</q-item-label>
+            <div class="row items-center q-gutter-x-sm">
+              <span class="text-weight-bold text-body1 text-grey-9">{{ n.titulo }}</span>
+              <q-badge v-if="n.badge" :color="n.badgeColor || 'primary'" :label="n.badge" />
+            </div>
+            <q-item-label caption class="text-grey-8 q-mt-xs">{{ n.descripcion }}</q-item-label>
           </q-item-section>
-          <q-item-section side>
+          <q-item-section side top>
             <span class="text-caption text-grey-6">{{ n.cuando }}</span>
           </q-item-section>
         </q-item>
       </q-list>
-      <div v-else class="text-grey-6 q-pa-lg text-center">
-        No hay notificaciones por el momento.
+
+      <div v-else class="text-grey-6 q-pa-xl text-center">
+        <q-icon name="notifications_off" size="48px" color="grey-4" class="q-mb-sm" />
+        <div class="text-body1 text-weight-medium">No hay notificaciones pendientes</div>
+        <div class="text-caption text-grey-5">Los eventos generados por tus trámites aparecerán aquí automáticamente.</div>
       </div>
     </q-card>
   </q-page>
@@ -30,78 +58,147 @@
 import { ref, onMounted } from 'vue'
 import api from '../services/api'
 import { useAuthStore } from '../stores/authStore'
+import { useSolicitudesStore } from '../stores/useSolicitudesStore'
 
 const auth = useAuthStore()
+const solicitudesStore = useSolicitudesStore()
 const items = ref([])
+const cargando = ref(false)
 
 onMounted(cargar)
 
 async function cargar() {
-  const tareas = []
-  if (['Administrador', 'Supervisor'].includes(auth.rol)) {
-    tareas.push(api.get('/api/usuarios').catch(() => []))
-  }
-  const url = auth.rol === 'Contratista' ? '/api/contratos/mis-solicitudes' : '/api/contratos'
-  tareas.push(api.get(url).catch(() => []))
-
-  const [usuariosResp, contratosResp] = await Promise.all(tareas)
-  const contratos = contratosResp?.data || []
-
+  cargando.value = true
+  const rol = auth.rolUsuario // 'ADMINISTRADOR', 'SUPERVISOR', 'RESPONSABLE_AREA', 'CONTRATISTA'
   const lista = []
 
-  contratos.forEach((c) => {
-    if (c.estado === 'En revisión' || c.estado === 'Pendiente de Firmas' || c.estado === 'EnProceso') {
-      lista.push({
-        icono: 'assignment',
-        bg: '#fff8e1',
-        color: '#f9a825',
-        titulo: 'Nueva solicitud asignada',
-        descripcion: `Solicitud ${c.numero_contrato} asignada para su trámite`,
-        cuando: hace(c.createdAt),
-      })
-    }
-    if (c.estado === 'Finalizado') {
-      lista.push({
-        icono: 'check_circle',
-        bg: '#e8f5e9',
-        color: '#2e7d32',
-        titulo: 'Solicitud firmada',
-        descripcion: `La solicitud ${c.numero_contrato} ha sido firmada`,
-        cuando: hace(c.updatedAt),
-      })
-    }
-    if (c.estado === 'Rechazado') {
-      lista.push({
-        icono: 'edit_note',
-        bg: '#fff3e0',
-        color: '#ef6c00',
-        titulo: 'Observación registrada',
-        descripcion: `Se registró una observación en la solicitud ${c.numero_contrato}`,
-        cuando: hace(c.updatedAt),
-      })
-    }
-  })
+  try {
+    // 1. Obtener solicitudes del store / backend
+    await solicitudesStore.cargarSolicitudes()
+    const solicitudes = solicitudesStore.solicitudes || []
 
-  const usuarios = usuariosResp?.data || []
-  usuarios.forEach((u) => {
-    lista.push({
-      icono: 'group_add',
-      bg: '#eee',
-      color: '#333',
-      titulo: 'Nuevo usuario creado',
-      descripcion: `Se ha creado el usuario ${u.correo_institucional}`,
-      cuando: hace(u.createdAt),
+    // 2. Si es Administrador o Supervisor, consultar usuarios registrados
+    let usuarios = []
+    if (rol === 'ADMINISTRADOR' || rol === 'SUPERVISOR') {
+      try {
+        const respU = await api.get('/usuarios')
+        usuarios = Array.isArray(respU.data) ? respU.data : (respU.data?.usuarios || [])
+      } catch {
+        usuarios = []
+      }
+    }
+
+    // 3. Generar notificaciones según el rol y los estados de cada trámite
+    solicitudes.forEach((c) => {
+      const num = c.numeroContrato || c.numeroSolicitud || c.id
+      const contratista = c.nombreContratista || c.contratista || 'Contratista'
+      const fecha = c.fecha || c.fechaSolicitud || c.updatedAt || c.createdAt
+
+      if (c.estado === 'En revisión' || c.estado === 'En revision') {
+        if (rol === 'CONTRATISTA') {
+          lista.push({
+            icono: 'hourglass_top',
+            bg: '#e3f2fd',
+            color: '#1565c0',
+            badge: 'En revisión',
+            badgeColor: 'blue-8',
+            titulo: 'Solicitud radicada con éxito',
+            descripcion: `Tu solicitud ${num} fue recibida por el sistema y se encuentra en revisión de paz y salvo por las dependencias.`,
+            cuando: hace(fecha),
+          })
+        } else if (rol === 'RESPONSABLE_AREA') {
+          lista.push({
+            icono: 'edit_calendar',
+            bg: '#fff8e1',
+            color: '#f57f17',
+            badge: 'Pendiente Firma',
+            badgeColor: 'amber-9',
+            titulo: 'Pendiente de firma de área',
+            descripcion: `El contrato ${num} (${contratista}) requiere tu verificación de inventario y firma digital.`,
+            cuando: hace(fecha),
+          })
+        } else {
+          // Administrador / Supervisor
+          lista.push({
+            icono: 'assignment',
+            bg: '#fff8e1',
+            color: '#f57f17',
+            badge: 'Radicado',
+            badgeColor: 'amber-9',
+            titulo: 'Nueva solicitud asignada',
+            descripcion: `Solicitud ${num} de ${contratista} en trámite de firmas y revisión.`,
+            cuando: hace(fecha),
+          })
+        }
+      }
+
+      if (c.estado === 'Firmado') {
+        lista.push({
+          icono: 'draw',
+          bg: '#e8f5e9',
+          color: '#2e7d32',
+          badge: 'Firmado',
+          badgeColor: 'green-8',
+          titulo: 'Firma de paz y salvo estampada',
+          descripcion: `La solicitud ${num} (${contratista}) cuenta con firmas registradas en su formato.`,
+          cuando: hace(fecha),
+        })
+      }
+
+      if (c.estado === 'Finalizado') {
+        lista.push({
+          icono: 'verified',
+          bg: '#e8f5e9',
+          color: '#2e7d32',
+          badge: 'Completado',
+          badgeColor: 'positive',
+          titulo: 'Paz y Salvo finalizado',
+          descripcion: `El contrato ${num} de ${contratista} completó todas las validaciones. El certificado oficial GCCON-F-088 está listo para descarga.`,
+          cuando: hace(fecha),
+        })
+      }
+
+      if (c.estado === 'Rechazado') {
+        lista.push({
+          icono: 'report_problem',
+          bg: '#ffebee',
+          color: '#c62828',
+          badge: 'Observación',
+          badgeColor: 'negative',
+          titulo: 'Observación registrada en trámite',
+          descripcion: `Se registraron observaciones de no paz y salvo en el contrato ${num}. Requiere subsanar pendientes.`,
+          cuando: hace(fecha),
+        })
+      }
     })
-  })
 
-  items.value = lista.filter((n) => n.cuando !== '−').slice(0, 12)
+    // 4. Si es Administrador o Supervisor, añadir alertas de nuevos usuarios
+    usuarios.forEach((u) => {
+      lista.push({
+        icono: 'person_add',
+        bg: '#ede7f6',
+        color: '#512da8',
+        badge: u.rol,
+        badgeColor: 'deep-purple-7',
+        titulo: 'Nuevo usuario registrado',
+        descripcion: `Se habilitó la cuenta de ${u.nombre_completo || u.nombre || u.correo_institucional} con rol ${u.rol}.`,
+        cuando: hace(u.createdAt),
+      })
+    })
+
+    items.value = lista.slice(0, 20)
+  } catch (err) {
+    console.error('Error cargando notificaciones:', err)
+  } finally {
+    cargando.value = false
+  }
 }
 
 function hace(fecha) {
-  if (!fecha) return '—'
+  if (!fecha) return 'reciente'
   const d = new Date(fecha)
   const dif = Date.now() - d.getTime()
-  if (Number.isNaN(dif)) return '—'
+  if (Number.isNaN(dif)) return 'reciente'
   const min = Math.floor(dif / 60000)
   if (min < 1) return 'hace un momento'
   if (min < 60) return `hace ${min} min`
