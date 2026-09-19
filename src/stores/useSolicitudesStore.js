@@ -205,9 +205,17 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
         const mapa = new Map()
         // Priorizar contratos de Atlas al inicio
         desdeAtlas.forEach((s) => mapa.set((s.numeroContrato || s.id).toLowerCase(), s))
+        // Preservar contratos en memoria recién creados
+        solicitudes.value.forEach((s) => {
+          const key = (s.numeroContrato || s.numeroSolicitud || s.id || '').toLowerCase()
+          if (key && !mapa.has(key)) {
+            mapa.set(key, s)
+          }
+        })
         solicitudesBase.forEach((s) => {
-          if (!mapa.has((s.numeroContrato || s.id).toLowerCase())) {
-            mapa.set((s.numeroContrato || s.id).toLowerCase(), s)
+          const key = (s.numeroContrato || s.id).toLowerCase()
+          if (!mapa.has(key)) {
+            mapa.set(key, s)
           }
         })
         solicitudes.value = Array.from(mapa.values())
@@ -222,16 +230,44 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
   cargarSolicitudes()
 
   async function agregarSolicitud(nuevaSolicitud) {
+    const num = nuevaSolicitud.numeroContrato || `CNT-${Date.now().toString().slice(-4)}`
+    const nom = nuevaSolicitud.contratista || nuevaSolicitud.nombreContratista || 'Contratista'
+    const dep = nuevaSolicitud.dependencia || 'Gestión Tecnológica'
+    const sup = nuevaSolicitud.responsable || 'Supervisor Asignado'
+    const fch = nuevaSolicitud.fecha || new Date().toISOString().split('T')[0]
+    const est = nuevaSolicitud.estado || 'En revisión'
+
     const solicitudAInsertar = {
       ...nuevaSolicitud,
-      id: nuevaSolicitud.numeroSolicitud || nuevaSolicitud.id || `SOL-2026-${Date.now()}`,
+      id: nuevaSolicitud.numeroSolicitud || num,
+      numeroSolicitud: nuevaSolicitud.numeroSolicitud || `SOL-${String(num).replace(/\D/g, '').slice(-4).padStart(4, '0')}`,
+      numeroContrato: num,
+      contratista: nom,
+      nombreContratista: nom,
+      dependencia: dep,
+      responsable: sup,
+      fecha: fch,
+      fechaSolicitud: fch,
+      estado: est,
+      firmas: [
+        {
+          dependenciaCodigo: 'DEP-01',
+          dependenciaNombre: dep,
+          firmada: false,
+          fechaFirma: null,
+        }
+      ]
     }
     solicitudes.value.unshift(solicitudAInsertar)
+
     try {
       await api.post('/contratos', {
-        numero: nuevaSolicitud.numeroContrato || `CNT-${Date.now().toString().slice(-4)}`,
-        telefono: nuevaSolicitud.telefono || '3001234567',
-        dependencia: nuevaSolicitud.dependencia || 'Sistemas e Informática',
+        numero: num,
+        contratista: nom,
+        nombre_contratista: nom,
+        telefono: nuevaSolicitud.documentoContratista || nuevaSolicitud.telefono || '3001234567',
+        dependencia: dep,
+        estado: est,
         bienes: [
           {
             descripcion: 'Equipo de cómputo y accesorios de oficina',
@@ -242,7 +278,7 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
       })
       await cargarSolicitudes()
     } catch (err) {
-      console.warn('Registro de contrato local en fallback:', err.message)
+      console.warn('Registro de contrato local en fallback:', err.response?.data?.mensaje || err.message)
     }
   }
 

@@ -38,6 +38,7 @@
       :rows="rows"
       :columns="columns"
       :filter="filtro"
+      :filter-method="metodoFiltro"
       row-key="id"
       flat
       bordered
@@ -288,6 +289,28 @@ const columns = [
     align: 'center',
   },
 ]
+
+function metodoFiltro(filas, termino) {
+  const t = (termino || '').toLowerCase().trim()
+  if (!t) return filas
+  return filas.filter((r) => {
+    const texto = [
+      r.numeroSolicitud,
+      r.solicitud,
+      r.codigo,
+      r.id,
+      r.numeroContrato,
+      r.contrato,
+      r.contratista,
+      r.nombreContratista,
+      r.dependencia,
+      r.responsable,
+      r.documentoContratista,
+      r.estado,
+    ].filter(Boolean).join(' ').toLowerCase()
+    return texto.includes(t)
+  })
+}
 
 function obtenerColorEstado(estado) {
   switch (estado) {
