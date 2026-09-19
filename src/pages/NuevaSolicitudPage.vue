@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <q-page class="q-pa-md bg-grey-2">
     <div class="row q-col-gutter-md justify-center">
       <div class="col-12 col-md-10 col-lg-8">
@@ -139,11 +139,16 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Notify } from 'quasar'
+import { useSolicitudesStore } from '../stores/useSolicitudesStore.js'
+import { useAuthStore } from '../stores/authStore.js'
+import api from '../services/api'
 
 const router = useRouter()
+const store = useSolicitudesStore()
+const auth = useAuthStore()
 const cargando = ref(false)
 
 const form = ref({
@@ -156,57 +161,87 @@ const form = ref({
   adjunto: null,
 })
 
-const opcionesDependencias = [
-  'Centro de Comercio y Servicios',
-  'Centro Industrial y del Desarrollo Tecnológico',
-  'Despacho de Dirección Regional',
-  'Subdirección Centro Agroturístico',
-]
+const opcionesDependencias = ref([
+  'Sistemas e Informática',
+  'Gestión Tecnológica (TIC)',
+  'Almacén e Inventarios',
+  'Recursos Humanos',
+  'Biblioteca y Archivo',
+  'Bienestar al Aprendiz',
+])
 
-const opcionesSupervisores = [
-  { id: 1, nombre: 'Ing. María Alejandra Gómez - Supervisor Técnico' },
-  { id: 2, nombre: 'Arq. Roberto Carlos Silva - Supervisor Infraestructura' },
-  { id: 3, nombre: 'Lic. Claudia Patricia Ruiz - Supervisora Administrativa' },
-]
+const opcionesSupervisores = ref([
+  { id: 'sup-1', nombre: 'Ing. Carlos Supervisor' },
+  { id: 'sup-2', nombre: 'Dra. Ana María Gómez' },
+  { id: 'sup-3', nombre: 'Ing. Fernando Ramírez' },
+])
 
-function guardarSolicitud() {
+onMounted(async () => {
+  try {
+    const [depRes, supRes] = await Promise.allSettled([
+      api.get('/dependencias'),
+      api.get('/usuarios?rol=Supervisor'),
+    ])
+
+    if (depRes.status === 'fulfilled') {
+      const deps = Array.isArray(depRes.value.data) ? depRes.value.data : (depRes.value.data?.dependencias || [])
+      if (deps.length > 0) {
+        opcionesDependencias.value = deps.map((d) => d.nombre_dependencia || d.nombre)
+      }
+    }
+
+    if (supRes.status === 'fulfilled') {
+      const sups = Array.isArray(supRes.value.data) ? supRes.value.data : (supRes.value.data?.usuarios || [])
+      if (sups.length > 0) {
+        opcionesSupervisores.value = sups.map((s) => ({
+          id: s._id || s.id,
+          nombre: s.nombre_completo || s.nombre || 'Supervisor',
+        }))
+      }
+    }
+  } catch (err) {
+    console.warn('Carga de listas para nueva solicitud:', err.message)
+  }
+})
+
+async function guardarSolicitud() {
   cargando.value = true
 
-  // Obtener usuario en sesión
-  const user = JSON.parse(localStorage.getItem('gccon_user') || '{}')
+  const nomContratista = auth.nombre || auth.usuario?.nombre_completo || auth.usuario?.nombre || 'Contratista'
+  const supNombre = typeof form.value.supervisor === 'object' ? form.value.supervisor?.nombre : (form.value.supervisor || 'Supervisor Asignado')
+  const depNombre = typeof form.value.dependencia === 'object' ? (form.value.dependencia?.nombre || form.value.dependencia?.label) : (form.value.dependencia || 'Gestión Tecnológica')
 
-  // Crear objeto de solicitud
   const nuevaSolicitud = {
-    id: `REQ-${Date.now().toString().slice(-4)}`,
     numeroContrato: form.value.numeroContrato,
-    dependencia: form.value.dependencia,
+    contratista: nomContratista,
+    nombreContratista: nomContratista,
+    dependencia: depNombre,
+    responsable: supNombre,
     objeto: form.value.objeto,
     fechaInicio: form.value.fechaInicio,
     fechaFin: form.value.fechaFin,
-    supervisor: form.value.supervisor ? form.value.supervisor.nombre : '',
-    solicitante: user.nombre || 'Contratista',
-    estado: 'Pendiente',
-    fechaCreacion: new Date().toLocaleDateString('es-CO'),
+    fecha: form.value.fechaInicio || new Date().toISOString().split('T')[0],
+    estado: 'En revisión',
   }
 
-  // Guardar en localStorage para persistencia temporal
-  const solicitudes = JSON.parse(localStorage.getItem('gccon_solicitudes') || '[]')
-  solicitudes.unshift(nuevaSolicitud)
-  localStorage.setItem('gccon_solicitudes', JSON.stringify(solicitudes))
-
-  setTimeout(() => {
+  try {
+    await store.agregarSolicitud(nuevaSolicitud)
+    Notify.create({
+      type: 'positive',
+      message: 'Solicitud creada exitosamente y registrada en MongoDB Atlas.',
+      position: 'top-right',
+    })
+    router.push({ name: 'solicitudes' })
+  } catch (err) {
+    console.error('Error al registrar solicitud:', err)
+    Notify.create({
+      type: 'negative',
+      message: 'Error al registrar solicitud: ' + (err.message || ''),
+      position: 'top-right',
+    })
+  } finally {
     cargando.value = false
-    try {
-      Notify.create({
-        type: 'positive',
-        message: 'Solicitud creada exitosamente',
-        position: 'top-right',
-      })
-    } catch {
-      // Ignorar si notify no está disponible
-    }
-    router.push('/app')
-  }, 600)
+  }
 }
 </script>
 
