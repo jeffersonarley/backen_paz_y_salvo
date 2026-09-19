@@ -252,9 +252,13 @@
         <div class="linea-separador-inf"></div>
 
         <div class="zona-firma-inf">
-          <div class="caja-firma-contratista">
+          <div class="caja-firma-contratista cursor-pointer" @click="abrirModalFirma" title="Clic para pegar, cambiar o ajustar el tamaño de tu firma">
             <div v-if="firmaGuardada" class="contenedor-firma-img">
               <img :src="firmaGuardada" alt="Firma del Contratista" class="img-firma-estampada" />
+              <q-tooltip>Clic para editar, agrandar o ajustar tu firma</q-tooltip>
+            </div>
+            <div v-else class="contenedor-firma-placeholder no-print">
+              <q-btn flat dense size="xs" color="primary" icon="add_photo_alternate" label="Clic para firmar aquí" />
             </div>
             <div class="linea-firma-sola"></div>
             <div class="texto-firma-sola">Firma del Contratista</div>
@@ -300,7 +304,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useSolicitudesStore } from '../stores/useSolicitudesStore.js'
 import FirmaCanvas from '../components/FirmaCanvas.vue'
@@ -316,6 +320,13 @@ const canvasRef = ref(null)
 
 function abrirModalFirma() {
   dialogoFirma.value = true
+  if (firmaGuardada.value) {
+    nextTick(() => {
+      if (canvasRef.value && typeof canvasRef.value.cargarDataUrl === 'function') {
+        canvasRef.value.cargarDataUrl(firmaGuardada.value)
+      }
+    })
+  }
 }
 
 function guardarFirmaCertificado() {
@@ -790,7 +801,7 @@ function imprimir() {
 }
 
 .zona-firma-inf {
-  min-height: 65px;
+  min-height: 80px;
   display: flex;
   justify-content: flex-end;
   align-items: flex-end;
@@ -798,13 +809,13 @@ function imprimir() {
 }
 
 .caja-firma-contratista {
-  width: 160px;
+  width: 220px;
   text-align: center;
 }
 
 .contenedor-firma-img {
   width: 100%;
-  height: 48px;
+  height: 65px;
   display: flex;
   justify-content: center;
   align-items: flex-end;
@@ -812,9 +823,14 @@ function imprimir() {
 }
 
 .img-firma-estampada {
-  max-width: 150px;
-  max-height: 46px;
+  max-width: 210px;
+  max-height: 62px;
   object-fit: contain;
+  transition: transform 0.15s ease;
+}
+
+.caja-firma-contratista:hover .img-firma-estampada {
+  transform: scale(1.04);
 }
 
 .valor-dato {
