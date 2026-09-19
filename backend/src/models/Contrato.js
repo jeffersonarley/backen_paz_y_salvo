@@ -27,6 +27,24 @@ const contratoSchema = new mongoose.Schema({
         ref: 'DependenciaArea',
         required: [true, 'La dependencia es obligatoria']
     },
+    objeto_contractual: {
+        type: String,
+        trim: true,
+        default: null
+    },
+    fecha_inicio: {
+        type: Date,
+        default: null
+    },
+    fecha_fin: {
+        type: Date,
+        default: null
+    },
+    adjunto_nombre: {
+        type: String,
+        trim: true,
+        default: null
+    },
     usuario: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Usuario',

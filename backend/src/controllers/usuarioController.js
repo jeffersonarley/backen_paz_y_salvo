@@ -71,6 +71,10 @@ exports.obtenerUsuarios = asyncHandler(async (req, res) => {
         filtro.supervisor_id = usuarioIdActual(req);
     }
 
+    if (req.query.rol) {
+        filtro.rol = { $regex: `^${req.query.rol}$`, $options: 'i' };
+    }
+
     const usuarios = await Usuario.find(filtro, '-password_hash -token_recuperacion -token_expiracion');
     res.status(200).json(usuarios);
 });
@@ -82,11 +86,43 @@ exports.obtenerUsuario = asyncHandler(async (req, res) => {
         throw new AppError('Usuario no encontrado.', 404);
     }
 
-    if (req.usuario.rol === 'Supervisor' && String(usuario.supervisor_id) !== String(usuarioIdActual(req))) {
+    const esPropio = String(usuario._id) === String(usuarioIdActual(req));
+    const rolActual = req.usuario.rol;
+
+    // Cada usuario puede ver su propio perfil; otros requieren Admin/Supervisor
+    if (!esPropio && !['Administrador', 'Supervisor'].includes(rolActual)) {
+        throw new AppError('Acceso denegado.', 403);
+    }
+
+    if (!esPropio && rolActual === 'Supervisor' && String(usuario.supervisor_id) !== String(usuarioIdActual(req))) {
         throw new AppError('Acceso denegado. Este usuario no te pertenece.', 403);
     }
 
     res.status(200).json(usuario);
+});
+
+// Eliminar un usuario (solo Administrador)
+exports.eliminarUsuario = asyncHandler(async (req, res) => {
+    const usuario = await Usuario.findById(req.params.id);
+    if (!usuario) {
+        throw new AppError('Usuario no encontrado.', 404);
+    }
+
+    const actualId = usuarioIdActual(req);
+    if (String(usuario._id) === String(actualId)) {
+        throw new AppError('No puede eliminar su propia cuenta.', 400);
+    }
+
+    await Usuario.findByIdAndDelete(usuario._id);
+
+    await registrar({
+        usuario_id: actualId,
+        accion: 'ELIMINAR_USUARIO',
+        entidad_afectada: 'usuarios',
+        detalles: { usuario_eliminado: usuario._id, correo: usuario.correo_institucional }
+    });
+
+    res.status(200).json({ mensaje: 'Usuario eliminado exitosamente.' });
 });
 
 // Actualizar datos de un usuario (RF-009)

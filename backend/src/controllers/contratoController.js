@@ -32,7 +32,7 @@ async function resolverDependencia(valor) {
 
 // Diagrama 2: Registro contractual e inventario (transacción atómica + fallback)
 exports.crearContrato = asyncHandler(async (req, res) => {
-    const { numero, telefono, dependencia, bienes } = req.body;
+    const { numero, telefono, dependencia, bienes, objeto_contractual, fecha_inicio, fecha_fin, adjunto_nombre } = req.body;
 
     const usuarioId = req.usuario?.id || req.usuario?._id || req.usuario?.uid;
     if (!usuarioId) {
@@ -76,6 +76,10 @@ exports.crearContrato = asyncHandler(async (req, res) => {
         dependencia: dependenciaArea._id,
         usuario: usuarioId,
         supervisor: req.usuario.supervisor_id || null,
+        objeto_contractual: objeto_contractual || null,
+        fecha_inicio: fecha_inicio || null,
+        fecha_fin: fecha_fin || null,
+        adjunto_nombre: adjunto_nombre || null,
         estado: 'Borrador',
         version_formato: versionFormato
     });
@@ -207,13 +211,16 @@ exports.actualizarContrato = asyncHandler(async (req, res) => {
         throw new AppError('Solo se puede modificar un contrato en estado Borrador.', 400);
     }
 
-    const { numero, telefono, dependencia } = req.body;
+    const { numero, telefono, dependencia, objeto_contractual, fecha_inicio, fecha_fin } = req.body;
     if (numero !== undefined) contrato.numero_contrato = numero;
     if (telefono !== undefined) contrato.telefono = telefono;
     if (dependencia !== undefined) {
         const dependenciaArea = await resolverDependencia(dependencia);
         contrato.dependencia = dependenciaArea._id;
     }
+    if (objeto_contractual !== undefined) contrato.objeto_contractual = objeto_contractual;
+    if (fecha_inicio !== undefined) contrato.fecha_inicio = fecha_inicio || null;
+    if (fecha_fin !== undefined) contrato.fecha_fin = fecha_fin || null;
 
     await contrato.save();
     res.status(200).json({ mensaje: 'Contrato actualizado exitosamente.', contrato });

@@ -92,12 +92,23 @@ const menu = computed(() => {
   if ([ROL.ADMINISTRADOR, ROL.SUPERVISOR].includes(rol)) {
     items.push({ name: 'usuarios', label: 'Usuarios', icon: 'people' })
   }
+  if (rol === ROL.ADMINISTRADOR) {
+    items.push({ name: 'supervisores', label: 'Supervisores', icon: 'supervisor_account' })
+  }
+  if (rol === ROL.SUPERVISOR) {
+    items.push({ name: 'contratistas', label: 'Contratistas', icon: 'handyman' })
+  }
   if ([ROL.ADMINISTRADOR, ROL.SUPERVISOR].includes(rol)) {
     items.push({ name: 'dependencias', label: 'Dependencias', icon: 'apartment' })
   }
   if ([ROL.ADMINISTRADOR, ROL.RESPONSABLE_AREA].includes(rol)) {
     items.push({ name: 'firmas', label: 'Firmas', icon: 'draw' })
   }
+  if ([ROL.ADMINISTRADOR, ROL.SUPERVISOR, ROL.RESPONSABLE_AREA].includes(rol)) {
+    items.push({ name: 'reportes', label: 'Reportes', icon: 'bar_chart' })
+  }
+  items.push({ name: 'notificaciones', label: 'Notificaciones', icon: 'notifications' })
+  items.push({ name: 'perfil', label: 'Mi Perfil', icon: 'account_circle' })
 
   return items
 })

@@ -77,6 +77,12 @@
                 no-caps
                 :loading="loading"
               />
+
+              <div class="text-center q-mt-sm">
+                <router-link to="/recuperar" class="text-subtitle2 text-primary">
+                  ¿Olvidaste tu contraseña?
+                </router-link>
+              </div>
             </q-form>
           </q-card-section>
         </q-card>

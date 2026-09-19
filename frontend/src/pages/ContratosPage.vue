@@ -105,6 +105,17 @@
               <q-tooltip>Ver detalle</q-tooltip>
             </q-btn>
 
+            <q-btn
+              flat
+              round
+              dense
+              color="orange-8"
+              icon="description"
+              @click="router.push({ name: 'formato', params: { id: props.row._id } })"
+            >
+              <q-tooltip>Ver formato GCCON-F-088</q-tooltip>
+            </q-btn>
+
             <template v-if="esContratista && props.row.estado === 'Borrador'">
               <q-btn
                 flat
