@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <q-page class="q-pa-lg">
     <!-- Encabezado -->
     <div class="row items-center justify-between q-mb-lg">
@@ -43,6 +43,9 @@
       row-key="codigo"
       flat
       bordered
+      :loading="store.cargando"
+      :rows-per-page-options="[10, 25, 50, 0]"
+      :pagination="{ rowsPerPage: 25 }"
       no-data-label="No hay dependencias registradas"
       no-results-label="No se encontraron coincidencias"
     >

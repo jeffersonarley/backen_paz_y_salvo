@@ -1,4 +1,4 @@
--<template>
+<template>
   <q-page class="page-formato">
     <div class="toolbar no-print">
       <q-btn flat color="primary" icon="arrow_back" label="Volver" @click="volver" />

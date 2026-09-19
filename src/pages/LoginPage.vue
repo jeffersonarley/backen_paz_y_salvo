@@ -79,6 +79,17 @@
           unelevated
           :loading="cargando"
         />
+
+        <div class="row justify-center q-mt-sm">
+          <q-btn
+            flat
+            no-caps
+            dense
+            color="primary"
+            label="¿Olvidó su contraseña?"
+            :to="{ name: 'recuperar' }"
+          />
+        </div>
       </q-form>
 
       <div class="texto-footer">Servicio Nacional de Aprendizaje - SENA</div>

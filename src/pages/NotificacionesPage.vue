@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <q-page class="q-pa-lg">
     <div class="text-h4 text-weight-bold text-grey-9 q-mb-lg">Notificaciones</div>
 
@@ -50,7 +50,7 @@ async function cargar() {
   const lista = []
 
   contratos.forEach((c) => {
-    if (c.estado === 'Pendiente de Firmas' || c.estado === 'EnProceso') {
+    if (c.estado === 'En revisión' || c.estado === 'Pendiente de Firmas' || c.estado === 'EnProceso') {
       lista.push({
         icono: 'assignment',
         bg: '#fff8e1',

@@ -21,6 +21,11 @@
           <div class="text-caption">Paz y Salvo Contractual</div>
         </q-toolbar-title>
 
+        <!-- Botón de Notificaciones -->
+        <q-btn flat round icon="notifications" :to="{ name: 'notificaciones' }" class="q-mr-xs">
+          <q-tooltip>Notificaciones</q-tooltip>
+        </q-btn>
+
         <!-- Botón de Usuario con Menú Desplegable -->
         <q-btn flat round icon="account_circle">
           <q-menu auto-close>
@@ -184,6 +189,14 @@ const menuBase = [
     icon: 'draw',
     exact: false,
     roles: ['RESPONSABLE_AREA'],
+  },
+  {
+    name: 'reportes',
+    label: 'Reportes',
+    to: { name: 'reportes' },
+    icon: 'bar_chart',
+    exact: false,
+    roles: ['ADMINISTRADOR', 'SUPERVISOR'],
   },
 ]
 

@@ -172,6 +172,8 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
           const num = c.numero_contrato || `CNT-${idx + 1}`
           const nom = c.nombre_contratista || c.usuario?.nombre_completo || 'Contratista'
           const dep = c.dependencia?.nombre_dependencia || (typeof c.dependencia === 'string' ? c.dependencia : 'Gestión Tecnológica')
+          const sup = c.supervisor?.nombre_completo || 'Supervisor Asignado'
+          const fch = c.createdAt ? new Date(c.createdAt).toISOString().split('T')[0] : '2026-09-17'
           const est = (c.estado === 'EnProceso' || c.estado === 'Pendiente de Firmas' || c.estado === 'En revision' || c.estado === 'En revisión')
             ? 'En revisión'
             : (c.estado === 'Aprobado' ? 'Firmado' : (c.estado || 'Pendiente'))

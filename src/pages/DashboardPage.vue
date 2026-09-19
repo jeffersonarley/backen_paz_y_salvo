@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <q-page class="q-pa-lg">
     <!-- Encabezado -->
     <div class="row items-center justify-between q-mb-lg">
@@ -85,8 +85,9 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import DashboardCard from '../components/DashboardCard.vue'
+import api from '../services/api'
 
 // Contadores
 const totalUsuarios = ref(0)
@@ -94,8 +95,58 @@ const totalContratistas = ref(0)
 const totalDependencias = ref(0)
 const totalFirmas = ref(0)
 
-// Lista de actividades de ejemplo (inicialmente vacía)
+// Lista de actividades
 const actividades = ref([])
+const cargando = ref(false)
+
+async function cargarMetricas() {
+  cargando.value = true
+  try {
+    const [usrRes, depRes, cntRes] = await Promise.allSettled([
+      api.get('/usuarios'),
+      api.get('/dependencias'),
+      api.get('/contratos'),
+    ])
+
+    if (usrRes.status === 'fulfilled') {
+      const usuarios = Array.isArray(usrRes.value.data) ? usrRes.value.data : (usrRes.value.data?.usuarios || [])
+      totalUsuarios.value = usuarios.length
+      totalContratistas.value = usuarios.filter((u) => {
+        const r = String(u.rol || '').toUpperCase()
+        return r.includes('CONTRAT')
+      }).length
+    }
+
+    if (depRes.status === 'fulfilled') {
+      const deps = Array.isArray(depRes.value.data) ? depRes.value.data : (depRes.value.data?.dependencias || [])
+      totalDependencias.value = deps.length
+    }
+
+    if (cntRes.status === 'fulfilled') {
+      const contratos = Array.isArray(cntRes.value.data) ? cntRes.value.data : (cntRes.value.data?.contratos || [])
+      totalFirmas.value = contratos.filter((c) => c.estado === 'En revisión' || c.estado === 'Pendiente de Firmas' || c.estado === 'EnProceso').length
+
+      actividades.value = contratos.slice(0, 6).map((c) => {
+        const estadoNorm = (c.estado === 'Pendiente de Firmas' || c.estado === 'EnProceso') ? 'En revisión' : (c.estado || 'En revisión')
+        return {
+          id: c._id || c.numero_contrato,
+          contratista: c.nombre_contratista || 'Contratista',
+          dependencia: c.dependencia?.nombre_dependencia || (typeof c.dependencia === 'string' ? c.dependencia : 'Gestión Tecnológica'),
+          fecha: c.createdAt ? new Date(c.createdAt).toLocaleDateString('es-CO') : 'Reciente',
+          estado: estadoNorm,
+        }
+      })
+    }
+  } catch (err) {
+    console.warn('Carga de métricas en dashboard:', err.message)
+  } finally {
+    cargando.value = false
+  }
+}
+
+onMounted(() => {
+  cargarMetricas()
+})
 
 // Formato de Fecha
 const fecha = new Date()

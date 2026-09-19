@@ -111,7 +111,33 @@ const routes = [
           roles: ['ADMINISTRADOR', 'SUPERVISOR', 'CONTRATISTA', 'RESPONSABLE_AREA'],
         },
       },
+      {
+        path: 'reportes',
+        name: 'reportes',
+        component: () => import('@/pages/ReportesPage.vue'),
+        meta: {
+          titulo: 'Reportes y Métricas',
+          roles: ['ADMINISTRADOR', 'SUPERVISOR'],
+        },
+      },
+      {
+        path: 'notificaciones',
+        name: 'notificaciones',
+        component: () => import('@/pages/NotificacionesPage.vue'),
+        meta: {
+          titulo: 'Notificaciones',
+          roles: ['ADMINISTRADOR', 'SUPERVISOR', 'CONTRATISTA', 'RESPONSABLE_AREA'],
+        },
+      },
     ],
+  },
+
+  // Ruta pública para recuperar contraseña
+  {
+    path: '/recuperar',
+    name: 'recuperar',
+    component: () => import('@/pages/RecuperarPage.vue'),
+    meta: { titulo: 'Recuperar Contraseña', publica: true },
   },
 
   // Captura de rutas no encontradas
