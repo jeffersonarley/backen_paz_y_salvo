@@ -167,7 +167,7 @@
                 </q-item-section>
                 <q-item-section>
                   <q-item-label class="text-weight-bold">Responsable de Dependencia</q-item-label>
-                  <q-item-label caption>{{ esFirmado ? 'Firmado y Estampado' : 'Pendiente de firma' }}</q-item-label>
+                  <q-item-label caption>{{ esFirmado ? 'Firmado y Estampado' : 'En revisión' }}</q-item-label>
                 </q-item-section>
               </q-item>
             </q-list>

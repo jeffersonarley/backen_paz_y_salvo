@@ -47,7 +47,7 @@
 
       <div v-else class="text-grey-6 q-pa-xl text-center">
         <q-icon name="notifications_off" size="48px" color="grey-4" class="q-mb-sm" />
-        <div class="text-body1 text-weight-medium">No hay notificaciones pendientes</div>
+        <div class="text-body1 text-weight-medium">No hay notificaciones en este momento</div>
         <div class="text-caption text-grey-5">Los eventos generados por tus trámites aparecerán aquí automáticamente.</div>
       </div>
     </q-card>
@@ -102,31 +102,31 @@ async function cargar() {
             color: '#1565c0',
             badge: 'En revisión',
             badgeColor: 'blue-8',
-            titulo: 'Solicitud radicada con éxito',
-            descripcion: `Tu solicitud ${num} fue recibida por el sistema y se encuentra en revisión de paz y salvo por las dependencias.`,
+            titulo: 'Solicitud en revisión',
+            descripcion: `Tu solicitud ${num} fue recibida por el sistema y se encuentra en revisión de paz y salvo.`,
             cuando: hace(fecha),
           })
         } else if (rol === 'RESPONSABLE_AREA') {
           lista.push({
-            icono: 'edit_calendar',
-            bg: '#fff8e1',
-            color: '#f57f17',
-            badge: 'Pendiente Firma',
-            badgeColor: 'amber-9',
-            titulo: 'Pendiente de firma de área',
-            descripcion: `El contrato ${num} (${contratista}) requiere tu verificación de inventario y firma digital.`,
+            icono: 'hourglass_top',
+            bg: '#e3f2fd',
+            color: '#1565c0',
+            badge: 'En revisión',
+            badgeColor: 'blue-8',
+            titulo: 'Solicitud en revisión',
+            descripcion: `El contrato ${num} (${contratista}) se encuentra en revisión de paz y salvo para tu área.`,
             cuando: hace(fecha),
           })
         } else {
           // Administrador / Supervisor
           lista.push({
-            icono: 'assignment',
-            bg: '#fff8e1',
-            color: '#f57f17',
-            badge: 'Radicado',
-            badgeColor: 'amber-9',
-            titulo: 'Nueva solicitud asignada',
-            descripcion: `Solicitud ${num} de ${contratista} en trámite de firmas y revisión.`,
+            icono: 'hourglass_top',
+            bg: '#e3f2fd',
+            color: '#1565c0',
+            badge: 'En revisión',
+            badgeColor: 'blue-8',
+            titulo: 'Solicitud en revisión',
+            descripcion: `Solicitud ${num} de ${contratista} en trámite de revisión.`,
             cuando: hace(fecha),
           })
         }
