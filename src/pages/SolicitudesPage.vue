@@ -223,7 +223,7 @@ onMounted(() => {
 
 const puedeFirmar = computed(() => auth.tienePermiso(['RESPONSABLE_AREA']))
 
-const OPCIONES_ESTADO = ['Pendiente', 'En revisión', 'Firmado', 'Rechazado', 'Finalizado']
+const OPCIONES_ESTADO = ['En revisión', 'Firmado', 'Rechazado', 'Finalizado']
 
 const formRef = ref(null)
 const filtro = ref('')
@@ -243,7 +243,7 @@ const solicitud = ref({
   dependencia: '',
   responsable: '',
   fecha: new Date().toISOString().substring(0, 10),
-  estado: 'Pendiente',
+  estado: 'En revisión',
 })
 
 const columns = [
@@ -379,16 +379,20 @@ async function guardarSolicitud() {
       }
     }
     $q.notify({ type: 'positive', message: 'Solicitud actualizada correctamente.' })
+    limpiarFormulario()
   } else {
-    if (typeof store.agregarSolicitud === 'function') {
-      await store.agregarSolicitud({ ...solicitud.value })
-    } else if (Array.isArray(store.solicitudes)) {
-      store.solicitudes.push({ ...solicitud.value })
+    try {
+      if (typeof store.agregarSolicitud === 'function') {
+        await store.agregarSolicitud({ ...solicitud.value })
+      } else if (Array.isArray(store.solicitudes)) {
+        store.solicitudes.push({ ...solicitud.value })
+      }
+      $q.notify({ type: 'positive', message: 'Solicitud registrada correctamente en MongoDB Atlas.' })
+      limpiarFormulario()
+    } catch (err) {
+      $q.notify({ type: 'negative', message: 'Error al registrar solicitud: ' + (err.message || '') })
     }
-    $q.notify({ type: 'positive', message: 'Solicitud registrada correctamente.' })
   }
-
-  limpiarFormulario()
 }
 
 function editarSolicitud(fila) {
@@ -407,7 +411,7 @@ function editarSolicitud(fila) {
     dependencia: fila.dependencia || fila.nombreDependencia || '',
     responsable: fila.responsable || fila.supervisor || '',
     fecha: fila.fecha || new Date().toISOString().substring(0, 10),
-    estado: fila.estado || 'Pendiente',
+    estado: fila.estado || 'En revisión',
   }
 
   codigoEditar.value = codigoExistente
@@ -442,9 +446,11 @@ async function confirmarEliminar() {
 
 function nuevaSolicitud() {
   limpiarFormulario()
-  const cons = ((store.solicitudes?.length || 0) + 1).toString().padStart(3, '0')
-  solicitud.value.numeroSolicitud = `SOL-2026-${cons}`
-  solicitud.value.numeroContrato = 'CNT-2025-088'
+  const randomSuffix = Math.floor(100 + Math.random() * 900)
+  solicitud.value.numeroSolicitud = `SOL-2026-${randomSuffix}`
+  solicitud.value.numeroContrato = `CNT-2026-${randomSuffix}`
+  solicitud.value.contratista = auth.usuario?.nombre || ''
+  solicitud.value.estado = 'En revisión'
   dialogo.value = true
 }
 
@@ -460,7 +466,7 @@ function limpiarFormulario() {
     dependencia: '',
     responsable: '',
     fecha: new Date().toISOString().substring(0, 10),
-    estado: 'Pendiente',
+    estado: 'En revisión',
   }
   dialogo.value = false
   editando.value = false

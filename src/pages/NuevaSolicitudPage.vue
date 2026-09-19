@@ -30,11 +30,24 @@
                   outlined
                   dense
                   label="Número de Contrato *"
-                  placeholder="Ej. C-2026-014"
+                  placeholder="Ej. CNT-2026-014"
                   :rules="[(val) => !!val || 'El número de contrato es obligatorio']"
                 />
               </div>
               <div class="col-12 col-sm-6">
+                <q-input
+                  v-model="form.contratista"
+                  outlined
+                  dense
+                  label="Nombre del Contratista *"
+                  placeholder="Nombre completo del contratista"
+                  :rules="[(val) => !!val || 'El nombre del contratista es obligatorio']"
+                />
+              </div>
+            </div>
+
+            <div class="row q-col-gutter-sm">
+              <div class="col-12">
                 <q-select
                   v-model="form.dependencia"
                   outlined
@@ -152,7 +165,8 @@ const auth = useAuthStore()
 const cargando = ref(false)
 
 const form = ref({
-  numeroContrato: '',
+  numeroContrato: `CNT-2026-${Math.floor(100 + Math.random() * 900)}`,
+  contratista: auth.usuario?.nombre || '',
   dependencia: null,
   objeto: '',
   fechaInicio: '',
@@ -177,6 +191,9 @@ const opcionesSupervisores = ref([
 ])
 
 onMounted(async () => {
+  if (!form.value.contratista && auth.usuario?.nombre) {
+    form.value.contratista = auth.usuario.nombre
+  }
   try {
     const [depRes, supRes] = await Promise.allSettled([
       api.get('/dependencias'),
@@ -207,7 +224,7 @@ onMounted(async () => {
 async function guardarSolicitud() {
   cargando.value = true
 
-  const nomContratista = auth.nombre || auth.usuario?.nombre_completo || auth.usuario?.nombre || 'Contratista'
+  const nomContratista = (form.value.contratista || auth.usuario?.nombre || auth.nombre || 'Contratista').trim()
   const supNombre = typeof form.value.supervisor === 'object' ? form.value.supervisor?.nombre : (form.value.supervisor || 'Supervisor Asignado')
   const depNombre = typeof form.value.dependencia === 'object' ? (form.value.dependencia?.nombre || form.value.dependencia?.label) : (form.value.dependencia || 'Gestión Tecnológica')
 

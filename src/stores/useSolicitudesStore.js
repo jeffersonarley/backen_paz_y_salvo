@@ -15,7 +15,7 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
       responsable: 'Ing. Carlos Supervisor',
       fecha: '2026-08-15',
       fechaSolicitud: '2026-08-15',
-      estado: 'Pendiente',
+      estado: 'En revisión',
       firmas: [
         {
           dependenciaCodigo: 'DEP-01',
@@ -141,7 +141,7 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
       responsable: 'Ing. Fernando Ramírez',
       fecha: '2026-09-15',
       fechaSolicitud: '2026-09-15',
-      estado: 'Pendiente',
+      estado: 'En revisión',
       firmas: [
         {
           dependenciaCodigo: 'DEP-04',
@@ -173,10 +173,18 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
           const nom = c.nombre_contratista || c.usuario?.nombre_completo || 'Contratista'
           const dep = c.dependencia?.nombre_dependencia || (typeof c.dependencia === 'string' ? c.dependencia : 'Gestión Tecnológica')
           const sup = c.supervisor?.nombre_completo || 'Supervisor Asignado'
-          const fch = c.createdAt ? new Date(c.createdAt).toISOString().split('T')[0] : '2026-09-17'
-          const est = (c.estado === 'EnProceso' || c.estado === 'Pendiente de Firmas' || c.estado === 'En revision' || c.estado === 'En revisión')
-            ? 'En revisión'
-            : (c.estado === 'Aprobado' ? 'Firmado' : (c.estado || 'Pendiente'))
+          const fch = c.createdAt ? new Date(c.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+          
+          let est = 'En revisión'
+          if (c.estado === 'Firmado' || c.estado === 'Aprobado') {
+            est = 'Firmado'
+          } else if (c.estado === 'Finalizado') {
+            est = 'Finalizado'
+          } else if (c.estado === 'Rechazado') {
+            est = 'Rechazado'
+          } else {
+            est = 'En revisión'
+          }
 
           return {
             _id: c._id,
@@ -203,18 +211,11 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
         })
 
         const mapa = new Map()
-        // Priorizar contratos de Atlas al inicio
         desdeAtlas.forEach((s) => mapa.set((s.numeroContrato || s.id).toLowerCase(), s))
-        // Preservar contratos en memoria recién creados
+        // Preservar contratos en memoria sólo si no existen en Atlas
         solicitudes.value.forEach((s) => {
           const key = (s.numeroContrato || s.numeroSolicitud || s.id || '').toLowerCase()
           if (key && !mapa.has(key)) {
-            mapa.set(key, s)
-          }
-        })
-        solicitudesBase.forEach((s) => {
-          const key = (s.numeroContrato || s.id).toLowerCase()
-          if (!mapa.has(key)) {
             mapa.set(key, s)
           }
         })
@@ -235,7 +236,7 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
     const dep = nuevaSolicitud.dependencia || 'Gestión Tecnológica'
     const sup = nuevaSolicitud.responsable || 'Supervisor Asignado'
     const fch = nuevaSolicitud.fecha || new Date().toISOString().split('T')[0]
-    const est = nuevaSolicitud.estado || 'En revisión'
+    const est = 'En revisión'
 
     const solicitudAInsertar = {
       ...nuevaSolicitud,
@@ -278,7 +279,8 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
       })
       await cargarSolicitudes()
     } catch (err) {
-      console.warn('Registro de contrato local en fallback:', err.response?.data?.mensaje || err.message)
+      console.error('Error al registrar contrato en Atlas:', err.response?.data?.mensaje || err.message)
+      throw new Error(err.response?.data?.mensaje || err.message || 'Error al registrar contrato en Atlas')
     }
   }
 
