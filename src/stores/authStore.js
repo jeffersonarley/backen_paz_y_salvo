@@ -19,7 +19,7 @@ export const useAuthStore = defineStore('auth', () => {
   const usuariosPrueba = ref([
     {
       id: 1,
-      nombre: 'Administrador General SENA',
+      nombre: 'Administrador General',
       correo: 'admin@gccon.com',
       password: 'admin',
       rol: 'ADMINISTRADOR',

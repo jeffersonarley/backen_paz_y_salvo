@@ -26,13 +26,41 @@
           <q-tooltip>Notificaciones</q-tooltip>
         </q-btn>
 
-        <!-- Botón de Usuario con Menú Desplegable -->
-        <q-btn flat round icon="account_circle">
-          <q-menu auto-close>
-            <q-list style="min-width: 150px">
+        <!-- Botón de Identidad de Usuario con Menú Desplegable -->
+        <q-btn flat no-caps class="text-white q-ml-xs q-px-sm header-user-btn">
+          <div class="row items-center no-wrap">
+            <q-avatar size="26px" color="white" text-color="primary" icon="person" class="q-mr-sm" />
+            <span class="text-weight-medium text-body2 q-mr-xs ellipsis" style="max-width: 190px;">
+              {{ textoUsuarioHeader }}
+            </span>
+            <q-icon name="arrow_drop_down" size="22px" />
+          </div>
+          <q-tooltip>Sesión iniciada: {{ rolLegible }}</q-tooltip>
+
+          <q-menu auto-close anchor="bottom right" self="top right">
+            <div class="q-pa-md bg-grey-1" style="min-width: 240px">
+              <div class="row items-center q-mb-xs">
+                <q-avatar size="38px" color="primary" text-color="white" icon="person" class="q-mr-sm" />
+                <div class="column">
+                  <div class="text-weight-bold text-body2 text-grey-9">
+                    {{ auth.usuario?.nombre || 'Usuario del Sistema' }}
+                  </div>
+                  <div class="text-caption text-primary text-weight-bold">
+                    {{ rolLegible }}
+                  </div>
+                </div>
+              </div>
+              <div v-if="auth.usuario?.correo" class="text-caption text-grey-6 ellipsis q-mt-xs">
+                {{ auth.usuario.correo }}
+              </div>
+            </div>
+
+            <q-separator />
+
+            <q-list>
               <q-item clickable :to="{ name: 'perfil' }">
                 <q-item-section avatar>
-                  <q-icon name="person" />
+                  <q-icon name="person" color="grey-8" />
                 </q-item-section>
                 <q-item-section>Mi Perfil</q-item-section>
               </q-item>
@@ -123,6 +151,24 @@ const $q = useQuasar()
 const leftDrawerOpen = ref($q.screen.gt.sm)
 const router = useRouter()
 const auth = useAuthStore()
+
+const rolLegible = computed(() => {
+  const r = normalizarRol(auth.usuario?.rol || auth.rolUsuario)
+  if (r === 'ADMINISTRADOR') return 'Administrador General'
+  if (r === 'SUPERVISOR') return 'Supervisor'
+  if (r === 'RESPONSABLE_AREA') return 'Responsable de Área'
+  if (r === 'CONTRATISTA') return 'Contratista'
+  return auth.usuario?.rol || 'Usuario'
+})
+
+const textoUsuarioHeader = computed(() => {
+  if (!auth.usuario) return 'Usuario'
+  const nom = (auth.usuario.nombre || '').trim()
+  if (nom.includes('Administrador General')) {
+    return 'Administrador General'
+  }
+  return nom || rolLegible.value
+})
 
 // Reacciona en vivo si la pantalla cambia de tamaño (p. ej. al usar
 // las DevTools en modo responsivo, o al rotar/redimensionar la ventana)
@@ -224,6 +270,15 @@ function cerrarDrawerEnMovil() {
   filter: brightness(0) invert(1);
   width: 34px;
   height: auto;
+}
+
+.header-user-btn {
+  border-radius: 8px;
+  padding: 4px 10px;
+  transition: background-color 0.2s ease;
+}
+.header-user-btn:hover {
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
 /* Reglas definitivas para impresión y PDF */
