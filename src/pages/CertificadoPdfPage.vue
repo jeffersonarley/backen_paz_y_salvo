@@ -1,57 +1,9 @@
 <template>
   <q-page class="page-formato">
     <div class="toolbar no-print">
-      <div class="row items-center q-gutter-sm">
-        <q-btn
-          flat
-          dense
-          color="primary"
-          icon="arrow_back"
-          label="Volver a Solicitudes"
-          @click="volver"
-        />
-        <q-btn
-          flat
-          dense
-          color="secondary"
-          icon="draw"
-          label="Ir a Gestión de Firmas"
-          @click="irAFirmas"
-        />
-        <q-badge
-          :color="
-            datosSolicitud.estado === 'Firmado' || datosSolicitud.estado === 'Finalizado'
-              ? 'positive'
-              : datosSolicitud.estado === 'Rechazado'
-                ? 'negative'
-                : 'warning'
-          "
-          class="text-weight-bold q-pa-xs"
-        >
-          {{
-            datosSolicitud.estado === 'Firmado' || datosSolicitud.estado === 'Finalizado'
-              ? '✓ Paz y Salvo Oficial Firmado'
-              : datosSolicitud.estado === 'Rechazado'
-                ? '✗ Trámite Rechazado con Novedades'
-                : 'En revisión de dependencias'
-          }}
-        </q-badge>
-      </div>
+      <q-btn flat color="primary" icon="arrow_back" label="Volver" @click="volver" />
       <div class="q-gutter-sm">
-        <q-btn
-          color="primary"
-          icon="draw"
-          :label="firmaGuardada ? 'Modificar Firma Contratista' : 'Estampar Firma Contratista'"
-          unelevated
-          @click="abrirModalFirma"
-        />
-        <q-btn
-          color="positive"
-          icon="print"
-          label="Imprimir / Descargar PDF"
-          unelevated
-          @click="imprimir"
-        />
+        <q-btn color="positive" icon="print" label="Imprimir" unelevated @click="imprimir" />
       </div>
     </div>
 
@@ -501,15 +453,6 @@ onMounted(() => {
 
 function volver() {
   router.push({ name: 'solicitudes' })
-}
-
-function irAFirmas() {
-  const codigo = route.query.codigo || route.params.id
-  if (codigo) {
-    router.push({ name: 'firmas', query: { codigo } })
-  } else {
-    router.push({ name: 'firmas' })
-  }
 }
 
 function imprimir() {
