@@ -3,7 +3,10 @@ import { ref, computed } from 'vue'
 import api from '../services/api'
 
 function normalizarRol(valor) {
-  const v = String(valor || '').trim().toUpperCase().replace(/[\s_-]+/g, '')
+  const v = String(valor || '')
+    .trim()
+    .toUpperCase()
+    .replace(/[\s_-]+/g, '')
   if (v.includes('ADMIN')) return 'ADMINISTRADOR'
   if (v.includes('SUPER')) return 'SUPERVISOR'
   if (v.includes('RESPONSABLE')) return 'RESPONSABLE_AREA'
@@ -176,14 +179,20 @@ export const useAuthStore = defineStore('auth', () => {
         return { success: true, user: userObj }
       }
     } catch (err) {
-      console.warn('Login backend fallo, probando usuarios locales:', err.response?.data?.mensaje || err.message)
+      console.warn(
+        'Login backend fallo, probando usuarios locales:',
+        err.response?.data?.mensaje || err.message,
+      )
     }
 
     // 2. Fallback con la lista local
     let user = usuariosPrueba.value.find(
       (u) =>
         u.correo.toLowerCase() === emailLimpio &&
-        (u.password === password || password === '123' || password === '12345678' || password === 'Admin1234!'),
+        (u.password === password ||
+          password === '123' ||
+          password === '12345678' ||
+          password === 'Admin1234!'),
     )
 
     if (!user) {
@@ -201,7 +210,9 @@ export const useAuthStore = defineStore('auth', () => {
 
   function registrarUsuarioLocal(nuevoUsuario) {
     const existe = usuariosPrueba.value.find(
-      (u) => u.correo.toLowerCase() === (nuevoUsuario.correo || nuevoUsuario.correo_institucional || '').toLowerCase(),
+      (u) =>
+        u.correo.toLowerCase() ===
+        (nuevoUsuario.correo || nuevoUsuario.correo_institucional || '').toLowerCase(),
     )
     if (!existe) {
       usuariosPrueba.value.push({

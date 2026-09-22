@@ -109,7 +109,9 @@ async function cargarMetricas() {
     ])
 
     if (usrRes.status === 'fulfilled') {
-      const usuarios = Array.isArray(usrRes.value.data) ? usrRes.value.data : (usrRes.value.data?.usuarios || [])
+      const usuarios = Array.isArray(usrRes.value.data)
+        ? usrRes.value.data
+        : usrRes.value.data?.usuarios || []
       totalUsuarios.value = usuarios.length
       totalContratistas.value = usuarios.filter((u) => {
         const r = String(u.rol || '').toUpperCase()
@@ -118,20 +120,34 @@ async function cargarMetricas() {
     }
 
     if (depRes.status === 'fulfilled') {
-      const deps = Array.isArray(depRes.value.data) ? depRes.value.data : (depRes.value.data?.dependencias || [])
+      const deps = Array.isArray(depRes.value.data)
+        ? depRes.value.data
+        : depRes.value.data?.dependencias || []
       totalDependencias.value = deps.length
     }
 
     if (cntRes.status === 'fulfilled') {
-      const contratos = Array.isArray(cntRes.value.data) ? cntRes.value.data : (cntRes.value.data?.contratos || [])
-      totalFirmas.value = contratos.filter((c) => c.estado === 'En revisión' || c.estado === 'Pendiente de Firmas' || c.estado === 'EnProceso').length
+      const contratos = Array.isArray(cntRes.value.data)
+        ? cntRes.value.data
+        : cntRes.value.data?.contratos || []
+      totalFirmas.value = contratos.filter(
+        (c) =>
+          c.estado === 'En revisión' ||
+          c.estado === 'Pendiente de Firmas' ||
+          c.estado === 'EnProceso',
+      ).length
 
       actividades.value = contratos.slice(0, 6).map((c) => {
-        const estadoNorm = (c.estado === 'Pendiente de Firmas' || c.estado === 'EnProceso') ? 'En revisión' : (c.estado || 'En revisión')
+        const estadoNorm =
+          c.estado === 'Pendiente de Firmas' || c.estado === 'EnProceso'
+            ? 'En revisión'
+            : c.estado || 'En revisión'
         return {
           id: c._id || c.numero_contrato,
           contratista: c.nombre_contratista || 'Contratista',
-          dependencia: c.dependencia?.nombre_dependencia || (typeof c.dependencia === 'string' ? c.dependencia : 'Gestión Tecnológica'),
+          dependencia:
+            c.dependencia?.nombre_dependencia ||
+            (typeof c.dependencia === 'string' ? c.dependencia : 'Gestión Tecnológica'),
           fecha: c.createdAt ? new Date(c.createdAt).toLocaleDateString('es-CO') : 'Reciente',
           estado: estadoNorm,
         }

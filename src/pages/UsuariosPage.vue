@@ -171,7 +171,9 @@
         </q-card-section>
 
         <q-card-section class="q-pt-none">
-          ¿Está seguro de desactivar al usuario con documento <strong>{{ documentoEliminar }}</strong>?
+          ¿Está seguro de desactivar al usuario con documento
+          <strong>{{ documentoEliminar }}</strong
+          >?
         </q-card-section>
 
         <q-card-actions align="right">
@@ -256,7 +258,8 @@ function normalizarRolParaBackend(rolUI) {
 }
 
 function normalizarRolParaUI(rolBackend) {
-  if (rolBackend === 'ResponsableArea' || rolBackend === 'RESPONSABLE_AREA') return 'Responsable de Área'
+  if (rolBackend === 'ResponsableArea' || rolBackend === 'RESPONSABLE_AREA')
+    return 'Responsable de Área'
   if (rolBackend === 'ADMINISTRADOR') return 'Administrador'
   if (rolBackend === 'SUPERVISOR') return 'Supervisor'
   if (rolBackend === 'CONTRATISTA') return 'Contratista'
@@ -269,7 +272,7 @@ async function cargarUsuarios() {
   cargando.value = true
   try {
     const resp = await api.get('/usuarios')
-    const lista = Array.isArray(resp.data) ? resp.data : (resp.data?.usuarios || [])
+    const lista = Array.isArray(resp.data) ? resp.data : resp.data?.usuarios || []
     if (Array.isArray(lista)) {
       rows.value = lista.map((u, idx) => ({
         id: (u._id || u.id || `usr_${idx}`).toString(),
@@ -379,7 +382,8 @@ function eliminarUsuario(fila) {
 
 async function confirmarEliminar() {
   try {
-    const idParaBorrar = usuarioEliminar.value?.id || usuarioEliminar.value?._id || documentoEliminar.value
+    const idParaBorrar =
+      usuarioEliminar.value?.id || usuarioEliminar.value?._id || documentoEliminar.value
     await api.delete(`/usuarios/${idParaBorrar}`)
     $q.notify({
       type: 'info',

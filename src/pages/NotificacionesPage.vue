@@ -7,14 +7,7 @@
           Eventos automáticos de radicación, revisiones, firmas y finalización de trámites
         </div>
       </div>
-      <q-btn
-        flat
-        round
-        icon="refresh"
-        color="primary"
-        @click="cargar"
-        :loading="cargando"
-      >
+      <q-btn flat round icon="refresh" color="primary" @click="cargar" :loading="cargando">
         <q-tooltip>Actualizar notificaciones</q-tooltip>
       </q-btn>
     </div>
@@ -48,7 +41,9 @@
       <div v-else class="text-grey-6 q-pa-xl text-center">
         <q-icon name="notifications_off" size="48px" color="grey-4" class="q-mb-sm" />
         <div class="text-body1 text-weight-medium">No hay notificaciones en este momento</div>
-        <div class="text-caption text-grey-5">Los eventos generados por tus trámites aparecerán aquí automáticamente.</div>
+        <div class="text-caption text-grey-5">
+          Los eventos generados por tus trámites aparecerán aquí automáticamente.
+        </div>
       </div>
     </q-card>
   </q-page>
@@ -82,7 +77,7 @@ async function cargar() {
     if (rol === 'ADMINISTRADOR' || rol === 'SUPERVISOR') {
       try {
         const respU = await api.get('/usuarios')
-        usuarios = Array.isArray(respU.data) ? respU.data : (respU.data?.usuarios || [])
+        usuarios = Array.isArray(respU.data) ? respU.data : respU.data?.usuarios || []
       } catch {
         usuarios = []
       }

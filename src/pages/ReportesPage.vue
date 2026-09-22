@@ -84,7 +84,7 @@ async function cargar() {
 
     try {
       const resp = await api.get('/contratos')
-      const desdeApi = Array.isArray(resp.data) ? resp.data : (resp.data?.contratos || [])
+      const desdeApi = Array.isArray(resp.data) ? resp.data : resp.data?.contratos || []
       if (desdeApi.length > 0 && lista.length === 0) {
         lista = desdeApi
       }

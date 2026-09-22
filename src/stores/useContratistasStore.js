@@ -55,7 +55,7 @@ export const useContratistasStore = defineStore('contratistas', () => {
     cargando.value = true
     try {
       const resp = await api.get('/usuarios?rol=Contratista')
-      const lista = Array.isArray(resp.data) ? resp.data : (resp.data?.usuarios || [])
+      const lista = Array.isArray(resp.data) ? resp.data : resp.data?.usuarios || []
       if (Array.isArray(lista)) {
         const desdeAtlas = lista.map((u, idx) => ({
           _id: (u._id || u.id || `con_${idx}`).toString(),

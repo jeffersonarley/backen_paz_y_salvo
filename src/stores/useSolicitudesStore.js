@@ -166,15 +166,19 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
     cargando.value = true
     try {
       const resp = await api.get('/contratos')
-      const lista = Array.isArray(resp.data) ? resp.data : (resp.data?.contratos || [])
+      const lista = Array.isArray(resp.data) ? resp.data : resp.data?.contratos || []
       if (Array.isArray(lista) && lista.length > 0) {
         const desdeAtlas = lista.map((c, idx) => {
           const num = c.numero_contrato || `CNT-${idx + 1}`
           const nom = c.nombre_contratista || c.usuario?.nombre_completo || 'Contratista'
-          const dep = c.dependencia?.nombre_dependencia || (typeof c.dependencia === 'string' ? c.dependencia : 'Gestión Tecnológica')
+          const dep =
+            c.dependencia?.nombre_dependencia ||
+            (typeof c.dependencia === 'string' ? c.dependencia : 'Gestión Tecnológica')
           const sup = c.supervisor?.nombre_completo || 'Supervisor Asignado'
-          const fch = c.createdAt ? new Date(c.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
-          
+          const fch = c.createdAt
+            ? new Date(c.createdAt).toISOString().split('T')[0]
+            : new Date().toISOString().split('T')[0]
+
           let est = 'En revisión'
           if (c.estado === 'Firmado' || c.estado === 'Aprobado') {
             est = 'Firmado'
@@ -200,23 +204,27 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
             fechaSolicitud: fch,
             estado: est,
             observacionRechazo: c.observaciones_supervisor || c.observacion_rechazo || '',
-            bienes: Array.isArray(c.bienes) && c.bienes.length > 0 ? c.bienes : [
-              {
-                descripcion: 'Equipo de cómputo y periféricos institucionales',
-                codigo_inventario: `INV-${String(num).replace(/\D/g, '').slice(-4).padStart(4, '0') || '1042'}`,
-                estado_bien: 'Bueno',
-                cantidad: 1,
-                estado_entrega: est === 'Firmado' || est === 'Finalizado' ? 'Devuelto' : 'Pendiente'
-              }
-            ],
+            bienes:
+              Array.isArray(c.bienes) && c.bienes.length > 0
+                ? c.bienes
+                : [
+                    {
+                      descripcion: 'Equipo de cómputo y periféricos institucionales',
+                      codigo_inventario: `INV-${String(num).replace(/\D/g, '').slice(-4).padStart(4, '0') || '1042'}`,
+                      estado_bien: 'Bueno',
+                      cantidad: 1,
+                      estado_entrega:
+                        est === 'Firmado' || est === 'Finalizado' ? 'Devuelto' : 'Pendiente',
+                    },
+                  ],
             firmas: [
               {
                 dependenciaCodigo: 'DEP-01',
                 dependenciaNombre: dep,
                 firmada: est === 'Firmado' || est === 'Finalizado',
                 fechaFirma: est === 'Firmado' || est === 'Finalizado' ? fch : null,
-              }
-            ]
+              },
+            ],
           }
         })
 
@@ -251,7 +259,9 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
     const solicitudAInsertar = {
       ...nuevaSolicitud,
       id: nuevaSolicitud.numeroSolicitud || num,
-      numeroSolicitud: nuevaSolicitud.numeroSolicitud || `SOL-${String(num).replace(/\D/g, '').slice(-4).padStart(4, '0')}`,
+      numeroSolicitud:
+        nuevaSolicitud.numeroSolicitud ||
+        `SOL-${String(num).replace(/\D/g, '').slice(-4).padStart(4, '0')}`,
       numeroContrato: num,
       contratista: nom,
       nombreContratista: nom,
@@ -266,8 +276,8 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
           dependenciaNombre: dep,
           firmada: false,
           fechaFirma: null,
-        }
-      ]
+        },
+      ],
     }
     solicitudes.value.unshift(solicitudAInsertar)
 
@@ -283,14 +293,19 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
           {
             descripcion: 'Equipo de cómputo y accesorios de oficina',
             codigo_inventario: `INV-${Date.now().toString().slice(-4)}`,
-            estado_bien: 'Bueno'
-          }
-        ]
+            estado_bien: 'Bueno',
+          },
+        ],
       })
       await cargarSolicitudes()
     } catch (err) {
-      console.error('Error al registrar contrato en Atlas:', err.response?.data?.mensaje || err.message)
-      throw new Error(err.response?.data?.mensaje || err.message || 'Error al registrar contrato en Atlas')
+      console.error(
+        'Error al registrar contrato en Atlas:',
+        err.response?.data?.mensaje || err.message,
+      )
+      throw new Error(
+        err.response?.data?.mensaje || err.message || 'Error al registrar contrato en Atlas',
+      )
     }
   }
 
@@ -350,7 +365,11 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
 
   async function eliminarSolicitud(idBusqueda) {
     // En el flujo de Solicitudes, desactivar una solicitud significa transicionar su estado a 'Rechazado'
-    return await cambiarEstado(idBusqueda, 'Rechazado', 'Desactivado desde el módulo de solicitudes')
+    return await cambiarEstado(
+      idBusqueda,
+      'Rechazado',
+      'Desactivado desde el módulo de solicitudes',
+    )
   }
 
   function registrarFirma(idSolicitud, codigoDependencia) {

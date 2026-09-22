@@ -22,7 +22,10 @@ export default defineRouter(() => {
   })
 
   const normalizarRol = (valor) => {
-    const v = String(valor || '').trim().toUpperCase().replace(/[\s_-]+/g, '')
+    const v = String(valor || '')
+      .trim()
+      .toUpperCase()
+      .replace(/[\s_-]+/g, '')
     if (v.includes('ADMIN')) return 'ADMINISTRADOR'
     if (v.includes('SUPER')) return 'SUPERVISOR'
     if (v.includes('RESPONSABLE')) return 'RESPONSABLE_AREA'

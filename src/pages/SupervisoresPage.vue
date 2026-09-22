@@ -148,7 +148,8 @@
 
         <q-card-section class="q-pt-none">
           ¿Está seguro de desactivar al supervisor con documento
-          <strong>{{ documentoEliminar }}</strong>?
+          <strong>{{ documentoEliminar }}</strong
+          >?
         </q-card-section>
 
         <q-card-actions align="right">

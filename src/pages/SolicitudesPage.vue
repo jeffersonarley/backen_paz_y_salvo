@@ -207,7 +207,11 @@
             class="q-mr-sm"
           />
           <span class="text-h6 text-weight-bold">
-            {{ nuevoEstadoObjetivo === 'Rechazado' ? 'Desactivar / Rechazar Solicitud' : 'Reactivar Solicitud' }}
+            {{
+              nuevoEstadoObjetivo === 'Rechazado'
+                ? 'Desactivar / Rechazar Solicitud'
+                : 'Reactivar Solicitud'
+            }}
           </span>
         </q-card-section>
 
@@ -215,7 +219,10 @@
           <div v-if="nuevoEstadoObjetivo === 'Rechazado'">
             <p>
               ¿Está seguro de desactivar o rechazar la solicitud
-              <strong>{{ solicitudSeleccionada?.numeroSolicitud || solicitudSeleccionada?.numeroContrato }}</strong>?
+              <strong>{{
+                solicitudSeleccionada?.numeroSolicitud || solicitudSeleccionada?.numeroContrato
+              }}</strong
+              >?
             </p>
             <p class="text-grey-8">
               El estado de la solicitud cambiará inmediatamente a
@@ -235,7 +242,10 @@
           <div v-else>
             <p>
               ¿Desea reactivar la solicitud
-              <strong>{{ solicitudSeleccionada?.numeroSolicitud || solicitudSeleccionada?.numeroContrato }}</strong>?
+              <strong>{{
+                solicitudSeleccionada?.numeroSolicitud || solicitudSeleccionada?.numeroContrato
+              }}</strong
+              >?
             </p>
             <p class="text-grey-8">
               El estado volverá a
@@ -277,7 +287,9 @@ onMounted(() => {
   }
 })
 
-const puedeFirmar = computed(() => auth.tienePermiso(['RESPONSABLE_AREA']))
+const puedeFirmar = computed(() =>
+  auth.tienePermiso(['RESPONSABLE_AREA', 'CONTRATISTA', 'SUPERVISOR', 'ADMINISTRADOR']),
+)
 
 const OPCIONES_ESTADO = ['En revisión', 'Firmado', 'Rechazado', 'Finalizado']
 
@@ -365,7 +377,10 @@ function metodoFiltro(filas, termino) {
       r.responsable,
       r.documentoContratista,
       r.estado,
-    ].filter(Boolean).join(' ').toLowerCase()
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase()
     return texto.includes(t)
   })
 }
@@ -422,8 +437,13 @@ async function guardarSolicitud() {
     if (Array.isArray(store.solicitudes)) {
       const index = store.solicitudes.findIndex(
         (s) =>
-          (s._id || s.numeroSolicitud || s.solicitud || s.codigo || s.numeroContrato || s.contrato || s.id) ===
-          idBusqueda,
+          (s._id ||
+            s.numeroSolicitud ||
+            s.solicitud ||
+            s.codigo ||
+            s.numeroContrato ||
+            s.contrato ||
+            s.id) === idBusqueda,
       )
       if (index !== -1) {
         store.solicitudes[index] = {
@@ -445,10 +465,16 @@ async function guardarSolicitud() {
       } else if (Array.isArray(store.solicitudes)) {
         store.solicitudes.push({ ...solicitud.value })
       }
-      $q.notify({ type: 'positive', message: 'Solicitud registrada correctamente en MongoDB Atlas.' })
+      $q.notify({
+        type: 'positive',
+        message: 'Solicitud registrada correctamente en MongoDB Atlas.',
+      })
       limpiarFormulario()
     } catch (err) {
-      $q.notify({ type: 'negative', message: 'Error al registrar solicitud: ' + (err.message || '') })
+      $q.notify({
+        type: 'negative',
+        message: 'Error al registrar solicitud: ' + (err.message || ''),
+      })
     }
   }
 }

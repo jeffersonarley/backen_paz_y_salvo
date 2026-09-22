@@ -201,14 +201,18 @@ onMounted(async () => {
     ])
 
     if (depRes.status === 'fulfilled') {
-      const deps = Array.isArray(depRes.value.data) ? depRes.value.data : (depRes.value.data?.dependencias || [])
+      const deps = Array.isArray(depRes.value.data)
+        ? depRes.value.data
+        : depRes.value.data?.dependencias || []
       if (deps.length > 0) {
         opcionesDependencias.value = deps.map((d) => d.nombre_dependencia || d.nombre)
       }
     }
 
     if (supRes.status === 'fulfilled') {
-      const sups = Array.isArray(supRes.value.data) ? supRes.value.data : (supRes.value.data?.usuarios || [])
+      const sups = Array.isArray(supRes.value.data)
+        ? supRes.value.data
+        : supRes.value.data?.usuarios || []
       if (sups.length > 0) {
         opcionesSupervisores.value = sups.map((s) => ({
           id: s._id || s.id,
@@ -224,9 +228,20 @@ onMounted(async () => {
 async function guardarSolicitud() {
   cargando.value = true
 
-  const nomContratista = (form.value.contratista || auth.usuario?.nombre || auth.nombre || 'Contratista').trim()
-  const supNombre = typeof form.value.supervisor === 'object' ? form.value.supervisor?.nombre : (form.value.supervisor || 'Supervisor Asignado')
-  const depNombre = typeof form.value.dependencia === 'object' ? (form.value.dependencia?.nombre || form.value.dependencia?.label) : (form.value.dependencia || 'Gestión Tecnológica')
+  const nomContratista = (
+    form.value.contratista ||
+    auth.usuario?.nombre ||
+    auth.nombre ||
+    'Contratista'
+  ).trim()
+  const supNombre =
+    typeof form.value.supervisor === 'object'
+      ? form.value.supervisor?.nombre
+      : form.value.supervisor || 'Supervisor Asignado'
+  const depNombre =
+    typeof form.value.dependencia === 'object'
+      ? form.value.dependencia?.nombre || form.value.dependencia?.label
+      : form.value.dependencia || 'Gestión Tecnológica'
 
   const nuevaSolicitud = {
     numeroContrato: form.value.numeroContrato,

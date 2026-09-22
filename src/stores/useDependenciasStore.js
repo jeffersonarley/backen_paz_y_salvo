@@ -63,7 +63,7 @@ export const useDependenciasStore = defineStore('dependencias', () => {
     cargando.value = true
     try {
       const resp = await api.get('/dependencias')
-      const lista = Array.isArray(resp.data) ? resp.data : (resp.data?.dependencias || [])
+      const lista = Array.isArray(resp.data) ? resp.data : resp.data?.dependencias || []
       if (Array.isArray(lista) && lista.length > 0) {
         const desdeAtlas = lista.map((d, idx) => ({
           _id: d._id?.toString() || `dep_${idx}`,
@@ -124,7 +124,8 @@ export const useDependenciasStore = defineStore('dependencias', () => {
         try {
           await api.put(`/dependencias/${idAtlas}`, {
             nombre_dependencia: datosActualizados.nombre,
-            activo: datosActualizados.estado !== 'Inactivo' && datosActualizados.estado !== 'Inactiva',
+            activo:
+              datosActualizados.estado !== 'Inactivo' && datosActualizados.estado !== 'Inactiva',
           })
           await cargarDependencias()
         } catch (err) {
@@ -135,7 +136,9 @@ export const useDependenciasStore = defineStore('dependencias', () => {
   }
 
   async function eliminar(codigoOId) {
-    const dep = dependencias.value.find((item) => item.codigo === codigoOId || item._id === codigoOId || item.id === codigoOId)
+    const dep = dependencias.value.find(
+      (item) => item.codigo === codigoOId || item._id === codigoOId || item.id === codigoOId,
+    )
     if (dep) {
       dep.estado = dep.estado === 'Inactiva' || dep.estado === 'Inactivo' ? 'Activa' : 'Inactiva'
       const idAtlas = dep?._id || dep?.id

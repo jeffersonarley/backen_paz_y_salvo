@@ -1,11 +1,23 @@
 <template>
   <q-page class="q-pa-lg">
-    <!-- Encabezado -->
+    <!-- Encabezado Adaptativo por Rol -->
     <div class="row items-center justify-between q-mb-lg">
       <div>
-        <div class="text-h4 text-primary text-weight-bold">Aprobaciones y Firmas</div>
+        <div class="text-h4 text-primary text-weight-bold">
+          {{ esContratista ? 'Seguimiento de Paz y Salvo y Firma' : 'Aprobaciones y Firmas' }}
+        </div>
         <div class="text-subtitle2 text-grey-7">
-          Certificado GCCON-F-088 — {{ solicitudActual ? `Solicitud: ${codigoSolicitud}` : 'Gestión de Dictámenes y Firmas Oficiales' }}
+          Certificado GCCON-F-088 —
+          <span v-if="esContratista" class="text-weight-bold text-primary"
+            >Vista Contratista (RF-005, RF-010)</span
+          >
+          <span v-else-if="esResponsableArea" class="text-weight-bold text-primary"
+            >Vista Responsable de Área (RF-008, RF-014)</span
+          >
+          <span v-else class="text-weight-bold text-primary"
+            >Vista Supervisión y Administración (RF-006)</span
+          >
+          {{ solicitudActual ? ` | Solicitud: ${codigoSolicitud}` : '' }}
         </div>
       </div>
 
@@ -40,15 +52,25 @@
     <div v-if="!solicitudActual">
       <q-card flat bordered class="q-pa-md q-mb-lg">
         <q-card-section>
-          <div class="text-h6 text-primary text-weight-bold q-mb-xs">Solicitudes Disponibles para Dictamen / Firma</div>
-          <div class="text-caption text-grey-7 q-mb-md">
-            Seleccione una solicitud para revisar los bienes a cargo del contratista y emitir su dictamen aprobatorio (firma) o registrar novedades de rechazo.
+          <div class="text-h6 text-primary text-weight-bold q-mb-xs">
+            {{
+              esContratista
+                ? 'Mis Solicitudes de Paz y Salvo'
+                : 'Solicitudes Disponibles para Dictamen / Firma'
+            }}
           </div>
-          
+          <div class="text-caption text-grey-7 q-mb-md">
+            {{
+              esContratista
+                ? 'Consulte el estado de su trámite en tiempo real. Cuando las dependencias otorguen el visto bueno en bienes, podrá estampar su firma final (RF-005, RF-010).'
+                : 'Seleccione una solicitud para revisar los bienes a cargo del contratista y emitir su dictamen aprobatorio (firma) o registrar novedades de rechazo (RF-008, RF-014).'
+            }}
+          </div>
+
           <q-table
             flat
             bordered
-            :rows="store.solicitudes || []"
+            :rows="solicitudesParaBandeja"
             :columns="columnasBandeja"
             row-key="id"
             no-data-label="No hay solicitudes registradas"
@@ -60,8 +82,8 @@
                     props.row.estado === 'Firmado' || props.row.estado === 'Finalizado'
                       ? 'positive'
                       : props.row.estado === 'Rechazado'
-                      ? 'negative'
-                      : 'warning'
+                        ? 'negative'
+                        : 'warning'
                   "
                   class="text-weight-bold q-pa-xs"
                 >
@@ -72,43 +94,83 @@
 
             <template #body-cell-acciones="props">
               <q-td :props="props" class="q-gutter-xs text-center">
-                <!-- Botón Firmar / Dictamen Positivo -->
-                <q-btn
-                  flat
-                  round
-                  dense
-                  color="positive"
-                  icon="draw"
-                  @click="seleccionarYFirmar(props.row)"
-                >
-                  <q-tooltip>Firmar / Estampar Paz y Salvo</q-tooltip>
-                </q-btn>
+                <!-- Para CONTRATISTA: Botón según estado -->
+                <template v-if="esContratista">
+                  <q-btn
+                    v-if="props.row.estado === 'Rechazado'"
+                    flat
+                    round
+                    dense
+                    color="negative"
+                    icon="report_problem"
+                    @click="irADetalle(props.row)"
+                  >
+                    <q-tooltip>Ver Novedades y Bienes Pendientes</q-tooltip>
+                  </q-btn>
+                  <q-btn
+                    v-else-if="props.row.estado === 'Firmado' || props.row.estado === 'Finalizado'"
+                    flat
+                    round
+                    dense
+                    color="positive"
+                    icon="verified"
+                    @click="irADetalle(props.row)"
+                  >
+                    <q-tooltip>Paz y Salvo Aprobado - Ver Detalle y Firmas</q-tooltip>
+                  </q-btn>
+                  <q-btn
+                    v-else
+                    flat
+                    round
+                    dense
+                    color="warning"
+                    icon="visibility"
+                    @click="irADetalle(props.row)"
+                  >
+                    <q-tooltip>Consultar Estado de Revisión</q-tooltip>
+                  </q-btn>
+                </template>
 
-                <!-- Botón Rechazar / Novedad con Observaciones o Bienes Faltantes -->
-                <q-btn
-                  flat
-                  round
-                  dense
-                  color="negative"
-                  icon="report_problem"
-                  @click="abrirModalRechazo(props.row)"
-                >
-                  <q-tooltip>Rechazar con Observaciones / Novedad de Bienes</q-tooltip>
-                </q-btn>
+                <!-- Para RESPONSABLE DE ÁREA y SUPERVISOR: Dictámenes y gestión -->
+                <template v-else>
+                  <!-- Botón Firmar / Dictamen Positivo -->
+                  <q-btn
+                    flat
+                    round
+                    dense
+                    color="positive"
+                    icon="draw"
+                    @click="seleccionarYFirmar(props.row)"
+                  >
+                    <q-tooltip>Firmar / Estampar Paz y Salvo</q-tooltip>
+                  </q-btn>
 
-                <!-- Botón Revisar Detalle e Inventario -->
-                <q-btn
-                  flat
-                  round
-                  dense
-                  color="primary"
-                  icon="inventory_2"
-                  @click="irADetalle(props.row)"
-                >
-                  <q-tooltip>Ver Detalle e Inventario de Bienes</q-tooltip>
-                </q-btn>
+                  <!-- Botón Rechazar / Novedad con Observaciones o Bienes Faltantes -->
+                  <q-btn
+                    flat
+                    round
+                    dense
+                    color="negative"
+                    icon="report_problem"
+                    @click="abrirModalRechazo(props.row)"
+                  >
+                    <q-tooltip>Rechazar con Observaciones / Novedad de Bienes</q-tooltip>
+                  </q-btn>
 
-                <!-- Botón Ver Certificado PDF -->
+                  <!-- Botón Revisar Detalle e Inventario -->
+                  <q-btn
+                    flat
+                    round
+                    dense
+                    color="primary"
+                    icon="inventory_2"
+                    @click="irADetalle(props.row)"
+                  >
+                    <q-tooltip>Ver Detalle e Inventario de Bienes</q-tooltip>
+                  </q-btn>
+                </template>
+
+                <!-- Botón Ver Certificado PDF (Siempre disponible) -->
                 <q-btn
                   flat
                   round
@@ -141,8 +203,8 @@
                   solicitudActual.estado === 'Firmado' || solicitudActual.estado === 'Finalizado'
                     ? 'positive'
                     : solicitudActual.estado === 'Rechazado'
-                    ? 'negative'
-                    : 'warning'
+                      ? 'negative'
+                      : 'warning'
                 "
                 class="text-weight-bold q-pa-xs"
               >
@@ -160,11 +222,19 @@
               <template #avatar>
                 <q-icon name="error" color="negative" size="md" />
               </template>
-              <div class="text-subtitle1 text-weight-bold">Dictamen con Observaciones / Trámite Rechazado</div>
+              <div class="text-subtitle1 text-weight-bold">
+                Dictamen con Observaciones / Trámite Rechazado
+              </div>
               <div class="text-body2 q-mt-xs">
                 <strong>Motivo / Novedad registrada:</strong>
-                <div class="q-pa-sm bg-white rounded-borders q-mt-xs text-grey-9 text-italic border-grey">
-                  "{{ solicitudActual.observacionRechazo || solicitudActual.observaciones_supervisor || 'Bienes o requerimientos pendientes de entrega en el área correspondiente.' }}"
+                <div
+                  class="q-pa-sm bg-white rounded-borders q-mt-xs text-grey-9 text-italic border-grey"
+                >
+                  "{{
+                    solicitudActual.observacionRechazo ||
+                    solicitudActual.observaciones_supervisor ||
+                    'Bienes o requerimientos pendientes de entrega en el área correspondiente.'
+                  }}"
                 </div>
               </div>
             </q-banner>
@@ -208,8 +278,14 @@
 
             <!-- Vista previa de firma estampada si ya se firmó -->
             <div v-if="firmaActual" class="q-mt-md q-pa-sm bg-grey-1 rounded-borders border-dashed">
-              <div class="text-caption text-weight-bold text-grey-8 q-mb-xs">Firma Manuscrita Estampada para este documento:</div>
-              <img :src="firmaActual" alt="Firma Estampada" style="max-height: 55px; max-width: 160px; object-fit: contain; display: block;" />
+              <div class="text-caption text-weight-bold text-grey-8 q-mb-xs">
+                Firma Manuscrita Estampada para este documento:
+              </div>
+              <img
+                :src="firmaActual"
+                alt="Firma Estampada"
+                style="max-height: 55px; max-width: 160px; object-fit: contain; display: block"
+              />
             </div>
 
             <!-- Sección de Inventario de Bienes a Cargo -->
@@ -222,7 +298,8 @@
                 <q-badge color="primary">{{ listaBienes.length }} Elementos</q-badge>
               </div>
               <div class="text-caption text-grey-7 q-mb-sm">
-                Verifique físicamente la devolución de cada elemento antes de otorgar el paz y salvo.
+                Verifique físicamente la devolución de cada elemento antes de otorgar el paz y
+                salvo.
               </div>
 
               <q-table
@@ -242,8 +319,8 @@
                         bProps.row.estado_entrega === 'Devuelto' || esFirmado
                           ? 'positive'
                           : solicitudActual.estado === 'Rechazado'
-                          ? 'negative'
-                          : 'warning'
+                            ? 'negative'
+                            : 'warning'
                       "
                       class="text-weight-bold"
                     >
@@ -266,16 +343,18 @@
             <q-separator class="q-mb-md" />
 
             <q-list bordered separator class="rounded-borders">
+              <!-- Paso 1: Supervisor -->
               <q-item>
                 <q-item-section avatar>
                   <q-icon name="check_circle" color="positive" />
                 </q-item-section>
                 <q-item-section>
                   <q-item-label class="text-weight-bold">Supervisor de Contrato</q-item-label>
-                  <q-item-label caption>Aprobado para firmas</q-item-label>
+                  <q-item-label caption>Aprobado para firmas (RF-006)</q-item-label>
                 </q-item-section>
               </q-item>
 
+              <!-- Paso 2: Responsable de Área -->
               <q-item>
                 <q-item-section avatar>
                   <q-icon
@@ -283,15 +362,15 @@
                       esFirmado
                         ? 'check_circle'
                         : solicitudActual.estado === 'Rechazado'
-                        ? 'cancel'
-                        : 'pending'
+                          ? 'cancel'
+                          : 'pending'
                     "
                     :color="
                       esFirmado
                         ? 'positive'
                         : solicitudActual.estado === 'Rechazado'
-                        ? 'negative'
-                        : 'warning'
+                          ? 'negative'
+                          : 'warning'
                     "
                   />
                 </q-item-section>
@@ -300,22 +379,127 @@
                   <q-item-label caption>
                     {{
                       esFirmado
-                        ? 'Firmado y Estampado'
+                        ? 'Paz y Salvo de Bienes Aprobado (RF-008)'
                         : solicitudActual.estado === 'Rechazado'
-                        ? 'Rechazado con Observaciones'
-                        : 'Pendiente de dictamen'
+                          ? 'Rechazado con Observaciones (RF-014)'
+                          : 'Pendiente de dictamen de bienes'
+                    }}
+                  </q-item-label>
+                </q-item-section>
+              </q-item>
+
+              <!-- Paso 3: Firma del Contratista -->
+              <q-item>
+                <q-item-section avatar>
+                  <q-icon
+                    :name="
+                      firmaActual
+                        ? 'check_circle'
+                        : solicitudActual.estado === 'Rechazado'
+                          ? 'block'
+                          : esFirmado
+                            ? 'edit_note'
+                            : 'lock'
+                    "
+                    :color="
+                      firmaActual
+                        ? 'positive'
+                        : solicitudActual.estado === 'Rechazado'
+                          ? 'negative'
+                          : esFirmado
+                            ? 'primary'
+                            : 'grey-6'
+                    "
+                  />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label class="text-weight-bold">Firma del Contratista</q-item-label>
+                  <q-item-label caption>
+                    {{
+                      firmaActual
+                        ? 'Firma de cierre estampada (RF-010)'
+                        : solicitudActual.estado === 'Rechazado'
+                          ? 'Firma bloqueada por novedades'
+                          : esFirmado
+                            ? 'Habilitada: Proceda a firmar'
+                            : 'Pendiente visto bueno de áreas'
                     }}
                   </q-item-label>
                 </q-item-section>
               </q-item>
             </q-list>
 
-            <div class="q-mt-lg column q-gutter-sm">
-              <!-- Botón Firmar -->
+            <!-- Acciones para CONTRATISTA -->
+            <div v-if="esContratista" class="q-mt-lg column q-gutter-sm">
+              <div
+                v-if="solicitudActual.estado === 'Rechazado'"
+                class="q-pa-sm bg-red-1 rounded-borders border-negative"
+              >
+                <div class="text-caption text-weight-bold text-negative">
+                  <q-icon name="block" class="q-mr-xs" /> Firma retenida por novedades
+                </div>
+                <div class="text-caption text-grey-8">
+                  Debe entregar o subsanar los bienes requeridos en la dependencia para que el área
+                  reactive su trámite.
+                </div>
+              </div>
+              <div v-else-if="!esFirmado" class="q-pa-sm bg-amber-1 rounded-borders border-warning">
+                <div class="text-caption text-weight-bold text-amber-9">
+                  <q-icon name="pending" class="q-mr-xs" /> En revisión de bienes
+                </div>
+                <div class="text-caption text-grey-8">
+                  El responsable de área está validando el inventario. Una vez aprobado, se
+                  habilitará su firma de cierre.
+                </div>
+              </div>
+
+              <!-- Botón Firmar Contratista (Se habilita cuando está en orden) -->
+              <q-btn
+                v-if="solicitudActual.estado !== 'Rechazado'"
+                color="positive"
+                icon="draw"
+                :label="
+                  firmaActual
+                    ? 'Modificar Firma del Contratista'
+                    : 'Estampar Firma del Contratista (Cierre GCCON-F-088)'
+                "
+                unelevated
+                class="full-width text-weight-bold"
+                @click="abrirModalFirma"
+              />
+              <q-btn
+                v-else
+                disable
+                color="grey-6"
+                icon="lock"
+                label="Firma Retenida por Novedades"
+                unelevated
+                class="full-width"
+              />
+
+              <!-- Botón Ver PDF -->
+              <q-btn
+                outline
+                color="red-7"
+                icon="picture_as_pdf"
+                label="Ver / Descargar PDF Oficial"
+                class="full-width"
+                @click="imprimirCertificado"
+              />
+            </div>
+
+            <!-- Acciones para RESPONSABLE DE ÁREA -->
+            <div v-else-if="esResponsableArea" class="q-mt-lg column q-gutter-sm">
+              <!-- Botón Firmar / Dictamen Positivo de Área -->
               <q-btn
                 color="positive"
                 icon="draw"
-                :label="esFirmado ? 'Volver a Firmar' : 'Firmar y Aprobar Paz y Salvo'"
+                :label="
+                  esFirmado
+                    ? 'Dictamen Aprobado (Firmado)'
+                    : 'Aprobar y Firmar Paz y Salvo del Área'
+                "
+                :disable="esFirmado"
                 unelevated
                 class="full-width text-weight-bold"
                 @click="abrirModalFirma"
@@ -341,6 +525,34 @@
                 @click="imprimirCertificado"
               />
             </div>
+
+            <!-- Acciones para SUPERVISOR Y ADMINISTRADOR -->
+            <div v-else-if="esSupervisorOAdmin" class="q-mt-lg column q-gutter-sm">
+              <q-btn
+                color="positive"
+                icon="draw"
+                :label="esFirmado ? 'Firmar / Estampar' : 'Firmar Paz y Salvo'"
+                unelevated
+                class="full-width text-weight-bold"
+                @click="abrirModalFirma"
+              />
+              <q-btn
+                outline
+                color="negative"
+                icon="report_problem"
+                label="Rechazar / Novedad de Bienes"
+                class="full-width text-weight-bold"
+                @click="abrirModalRechazo(solicitudActual)"
+              />
+              <q-btn
+                outline
+                color="red-7"
+                icon="picture_as_pdf"
+                label="Ver Certificado PDF"
+                class="full-width"
+                @click="imprimirCertificado"
+              />
+            </div>
           </q-card-section>
         </q-card>
       </div>
@@ -348,7 +560,7 @@
 
     <!-- Diálogo con Canvas para Dibujar y Capturar la Firma -->
     <q-dialog v-model="dialogoFirma" persistent>
-      <q-card style="min-width: 480px; max-width: 90vw;">
+      <q-card style="min-width: 480px; max-width: 90vw">
         <q-card-section class="bg-primary text-white row items-center justify-between">
           <div class="text-h6">
             <q-icon name="draw" class="q-mr-sm" />
@@ -359,8 +571,9 @@
 
         <q-card-section class="q-pa-md">
           <div class="text-caption text-grey-8 q-mb-sm">
-            Dibuje su firma en el recuadro. Por seguridad y cumplimiento de la normativa SENA,
-            la firma <strong>no se almacena en la base de datos</strong>; se estampa directamente en el archivo PDF oficial.
+            Dibuje su firma en el recuadro. Por seguridad y cumplimiento de la normativa SENA, la
+            firma <strong>no se almacena en la base de datos</strong>; se estampa directamente en el
+            archivo PDF oficial.
           </div>
           <FirmaCanvas ref="canvasRef" />
         </q-card-section>
@@ -372,7 +585,7 @@
             icon="verified"
             label="Confirmar y Estampar en PDF"
             :loading="procesandoFirma"
-            @click="confirmarFirma"
+            @click="solicitarConfirmacionFirma"
           />
         </q-card-actions>
       </q-card>
@@ -380,7 +593,7 @@
 
     <!-- Diálogo / Pantalla de Observaciones y Novedad de Bienes -->
     <q-dialog v-model="dialogoRechazo" persistent>
-      <q-card style="min-width: 520px; max-width: 90vw;">
+      <q-card style="min-width: 520px; max-width: 90vw">
         <q-card-section class="bg-negative text-white row items-center justify-between">
           <div class="text-h6 text-weight-bold">
             <q-icon name="report_problem" class="q-mr-sm" />
@@ -391,8 +604,9 @@
 
         <q-card-section class="q-pa-md">
           <div class="text-caption text-grey-8 q-mb-md">
-            Si el contratista tiene bienes pendientes de devolución en su área, elementos dañados o soporte incompleto,
-            emita este dictamen negativo. El trámite pasará a estado <strong>Rechazado</strong> y se notificará para su subsanación.
+            Si el contratista tiene bienes pendientes de devolución en su área, elementos dañados o
+            soporte incompleto, emita este dictamen negativo. El trámite pasará a estado
+            <strong>Rechazado</strong> y se notificará para su subsanación.
           </div>
 
           <!-- Resumen de la Solicitud -->
@@ -456,7 +670,8 @@
                     {{ bien.descripcion || bien.nombre }}
                   </q-item-label>
                   <q-item-label caption>
-                    Placa/Código: {{ bien.codigo_inventario || bien.codigo || 'S/C' }} | Estado físico: {{ bien.estado_bien || 'Bueno' }}
+                    Placa/Código: {{ bien.codigo_inventario || bien.codigo || 'S/C' }} | Estado
+                    físico: {{ bien.estado_bien || 'Bueno' }}
                   </q-item-label>
                 </q-item-section>
                 <q-item-section side>
@@ -478,7 +693,11 @@
             type="textarea"
             rows="3"
             placeholder="Describa claramente los elementos pendientes por devolver o la justificación del no paz y salvo..."
-            :rules="[(val) => (!!val && val.trim().length >= 5) || 'Ingrese una observación detallada de al menos 5 caracteres']"
+            :rules="[
+              (val) =>
+                (!!val && val.trim().length >= 5) ||
+                'Ingrese una observación detallada de al menos 5 caracteres',
+            ]"
           />
         </q-card-section>
 
@@ -503,6 +722,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useSolicitudesStore } from '../stores/useSolicitudesStore.js'
+import { useAuthStore } from '../stores/authStore.js'
 import FirmaCanvas from '../components/FirmaCanvas.vue'
 import api from '../services/api'
 
@@ -510,6 +730,26 @@ const route = useRoute()
 const router = useRouter()
 const $q = useQuasar()
 const store = useSolicitudesStore()
+const auth = useAuthStore()
+
+const esContratista = computed(() => auth.rolUsuario === 'CONTRATISTA')
+const esResponsableArea = computed(() => auth.rolUsuario === 'RESPONSABLE_AREA')
+const esSupervisorOAdmin = computed(
+  () => auth.rolUsuario === 'SUPERVISOR' || auth.rolUsuario === 'ADMINISTRADOR',
+)
+
+const solicitudesParaBandeja = computed(() => {
+  const lista = store.solicitudes || []
+  if (esContratista.value && auth.usuario?.nombre) {
+    const nombreUsuario = auth.usuario.nombre.toLowerCase().trim()
+    const filtradas = lista.filter((s) => {
+      const c = (s.contratista || s.nombreContratista || '').toLowerCase().trim()
+      return c.includes(nombreUsuario) || nombreUsuario.includes(c)
+    })
+    return filtradas.length > 0 ? filtradas : lista
+  }
+  return lista
+})
 
 const dialogoFirma = ref(false)
 const dialogoRechazo = ref(false)
@@ -532,19 +772,54 @@ const opcionesMotivos = [
 ]
 
 const columnasBandeja = [
-  { name: 'solicitud', label: 'Código Solicitud', field: (row) => row.numeroSolicitud || row.solicitud || row.codigo || '—', align: 'left' },
-  { name: 'contrato', label: 'Contrato', field: (row) => row.numeroContrato || row.contrato || '—', align: 'left' },
-  { name: 'contratista', label: 'Contratista', field: (row) => row.contratista || row.nombreContratista || '—', align: 'left' },
-  { name: 'dependencia', label: 'Dependencia', field: (row) => row.dependencia || row.nombreDependencia || '—', align: 'left' },
+  {
+    name: 'solicitud',
+    label: 'Código Solicitud',
+    field: (row) => row.numeroSolicitud || row.solicitud || row.codigo || '—',
+    align: 'left',
+  },
+  {
+    name: 'contrato',
+    label: 'Contrato',
+    field: (row) => row.numeroContrato || row.contrato || '—',
+    align: 'left',
+  },
+  {
+    name: 'contratista',
+    label: 'Contratista',
+    field: (row) => row.contratista || row.nombreContratista || '—',
+    align: 'left',
+  },
+  {
+    name: 'dependencia',
+    label: 'Dependencia',
+    field: (row) => row.dependencia || row.nombreDependencia || '—',
+    align: 'left',
+  },
   { name: 'estado', label: 'Estado', field: 'estado', align: 'center' },
   { name: 'acciones', label: 'Acciones', align: 'center' },
 ]
 
 const columnasBienes = [
-  { name: 'codigo', label: 'Código / Inventario', field: (row) => row.codigo_inventario || row.codigo || 'S/C', align: 'left' },
-  { name: 'descripcion', label: 'Descripción del Bien', field: (row) => row.descripcion || row.nombre || '—', align: 'left' },
+  {
+    name: 'codigo',
+    label: 'Código / Inventario',
+    field: (row) => row.codigo_inventario || row.codigo || 'S/C',
+    align: 'left',
+  },
+  {
+    name: 'descripcion',
+    label: 'Descripción del Bien',
+    field: (row) => row.descripcion || row.nombre || '—',
+    align: 'left',
+  },
   { name: 'cantidad', label: 'Cantidad', field: (row) => row.cantidad || 1, align: 'center' },
-  { name: 'estado_bien', label: 'Estado Físico', field: (row) => row.estado_bien || 'Bueno', align: 'center' },
+  {
+    name: 'estado_bien',
+    label: 'Estado Físico',
+    field: (row) => row.estado_bien || 'Bueno',
+    align: 'center',
+  },
   { name: 'estado_entrega', label: 'Estado Devolución', field: 'estado_entrega', align: 'center' },
 ]
 
@@ -573,7 +848,8 @@ const listaBienes = computed(() => {
   if (Array.isArray(solicitudActual.value.bienes) && solicitudActual.value.bienes.length > 0) {
     return solicitudActual.value.bienes
   }
-  const cod = solicitudActual.value.numeroContrato || solicitudActual.value.numeroSolicitud || '1042'
+  const cod =
+    solicitudActual.value.numeroContrato || solicitudActual.value.numeroSolicitud || '1042'
   const sufijo = String(cod).replace(/\D/g, '').slice(-4).padStart(4, '0')
   return [
     {
@@ -581,14 +857,22 @@ const listaBienes = computed(() => {
       codigo_inventario: `INV-TIC-${sufijo}`,
       estado_bien: 'Bueno',
       cantidad: 1,
-      estado_entrega: esFirmado.value ? 'Devuelto' : (solicitudActual.value.estado === 'Rechazado' ? 'Pendiente' : 'En revisión'),
+      estado_entrega: esFirmado.value
+        ? 'Devuelto'
+        : solicitudActual.value.estado === 'Rechazado'
+          ? 'Pendiente'
+          : 'En revisión',
     },
     {
       descripcion: 'Carnet de identificación y tarjeta de proximidad',
       codigo_inventario: `INV-SEC-${sufijo}`,
       estado_bien: 'Bueno',
       cantidad: 1,
-      estado_entrega: esFirmado.value ? 'Devuelto' : (solicitudActual.value.estado === 'Rechazado' ? 'Pendiente' : 'En revisión'),
+      estado_entrega: esFirmado.value
+        ? 'Devuelto'
+        : solicitudActual.value.estado === 'Rechazado'
+          ? 'Pendiente'
+          : 'En revisión',
     },
   ]
 })
@@ -612,7 +896,8 @@ function volverALista() {
 }
 
 function irADetalle(fila) {
-  const cod = fila.numeroSolicitud || fila.solicitud || fila.codigo || fila.numeroContrato || fila.contrato
+  const cod =
+    fila.numeroSolicitud || fila.solicitud || fila.codigo || fila.numeroContrato || fila.contrato
   router.push({ name: 'firmas', query: { codigo: cod } })
 }
 
@@ -621,7 +906,8 @@ function abrirModalFirma() {
 }
 
 function seleccionarYFirmar(fila) {
-  const cod = fila.numeroSolicitud || fila.solicitud || fila.codigo || fila.numeroContrato || fila.contrato
+  const cod =
+    fila.numeroSolicitud || fila.solicitud || fila.codigo || fila.numeroContrato || fila.contrato
   router.push({ name: 'firmas', query: { codigo: cod } })
   setTimeout(() => {
     dialogoFirma.value = true
@@ -629,68 +915,88 @@ function seleccionarYFirmar(fila) {
 }
 
 function verPdfFila(fila) {
-  const cod = fila.numeroSolicitud || fila.solicitud || fila.codigo || fila.numeroContrato || fila.contrato
+  const cod =
+    fila.numeroSolicitud || fila.solicitud || fila.codigo || fila.numeroContrato || fila.contrato
   router.push({ name: 'certificado-pdf', query: { codigo: cod } })
 }
 
 function abrirModalRechazo(fila) {
   solicitudRechazar.value = fila
   motivoSeleccionado.value = 'Bienes o inventario pendiente por entregar / devolver'
-  
+
   // Extraer bienes del contrato para selección
-  const bienesOrigen = (Array.isArray(fila.bienes) && fila.bienes.length > 0)
-    ? fila.bienes
-    : [
-        {
-          descripcion: 'Equipo de cómputo portátil y accesorios',
-          codigo_inventario: `INV-${String(fila.numeroContrato || '1042').replace(/\D/g, '').slice(-4).padStart(4, '0')}`,
-          estado_bien: 'Bueno',
-        },
-        {
-          descripcion: 'Carnet de identificación institucional',
-          codigo_inventario: 'INV-CARNET-01',
-          estado_bien: 'Bueno',
-        },
-      ]
+  const bienesOrigen =
+    Array.isArray(fila.bienes) && fila.bienes.length > 0
+      ? fila.bienes
+      : [
+          {
+            descripcion: 'Equipo de cómputo portátil y accesorios',
+            codigo_inventario: `INV-${String(fila.numeroContrato || '1042')
+              .replace(/\D/g, '')
+              .slice(-4)
+              .padStart(4, '0')}`,
+            estado_bien: 'Bueno',
+          },
+          {
+            descripcion: 'Carnet de identificación institucional',
+            codigo_inventario: 'INV-CARNET-01',
+            estado_bien: 'Bueno',
+          },
+        ]
 
   bienesParaRechazo.value = bienesOrigen.map((b) => ({
     ...b,
     marcadoFaltante: true,
   }))
 
-  const faltantesIniciales = bienesParaRechazo.value.filter((b) => b.marcadoFaltante).map((b) => b.descripcion).join(', ')
+  const faltantesIniciales = bienesParaRechazo.value
+    .filter((b) => b.marcadoFaltante)
+    .map((b) => b.descripcion)
+    .join(', ')
   textoObservacionesRechazo.value = `El contratista no ha devuelto en el área los siguientes bienes a cargo: ${faltantesIniciales}. Trámite pendiente hasta su entrega física.`
-  
+
   dialogoRechazo.value = true
 }
 
 function alCambiarMotivo(nuevoMotivo) {
   if (nuevoMotivo === 'Bienes o inventario pendiente por entregar / devolver') {
-    const marcados = bienesParaRechazo.value.filter((b) => b.marcadoFaltante).map((b) => b.descripcion)
-    textoObservacionesRechazo.value = marcados.length > 0
-      ? `Pendiente entrega y devolución física de: ${marcados.join(', ')}.`
-      : 'Pendiente devolución de inventario institucional a cargo en el área.'
+    const marcados = bienesParaRechazo.value
+      .filter((b) => b.marcadoFaltante)
+      .map((b) => b.descripcion)
+    textoObservacionesRechazo.value =
+      marcados.length > 0
+        ? `Pendiente entrega y devolución física de: ${marcados.join(', ')}.`
+        : 'Pendiente devolución de inventario institucional a cargo en el área.'
   } else if (nuevoMotivo === 'Falta carnet institucional o credencial de acceso') {
-    textoObservacionesRechazo.value = 'El contratista tiene pendiente la devolución del carnet institucional y credenciales de acceso a las instalaciones.'
+    textoObservacionesRechazo.value =
+      'El contratista tiene pendiente la devolución del carnet institucional y credenciales de acceso a las instalaciones.'
   } else if (nuevoMotivo === 'Equipo o herramienta devuelta con daños o incompleta') {
-    textoObservacionesRechazo.value = 'Los elementos devueltos presentan daños físicos o componentes faltantes (cargador/periféricos) pendientes de subsanar.'
+    textoObservacionesRechazo.value =
+      'Los elementos devueltos presentan daños físicos o componentes faltantes (cargador/periféricos) pendientes de subsanar.'
   } else if (nuevoMotivo === 'Documentación o informe de entregables contractuales pendiente') {
-    textoObservacionesRechazo.value = 'Falta presentar los soportes e informe final de ejecución contractual ante la supervisión.'
+    textoObservacionesRechazo.value =
+      'Falta presentar los soportes e informe final de ejecución contractual ante la supervisión.'
   }
 }
 
 function alCambiarCheckBien() {
-  const marcados = bienesParaRechazo.value.filter((b) => b.marcadoFaltante).map((b) => `${b.descripcion} (${b.codigo_inventario || 'S/C'})`)
+  const marcados = bienesParaRechazo.value
+    .filter((b) => b.marcadoFaltante)
+    .map((b) => `${b.descripcion} (${b.codigo_inventario || 'S/C'})`)
   if (marcados.length > 0) {
     textoObservacionesRechazo.value = `El contratista tiene pendiente la devolución en el área de los siguientes bienes: ${marcados.join(', ')}.`
   } else {
-    textoObservacionesRechazo.value = 'Novedad registrada en el área: No se concede el paz y salvo por requerimientos pendientes.'
+    textoObservacionesRechazo.value =
+      'Novedad registrada en el área: No se concede el paz y salvo por requerimientos pendientes.'
   }
 }
 
 async function confirmarDictamenRechazo() {
   if (!textoObservacionesRechazo.value || textoObservacionesRechazo.value.trim().length < 5) {
-    $q.notify({ type: 'warning', message: 'Por favor describa las observaciones detalladas del rechazo.' })
+    $q.notify({
+      type: 'warning',
+      message: 'Por favor describa las observaciones detalladas del rechazo.',
+    })
     return
   }
 
@@ -704,11 +1010,16 @@ async function confirmarDictamenRechazo() {
       solicitudRechazar.value?.codigo
 
     const faltantes = bienesParaRechazo.value.filter((b) => b.marcadoFaltante)
-    
+
     await store.rechazarSolicitudConDictamen(idBusqueda, textoObservacionesRechazo.value, faltantes)
 
     // Si estamos en la vista de detalle de esta misma solicitud, actualizar estado reactivo
-    if (solicitudActual.value && (solicitudActual.value._id === idBusqueda || solicitudActual.value.numeroSolicitud === idBusqueda || solicitudActual.value.numeroContrato === idBusqueda)) {
+    if (
+      solicitudActual.value &&
+      (solicitudActual.value._id === idBusqueda ||
+        solicitudActual.value.numeroSolicitud === idBusqueda ||
+        solicitudActual.value.numeroContrato === idBusqueda)
+    ) {
       solicitudActual.value.estado = 'Rechazado'
       solicitudActual.value.observacionRechazo = textoObservacionesRechazo.value
     }
@@ -729,6 +1040,28 @@ async function confirmarDictamenRechazo() {
   }
 }
 
+function solicitarConfirmacionFirma() {
+  $q.dialog({
+    title: 'Confirmación de Firma (GCCON-F-088)',
+    message: esContratista.value
+      ? '¿Confirma que desea estampar su firma como contratista para dar constancia de recibo y cierre de este trámite? (RF-010)'
+      : '¿Confirma que desea emitir y registrar su dictamen de firma y paz y salvo para este contrato? (RF-008)',
+    ok: {
+      label: 'Sí, Confirmar y Estampar',
+      color: 'positive',
+      icon: 'verified',
+    },
+    cancel: {
+      label: 'Cancelar',
+      flat: true,
+      color: 'grey-8',
+    },
+    persistent: true,
+  }).onOk(() => {
+    confirmarFirma()
+  })
+}
+
 async function confirmarFirma() {
   if (!canvasRef.value) return
   procesandoFirma.value = true
@@ -744,7 +1077,8 @@ async function confirmarFirma() {
     firmaActual.value = dataUrl
 
     // Si tiene contrato en backend, enviar a la API
-    const contratoId = solicitudActual.value?.contratoId || solicitudActual.value?._id || solicitudActual.value?.id
+    const contratoId =
+      solicitudActual.value?.contratoId || solicitudActual.value?._id || solicitudActual.value?.id
     if (contratoId) {
       try {
         const firmaBase64 = dataUrl.replace(/^data:image\/\w+;base64,/, '')
@@ -780,7 +1114,9 @@ async function confirmarFirma() {
     $q.notify({
       type: 'positive',
       icon: 'verified',
-      message: 'Firma capturada y estampada exitosamente en el archivo PDF oficial.',
+      message: esContratista.value
+        ? '¡Firma del contratista estampada exitosamente! Ya puede descargar su PDF oficial (RF-010).'
+        : 'Paz y salvo de área registrado exitosamente (RF-008). Trámite habilitado para firma del contratista.',
     })
   } catch {
     $q.notify({

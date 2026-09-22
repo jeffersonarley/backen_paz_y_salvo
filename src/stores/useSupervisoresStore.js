@@ -39,7 +39,7 @@ export const useSupervisoresStore = defineStore('supervisores', () => {
     cargando.value = true
     try {
       const resp = await api.get('/usuarios?rol=Supervisor')
-      const lista = Array.isArray(resp.data) ? resp.data : (resp.data?.usuarios || [])
+      const lista = Array.isArray(resp.data) ? resp.data : resp.data?.usuarios || []
       if (Array.isArray(lista)) {
         const desdeAtlas = lista.map((u, idx) => ({
           _id: (u._id || u.id || `sup_${idx}`).toString(),

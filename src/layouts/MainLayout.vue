@@ -29,8 +29,14 @@
         <!-- Botón de Identidad de Usuario con Menú Desplegable -->
         <q-btn flat no-caps class="text-white q-ml-xs q-px-sm header-user-btn">
           <div class="row items-center no-wrap">
-            <q-avatar size="26px" color="white" text-color="primary" icon="person" class="q-mr-sm" />
-            <span class="text-weight-medium text-body2 q-mr-xs ellipsis" style="max-width: 190px;">
+            <q-avatar
+              size="26px"
+              color="white"
+              text-color="primary"
+              icon="person"
+              class="q-mr-sm"
+            />
+            <span class="text-weight-medium text-body2 q-mr-xs ellipsis" style="max-width: 190px">
               {{ textoUsuarioHeader }}
             </span>
             <q-icon name="arrow_drop_down" size="22px" />
@@ -40,7 +46,13 @@
           <q-menu auto-close anchor="bottom right" self="top right">
             <div class="q-pa-md bg-grey-1" style="min-width: 240px">
               <div class="row items-center q-mb-xs">
-                <q-avatar size="38px" color="primary" text-color="white" icon="person" class="q-mr-sm" />
+                <q-avatar
+                  size="38px"
+                  color="primary"
+                  text-color="white"
+                  icon="person"
+                  class="q-mr-sm"
+                />
                 <div class="column">
                   <div class="text-weight-bold text-body2 text-grey-9">
                     {{ auth.usuario?.nombre || 'Usuario del Sistema' }}
@@ -139,7 +151,10 @@ import { useQuasar } from 'quasar'
 import { useAuthStore } from '../stores/authStore.js'
 
 const normalizarRol = (valor) => {
-  const v = String(valor || '').trim().toUpperCase().replace(/[\s_-]+/g, '')
+  const v = String(valor || '')
+    .trim()
+    .toUpperCase()
+    .replace(/[\s_-]+/g, '')
   if (v.includes('ADMIN')) return 'ADMINISTRADOR'
   if (v.includes('SUPER')) return 'SUPERVISOR'
   if (v.includes('RESPONSABLE')) return 'RESPONSABLE_AREA'
@@ -176,7 +191,7 @@ watch(
   () => $q.screen.gt.sm,
   (esPantallaGrande) => {
     leftDrawerOpen.value = esPantallaGrande
-  }
+  },
 )
 
 const menuBase = [
@@ -234,7 +249,7 @@ const menuBase = [
     to: { name: 'firmas' },
     icon: 'draw',
     exact: false,
-    roles: ['RESPONSABLE_AREA'],
+    roles: ['ADMINISTRADOR', 'SUPERVISOR', 'CONTRATISTA', 'RESPONSABLE_AREA'],
   },
   {
     name: 'reportes',

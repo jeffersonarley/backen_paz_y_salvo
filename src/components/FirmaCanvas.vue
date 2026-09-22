@@ -48,12 +48,17 @@
 
     <!-- Editor interactivo de firma pegada o cargada -->
     <div v-if="imagenOriginal" class="contenedor-editor-firma">
-      <div class="barra-edicion q-pa-xs row items-center justify-between bg-grey-2 rounded-borders q-mb-xs">
+      <div
+        class="barra-edicion q-pa-xs row items-center justify-between bg-grey-2 rounded-borders q-mb-xs"
+      >
         <div class="row items-center q-gutter-xs">
           <q-btn flat round dense size="sm" icon="zoom_out" @click="ajustarEscala(-0.15)">
             <q-tooltip>Reducir tamaño</q-tooltip>
           </q-btn>
-          <div class="text-caption text-weight-bold text-primary" style="min-width: 44px; text-align: center;">
+          <div
+            class="text-caption text-weight-bold text-primary"
+            style="min-width: 44px; text-align: center"
+          >
             {{ Math.round(escala * 100) }}%
           </div>
           <q-btn flat round dense size="sm" icon="zoom_in" @click="ajustarEscala(0.15)">
@@ -86,12 +91,28 @@
             <q-tooltip>Hacer transparente el fondo blanco del papel</q-tooltip>
           </q-btn>
 
-          <q-btn flat dense size="xs" color="grey-8" icon="rotate_right" label="Girar" @click="rotar">
+          <q-btn
+            flat
+            dense
+            size="xs"
+            color="grey-8"
+            icon="rotate_right"
+            label="Girar"
+            @click="rotar"
+          >
             <q-tooltip>Girar 90 grados</q-tooltip>
           </q-btn>
         </div>
 
-        <q-btn flat dense size="xs" color="grey-7" icon="restart_alt" label="Centrar" @click="centrarFirma">
+        <q-btn
+          flat
+          dense
+          size="xs"
+          color="grey-7"
+          icon="restart_alt"
+          label="Centrar"
+          @click="centrarFirma"
+        >
           <q-tooltip>Centrar la firma en el recuadro</q-tooltip>
         </q-btn>
       </div>
@@ -321,7 +342,10 @@ function autoRecortarImagen(imgSource) {
     const imgData = tctx.getImageData(0, 0, w, h)
     const data = imgData.data
 
-    let minX = w, minY = h, maxX = 0, maxY = 0
+    let minX = w,
+      minY = h,
+      maxX = 0,
+      maxY = 0
     let hayContenido = false
 
     for (let y = 0; y < h; y++) {
@@ -353,8 +377,8 @@ function autoRecortarImagen(imgSource) {
     const pad = 12
     const cropX = Math.max(0, minX - pad)
     const cropY = Math.max(0, minY - pad)
-    const cropW = Math.min(w - cropX, (maxX - minX) + pad * 2)
-    const cropH = Math.min(h - cropY, (maxY - minY) + pad * 2)
+    const cropW = Math.min(w - cropX, maxX - minX + pad * 2)
+    const cropH = Math.min(h - cropY, maxY - minY + pad * 2)
 
     const cropCanvas = document.createElement('canvas')
     cropCanvas.width = cropW
@@ -459,7 +483,7 @@ function inicializarCanvasEditor() {
   canvas.height = height * DPI_X
 
   const ratioW = (width * 0.85) / imgElement.width
-  const ratioH = (height * 0.70) / imgElement.height
+  const ratioH = (height * 0.7) / imgElement.height
   const baseScale = Math.min(ratioW, ratioH)
   if (baseScale > 0) {
     escala.value = Math.max(0.6, Math.min(2.0, Math.round(baseScale * 100) / 100))
@@ -486,10 +510,16 @@ function redibujarEditor() {
   ctx.strokeStyle = '#f0f0f0'
   ctx.lineWidth = 1
   for (let x = 0; x < w; x += 20) {
-    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke()
+    ctx.beginPath()
+    ctx.moveTo(x, 0)
+    ctx.lineTo(x, h)
+    ctx.stroke()
   }
   for (let y = 0; y < h; y += 20) {
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke()
+    ctx.beginPath()
+    ctx.moveTo(0, y)
+    ctx.lineTo(w, y)
+    ctx.stroke()
   }
 
   const baseLineaY = h * 0.75
@@ -635,8 +665,8 @@ function exportarBase64() {
     const editorCanvas = canvasEditorRef.value
     const factorW = editorCanvas ? expW / (editorCanvas.width / DPI_X) : 1
 
-    const centroX = expW / 2 + (posicion.value.x * factorW)
-    const centroY = baseLineaY - 30 + (posicion.value.y * factorW)
+    const centroX = expW / 2 + posicion.value.x * factorW
+    const centroY = baseLineaY - 30 + posicion.value.y * factorW
 
     ectx.translate(centroX, centroY)
 

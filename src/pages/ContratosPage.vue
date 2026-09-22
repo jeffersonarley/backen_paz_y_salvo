@@ -317,7 +317,8 @@ async function cargar() {
       contratista: c.nombre_contratista,
       dependencia: c.dependencia?.nombre_dependencia || '—',
       fecha: c.createdAt ? new Date(c.createdAt).toLocaleDateString('es-CO') : '—',
-      estado: (c.estado === 'Pendiente de Firmas' || c.estado === 'EnProceso') ? 'En revisión' : c.estado,
+      estado:
+        c.estado === 'Pendiente de Firmas' || c.estado === 'EnProceso' ? 'En revisión' : c.estado,
     }))
   } catch (error) {
     $q.notify({

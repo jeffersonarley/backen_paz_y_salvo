@@ -1,275 +1,407 @@
 <template>
   <q-page class="page-formato">
     <div class="toolbar no-print">
-      <q-btn flat color="primary" icon="arrow_back" label="Volver" @click="volver" />
+      <div class="row items-center q-gutter-sm">
+        <q-btn
+          flat
+          dense
+          color="primary"
+          icon="arrow_back"
+          label="Volver a Solicitudes"
+          @click="volver"
+        />
+        <q-btn
+          flat
+          dense
+          color="secondary"
+          icon="draw"
+          label="Ir a Gestión de Firmas"
+          @click="irAFirmas"
+        />
+        <q-badge
+          :color="
+            datosSolicitud.estado === 'Firmado' || datosSolicitud.estado === 'Finalizado'
+              ? 'positive'
+              : datosSolicitud.estado === 'Rechazado'
+                ? 'negative'
+                : 'warning'
+          "
+          class="text-weight-bold q-pa-xs"
+        >
+          {{
+            datosSolicitud.estado === 'Firmado' || datosSolicitud.estado === 'Finalizado'
+              ? '✓ Paz y Salvo Oficial Firmado'
+              : datosSolicitud.estado === 'Rechazado'
+                ? '✗ Trámite Rechazado con Novedades'
+                : 'En revisión de dependencias'
+          }}
+        </q-badge>
+      </div>
       <div class="q-gutter-sm">
-        <q-btn color="primary" icon="content_paste" label="Pegar / Subir Firma" unelevated @click="abrirModalFirma" />
-        <q-btn color="positive" icon="print" label="Imprimir" unelevated @click="imprimir" />
+        <q-btn
+          color="primary"
+          icon="draw"
+          :label="firmaGuardada ? 'Modificar Firma Contratista' : 'Estampar Firma Contratista'"
+          unelevated
+          @click="abrirModalFirma"
+        />
+        <q-btn
+          color="positive"
+          icon="print"
+          label="Imprimir / Descargar PDF"
+          unelevated
+          @click="imprimir"
+        />
       </div>
     </div>
 
     <div class="documento-wrapper">
-    <div class="documento">
-      <!-- Encabezado con Logo y Versión -->
-      <div class="encabezado-topo">
-        <div class="encabezado-spacer"></div>
-        <div class="logo-box">
-          <img :src="logoSena" alt="Logo SENA" class="logo-sena" />
-        </div>
-
-        <div class="version-box">
-          <div class="version-fila">Versión: 1</div>
-          <div class="version-fila">
-            <div>Código:</div>
-            <div>GCCON-F-088</div>
+      <div class="documento">
+        <!-- Encabezado con Logo y Versión -->
+        <div class="encabezado-topo">
+          <div class="encabezado-spacer"></div>
+          <div class="logo-box">
+            <img :src="logoSena" alt="Logo SENA" class="logo-sena" />
           </div>
-        </div>
-      </div>
 
-      <!-- Títulos Principales en Bloques Negros y Blancos -->
-      <div class="barra-negra">PROCESO</div>
-      <div class="fila-blanca">GESTIÓN CONTRACTUAL</div>
-      <div class="barra-negra">NOMBRE DEL FORMATO</div>
-      <div class="fila-blanca texto-formato">
-        ENTREGA DE BIENES E INFORMACIÓN DE EJECUCIÓN CONTRACTUAL POR EL CONTRATISTA
-      </div>
-      <div class="barra-negra">CLASIFICACIÓN DE LA INFORMACIÓN</div>
-
-      <!-- Tabla de Clasificación de la Información (6 celdas exactas) -->
-      <div class="clasificacion-tabla">
-        <div class="clasif-col">Pública</div>
-        <div class="clasif-check">X</div>
-        <div class="clasif-col">Pública Clasificada</div>
-        <div class="clasif-check"></div>
-        <div class="clasif-col">Pública Reservada</div>
-        <div class="clasif-check"></div>
-      </div>
-
-      <!-- Datos del Contratista - Cuadrícula Oficial GCCON-F-088 -->
-      <div class="seccion-datos">
-        <!-- Fila 1: Nombres y Apellidos del Contratista | Identificación -->
-        <div class="fila-contratista-1">
-          <div class="celda-nombre-contratista">
-            <span class="etiqueta-form">NOMBRES Y APELLIDOS DEL CONTRATISTA:</span>
-            <span class="valor-form text-weight-bold">{{ datosSolicitud.contratista }}</span>
-          </div>
-          <div class="celda-identificacion-header">
-            IDENTIFICACIÓN
-          </div>
-        </div>
-
-        <!-- Fila 2: Ciudad | Fecha | Regional | Valor Identificación -->
-        <div class="fila-contratista-2">
-          <div class="bloque-ciudad-fecha-regional">
-            <div class="celda-etiqueta celda-ciudad-lbl">CIUDAD</div>
-            <div class="celda-valor celda-ciudad-val">{{ datosSolicitud.ciudad }}</div>
-            <div class="celda-etiqueta celda-fecha-lbl">FECHA</div>
-            <div class="celda-valor celda-fecha-val">{{ datosSolicitud.fecha }}</div>
-            <div class="celda-etiqueta celda-regional-lbl">REGIONAL</div>
-            <div class="celda-valor celda-regional-val">{{ datosSolicitud.regional }}</div>
-          </div>
-          <div class="celda-identificacion-valor">
-            {{ datosSolicitud.identificacion }}
-          </div>
-        </div>
-
-        <!-- Fila 3: Dirección u Oficina donde se ejecutó el contrato -->
-        <div class="fila-contratista-3">
-          <div class="celda-etiqueta celda-direccion-lbl">DIRECCIÓN U OFICINA DONDE SE EJECUTÓ EL CONTRATO:</div>
-          <div class="celda-valor celda-direccion-val">{{ datosSolicitud.direccion }}</div>
-        </div>
-
-        <!-- Fila 4: Número y Fecha de Contrato -->
-        <div class="fila-contratista-4">
-          <div class="celda-etiqueta celda-contrato-lbl">NÚMERO Y FECHA DE CONTRATO:</div>
-          <div class="celda-valor celda-contrato-val">{{ datosSolicitud.contrato }}</div>
-        </div>
-      </div>
-
-      <!-- Causal de Terminación del Contrato -->
-      <div class="titulo-causal">CAUSAL DE TERMINACIÓN DEL CONTRATO</div>
-
-      <div class="fila-causales">
-        <div class="causal-item">
-          <span class="causal-nombre">LIQUIDACIÓN POR MUTUO<br>ACUERDO</span>
-          <div class="causal-caja-cuadrada"></div>
-        </div>
-        <div class="causal-item">
-          <span class="causal-nombre">CESIÓN</span>
-          <div class="causal-caja-rect"></div>
-        </div>
-        <div class="causal-item">
-          <span class="causal-nombre">LIQUIDACIÓN ANTICIPADA<br>POR MUTUO ACUERDO</span>
-          <div class="causal-caja-cuadrada"></div>
-        </div>
-        <div class="causal-item">
-          <span class="causal-nombre">TERMINACIÓN<br>UNILATERAL</span>
-          <div class="causal-caja-cuadrada"></div>
-        </div>
-      </div>
-
-      <!-- Tabla de Dependencias Oficial (14 filas exactas de la foto) -->
-      <div class="tabla-dep">
-        <div class="tr-head">
-          <div class="th-dep">DEPENDENCIA SENA</div>
-          <div class="th-marca">Marcar<br>con x</div>
-          <div class="th-resp-wrap">
-            <div class="th-resp-top">RESPONSABLES</div>
-            <div class="th-resp-sub">
-              <div class="th-nombres">NOMBRES Y APELLIDOS</div>
-              <div class="th-firma">FIRMA</div>
+          <div class="version-box">
+            <div class="version-fila">Versión: 1</div>
+            <div class="version-fila">
+              <div>Código:</div>
+              <div>GCCON-F-088</div>
             </div>
           </div>
         </div>
 
-        <!-- 1 -->
-        <div class="tr-row">
-          <div class="td-dep">GESTIÓN DE TIC</div>
-          <div class="td-marca">X</div>
-          <div class="td-nombres">Franklin Rolando Chacon Lopez</div>
-          <div class="td-firma"></div>
+        <!-- Títulos Principales en Bloques Negros y Blancos -->
+        <div class="barra-negra">PROCESO</div>
+        <div class="fila-blanca">GESTIÓN CONTRACTUAL</div>
+        <div class="barra-negra">NOMBRE DEL FORMATO</div>
+        <div class="fila-blanca texto-formato">
+          ENTREGA DE BIENES E INFORMACIÓN DE EJECUCIÓN CONTRACTUAL POR EL CONTRATISTA
+        </div>
+        <div class="barra-negra">CLASIFICACIÓN DE LA INFORMACIÓN</div>
+
+        <!-- Tabla de Clasificación de la Información (6 celdas exactas) -->
+        <div class="clasificacion-tabla">
+          <div class="clasif-col">Pública</div>
+          <div class="clasif-check">X</div>
+          <div class="clasif-col">Pública Clasificada</div>
+          <div class="clasif-check"></div>
+          <div class="clasif-col">Pública Reservada</div>
+          <div class="clasif-check"></div>
         </div>
 
-        <!-- 2 -->
-        <div class="tr-row">
-          <div class="td-dep">ADMINISTRACIÓN DE DOCUMENTOS</div>
-          <div class="td-marca">X</div>
-          <div class="td-nombres">Hilda Lucia Ramirez Alvarado</div>
-          <div class="td-firma"></div>
-        </div>
-
-        <!-- 3 -->
-        <div class="tr-row">
-          <div class="td-dep">ENTREGA CARNÉ (Al Supervisor del Contrato en las Regionales y Centros de Formación)<br>SECRETARÍA GENERAL</div>
-          <div class="td-marca">X</div>
-          <div class="td-nombres">Johon Fredy Sanabria Muñoz</div>
-          <div class="td-firma"></div>
-        </div>
-
-        <!-- 4 -->
-        <div class="tr-row">
-          <div class="td-dep">ALMACÉN E INVENTARIOS</div>
-          <div class="td-marca">X</div>
-          <div class="td-nombres">Generar reporte de https://miinventario.sena.edu.co/Inicio.aspx y anexar al formato, garantizando que no tiene elementos a su cargo.</div>
-          <div class="td-firma"></div>
-        </div>
-
-        <!-- 5 -->
-        <div class="tr-row">
-          <div class="td-dep">SERVICIOS GENERALES, ADQUISICIONES<br>(Administración de edificio; Contratación)</div>
-          <div class="td-marca">X</div>
-          <div class="td-nombres">Juan David Silva Gutierrez</div>
-          <div class="td-firma"></div>
-        </div>
-
-        <!-- 6 -->
-        <div class="tr-row">
-          <div class="td-dep">CONTABILIDAD</div>
-          <div class="td-marca">X</div>
-          <div class="td-nombres">Zaida Leny Melgarejo Ballesteros</div>
-          <div class="td-firma"></div>
-        </div>
-
-        <!-- 7 -->
-        <div class="tr-row">
-          <div class="td-dep">TESORERÍA</div>
-          <div class="td-marca">X</div>
-          <div class="td-nombres">Nelcy Mabel Mayorga Pinto</div>
-          <div class="td-firma"></div>
-        </div>
-
-        <!-- 8 -->
-        <div class="tr-row">
-          <div class="td-dep">COORDINACIÓN DE: ÁREA/GRUPO/ACADÉMICA</div>
-          <div class="td-marca">X</div>
-          <div class="td-nombres">Johon Fredy Sanabria Muñoz</div>
-          <div class="td-firma"></div>
-        </div>
-
-        <!-- 9 -->
-        <div class="tr-row">
-          <div class="td-dep">BIBLIOTECA</div>
-          <div class="td-marca">X</div>
-          <div class="td-nombres">Andrea Juliana Celis Camacho / Yudith Milagros Martinez Bautista</div>
-          <div class="td-firma"></div>
-        </div>
-
-        <!-- 10 -->
-        <div class="tr-row">
-          <div class="td-dep">OTRO (LÍDER SIGA)</div>
-          <div class="td-marca">X</div>
-          <div class="td-nombres">Zaida Jebridy Garcia Jaimes</div>
-          <div class="td-firma"></div>
-        </div>
-
-        <!-- 11 -->
-        <div class="tr-row">
-          <div class="td-dep">OTRO (ADMINISTRACIÓN EDUCATIVA)</div>
-          <div class="td-marca">X</div>
-          <div class="td-nombres">Erika Johana Gómez Verdugo</div>
-          <div class="td-firma"></div>
-        </div>
-
-        <!-- 12 -->
-        <div class="tr-row">
-          <div class="td-dep">APOYO AL SEGUIMIENTO DE LOS PROCESOS ADMINISTRATIVOS Y NOVEDADES</div>
-          <div class="td-marca">X</div>
-          <div class="td-nombres">Nelson Fabian Duarte Peñaloza / Eileen Erfensi Hurtado Ariza</div>
-          <div class="td-firma"></div>
-        </div>
-
-        <!-- 13 -->
-        <div class="tr-row">
-          <div class="td-dep">APOYO ETAPA PRODUCTIVA</div>
-          <div class="td-marca">X</div>
-          <div class="td-nombres">Karen Andrea García Carreño</div>
-          <div class="td-firma"></div>
-        </div>
-
-        <!-- 14 -->
-        <div class="tr-row">
-          <div class="td-dep">SUPERVISOR DE CONTRATO</div>
-          <div class="td-marca">X</div>
-          <div class="td-nombres">Johon Fredy Sanabria Muñoz</div>
-          <div class="td-firma"></div>
-        </div>
-      </div>
-
-      <!-- Sección Inferior: Elementos faltantes, Otros y Firma del Contratista -->
-      <div class="seccion-inferior">
-        <div class="fila-elementos">
-          ELEMENTOS FALTANTES U OBLIGACIONES PENDIENTES (Relacionar con su respectivo valor)
-        </div>
-
-        <div class="fila-otros-inf">
-          <span class="otros-label">OTROS :</span>
-          <span class="otros-puntos"></span>
-        </div>
-
-        <div class="linea-separador-inf"></div>
-
-        <div class="zona-firma-inf">
-          <div class="caja-firma-contratista cursor-pointer" @click="abrirModalFirma" title="Clic para pegar, cambiar o ajustar el tamaño de tu firma">
-            <div v-if="firmaGuardada" class="contenedor-firma-img">
-              <img :src="firmaGuardada" alt="Firma del Contratista" class="img-firma-estampada" />
-              <q-tooltip>Clic para editar, agrandar o ajustar tu firma</q-tooltip>
+        <!-- Datos del Contratista - Cuadrícula Oficial GCCON-F-088 -->
+        <div class="seccion-datos">
+          <!-- Fila 1: Nombres y Apellidos del Contratista | Identificación -->
+          <div class="fila-contratista-1">
+            <div class="celda-nombre-contratista">
+              <span class="etiqueta-form">NOMBRES Y APELLIDOS DEL CONTRATISTA:</span>
+              <span class="valor-form text-weight-bold">{{ datosSolicitud.contratista }}</span>
             </div>
-            <div v-else class="contenedor-firma-placeholder no-print">
-              <q-btn flat dense size="xs" color="primary" icon="add_photo_alternate" label="Clic para firmar aquí" />
+            <div class="celda-identificacion-header">IDENTIFICACIÓN</div>
+          </div>
+
+          <!-- Fila 2: Ciudad | Fecha | Regional | Valor Identificación -->
+          <div class="fila-contratista-2">
+            <div class="bloque-ciudad-fecha-regional">
+              <div class="celda-etiqueta celda-ciudad-lbl">CIUDAD</div>
+              <div class="celda-valor celda-ciudad-val">{{ datosSolicitud.ciudad }}</div>
+              <div class="celda-etiqueta celda-fecha-lbl">FECHA</div>
+              <div class="celda-valor celda-fecha-val">{{ datosSolicitud.fecha }}</div>
+              <div class="celda-etiqueta celda-regional-lbl">REGIONAL</div>
+              <div class="celda-valor celda-regional-val">{{ datosSolicitud.regional }}</div>
             </div>
-            <div class="linea-firma-sola"></div>
-            <div class="texto-firma-sola">Firma del Contratista</div>
+            <div class="celda-identificacion-valor">
+              {{ datosSolicitud.identificacion }}
+            </div>
+          </div>
+
+          <!-- Fila 3: Dirección u Oficina donde se ejecutó el contrato -->
+          <div class="fila-contratista-3">
+            <div class="celda-etiqueta celda-direccion-lbl">
+              DIRECCIÓN U OFICINA DONDE SE EJECUTÓ EL CONTRATO:
+            </div>
+            <div class="celda-valor celda-direccion-val">{{ datosSolicitud.direccion }}</div>
+          </div>
+
+          <!-- Fila 4: Número y Fecha de Contrato -->
+          <div class="fila-contratista-4">
+            <div class="celda-etiqueta celda-contrato-lbl">NÚMERO Y FECHA DE CONTRATO:</div>
+            <div class="celda-valor celda-contrato-val">{{ datosSolicitud.contrato }}</div>
           </div>
         </div>
 
-        <div class="linea-separador-inf"></div>
+        <!-- Causal de Terminación del Contrato -->
+        <div class="titulo-causal">CAUSAL DE TERMINACIÓN DEL CONTRATO</div>
+
+        <div class="fila-causales">
+          <div class="causal-item">
+            <span class="causal-nombre">LIQUIDACIÓN POR MUTUO<br />ACUERDO</span>
+            <div class="causal-caja-cuadrada"></div>
+          </div>
+          <div class="causal-item">
+            <span class="causal-nombre">CESIÓN</span>
+            <div class="causal-caja-rect"></div>
+          </div>
+          <div class="causal-item">
+            <span class="causal-nombre">LIQUIDACIÓN ANTICIPADA<br />POR MUTUO ACUERDO</span>
+            <div class="causal-caja-cuadrada"></div>
+          </div>
+          <div class="causal-item">
+            <span class="causal-nombre">TERMINACIÓN<br />UNILATERAL</span>
+            <div class="causal-caja-cuadrada"></div>
+          </div>
+        </div>
+
+        <!-- Tabla de Dependencias Oficial (14 filas exactas de la foto) -->
+        <div class="tabla-dep">
+          <div class="tr-head">
+            <div class="th-dep">DEPENDENCIA SENA</div>
+            <div class="th-marca">Marcar<br />con x</div>
+            <div class="th-resp-wrap">
+              <div class="th-resp-top">RESPONSABLES</div>
+              <div class="th-resp-sub">
+                <div class="th-nombres">NOMBRES Y APELLIDOS</div>
+                <div class="th-firma">FIRMA</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 1 -->
+          <div class="tr-row">
+            <div class="td-dep">GESTIÓN DE TIC</div>
+            <div class="td-marca">X</div>
+            <div class="td-nombres">Franklin Rolando Chacon Lopez</div>
+            <div class="td-firma">
+              <span v-if="estaFilaFirmada(1)" class="sello-aprobado">✓ Firmado Elec.</span>
+              <span v-else-if="estaFilaRechazada(1)" class="sello-novedad">✗ Novedad</span>
+            </div>
+          </div>
+
+          <!-- 2 -->
+          <div class="tr-row">
+            <div class="td-dep">ADMINISTRACIÓN DE DOCUMENTOS</div>
+            <div class="td-marca">X</div>
+            <div class="td-nombres">Hilda Lucia Ramirez Alvarado</div>
+            <div class="td-firma">
+              <span v-if="estaFilaFirmada(2)" class="sello-aprobado">✓ Firmado Elec.</span>
+            </div>
+          </div>
+
+          <!-- 3 -->
+          <div class="tr-row">
+            <div class="td-dep">
+              ENTREGA CARNÉ (Al Supervisor del Contrato en las Regionales y Centros de Formación)<br />SECRETARÍA
+              GENERAL
+            </div>
+            <div class="td-marca">X</div>
+            <div class="td-nombres">Johon Fredy Sanabria Muñoz</div>
+            <div class="td-firma">
+              <span v-if="estaFilaFirmada(3)" class="sello-aprobado">✓ Firmado Elec.</span>
+            </div>
+          </div>
+
+          <!-- 4 -->
+          <div class="tr-row">
+            <div class="td-dep">ALMACÉN E INVENTARIOS</div>
+            <div class="td-marca">X</div>
+            <div class="td-nombres">
+              Generar reporte de https://miinventario.sena.edu.co/Inicio.aspx y anexar al formato,
+              garantizando que no tiene elementos a su cargo.
+            </div>
+            <div class="td-firma">
+              <span v-if="estaFilaFirmada(4)" class="sello-aprobado">✓ Paz y Salvo Almacén</span>
+              <span v-else-if="estaFilaRechazada(4)" class="sello-novedad">✗ Novedad Bienes</span>
+            </div>
+          </div>
+
+          <!-- 5 -->
+          <div class="tr-row">
+            <div class="td-dep">
+              SERVICIOS GENERALES, ADQUISICIONES<br />(Administración de edificio; Contratación)
+            </div>
+            <div class="td-marca">X</div>
+            <div class="td-nombres">Juan David Silva Gutierrez</div>
+            <div class="td-firma">
+              <span v-if="estaFilaFirmada(5)" class="sello-aprobado">✓ Firmado Elec.</span>
+            </div>
+          </div>
+
+          <!-- 6 -->
+          <div class="tr-row">
+            <div class="td-dep">CONTABILIDAD</div>
+            <div class="td-marca">X</div>
+            <div class="td-nombres">Zaida Leny Melgarejo Ballesteros</div>
+            <div class="td-firma">
+              <span v-if="estaFilaFirmada(6)" class="sello-aprobado">✓ Firmado Elec.</span>
+            </div>
+          </div>
+
+          <!-- 7 -->
+          <div class="tr-row">
+            <div class="td-dep">TESORERÍA</div>
+            <div class="td-marca">X</div>
+            <div class="td-nombres">Nelcy Mabel Mayorga Pinto</div>
+            <div class="td-firma">
+              <span v-if="estaFilaFirmada(7)" class="sello-aprobado">✓ Firmado Elec.</span>
+            </div>
+          </div>
+
+          <!-- 8 -->
+          <div class="tr-row">
+            <div class="td-dep">COORDINACIÓN DE: ÁREA/GRUPO/ACADÉMICA</div>
+            <div class="td-marca">X</div>
+            <div class="td-nombres">Johon Fredy Sanabria Muñoz</div>
+            <div class="td-firma">
+              <span v-if="estaFilaFirmada(8)" class="sello-aprobado">✓ Firmado Elec.</span>
+            </div>
+          </div>
+
+          <!-- 9 -->
+          <div class="tr-row">
+            <div class="td-dep">BIBLIOTECA</div>
+            <div class="td-marca">X</div>
+            <div class="td-nombres">
+              Andrea Juliana Celis Camacho / Yudith Milagros Martinez Bautista
+            </div>
+            <div class="td-firma">
+              <span v-if="estaFilaFirmada(9)" class="sello-aprobado">✓ Firmado Elec.</span>
+            </div>
+          </div>
+
+          <!-- 10 -->
+          <div class="tr-row">
+            <div class="td-dep">OTRO (LÍDER SIGA)</div>
+            <div class="td-marca">X</div>
+            <div class="td-nombres">Zaida Jebridy Garcia Jaimes</div>
+            <div class="td-firma">
+              <span v-if="estaFilaFirmada(10)" class="sello-aprobado">✓ Firmado Elec.</span>
+            </div>
+          </div>
+
+          <!-- 11 -->
+          <div class="tr-row">
+            <div class="td-dep">OTRO (ADMINISTRACIÓN EDUCATIVA)</div>
+            <div class="td-marca">X</div>
+            <div class="td-nombres">Erika Johana Gómez Verdugo</div>
+            <div class="td-firma">
+              <span v-if="estaFilaFirmada(11)" class="sello-aprobado">✓ Firmado Elec.</span>
+            </div>
+          </div>
+
+          <!-- 12 -->
+          <div class="tr-row">
+            <div class="td-dep">
+              APOYO AL SEGUIMIENTO DE LOS PROCESOS ADMINISTRATIVOS Y NOVEDADES
+            </div>
+            <div class="td-marca">X</div>
+            <div class="td-nombres">
+              Nelson Fabian Duarte Peñaloza / Eileen Erfensi Hurtado Ariza
+            </div>
+            <div class="td-firma">
+              <span v-if="estaFilaFirmada(12)" class="sello-aprobado">✓ Firmado Elec.</span>
+            </div>
+          </div>
+
+          <!-- 13 -->
+          <div class="tr-row">
+            <div class="td-dep">APOYO ETAPA PRODUCTIVA</div>
+            <div class="td-marca">X</div>
+            <div class="td-nombres">Karen Andrea García Carreño</div>
+            <div class="td-firma">
+              <span v-if="estaFilaFirmada(13)" class="sello-aprobado">✓ Firmado Elec.</span>
+            </div>
+          </div>
+
+          <!-- 14 -->
+          <div class="tr-row">
+            <div class="td-dep">SUPERVISOR DE CONTRATO</div>
+            <div class="td-marca">X</div>
+            <div class="td-nombres">Johon Fredy Sanabria Muñoz</div>
+            <div class="td-firma">
+              <span v-if="estaFilaFirmada(14)" class="sello-aprobado sello-sup"
+                >✓ V°B° Supervisor</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Sección Inferior: Elementos faltantes, Otros y Firma del Contratista -->
+        <div class="seccion-inferior">
+          <div class="fila-elementos">
+            <span
+              >ELEMENTOS FALTANTES U OBLIGACIONES PENDIENTES (Relacionar con su respectivo
+              valor):</span
+            >
+            <span
+              v-if="datosSolicitud.estado === 'Rechazado' && datosSolicitud.observacionRechazo"
+              class="texto-elementos-novedad q-ml-xs"
+            >
+              {{ datosSolicitud.observacionRechazo }}
+            </span>
+            <span v-else class="texto-elementos-paz q-ml-xs"> NINGUNO - PAZ Y SALVO AL DÍA </span>
+          </div>
+
+          <div class="fila-otros-inf">
+            <span class="otros-label">OTROS :</span>
+            <span class="otros-puntos"
+              >Certificación expedida y validada electrónicamente mediante plataforma GCCON-F-088
+              SENA.</span
+            >
+          </div>
+
+          <div class="linea-separador-inf"></div>
+
+          <div class="zona-firma-inf">
+            <!-- Si la solicitud presenta rechazo por bienes pendientes, la firma del contratista permanece retenida -->
+            <div v-if="datosSolicitud.estado === 'Rechazado'" class="caja-firma-bloqueada">
+              <div class="aviso-bloqueo-rojo">FIRMA DEL CONTRATISTA RETENIDA</div>
+              <div class="aviso-bloqueo-sub">
+                Presenta novedades u obligaciones pendientes por subsanar ante las dependencias
+              </div>
+              <div class="linea-firma-sola"></div>
+              <div class="texto-firma-sola">Firma del Contratista</div>
+              <div class="nombre-firmante-inf">{{ datosSolicitud.contratista }}</div>
+              <div class="doc-firmante-inf">C.C. {{ datosSolicitud.identificacion }}</div>
+            </div>
+
+            <div
+              v-else
+              class="caja-firma-contratista cursor-pointer"
+              @click="abrirModalFirma"
+              title="Clic para estampar, cambiar o ajustar la firma del contratista"
+            >
+              <div v-if="firmaGuardada" class="contenedor-firma-img">
+                <img :src="firmaGuardada" alt="Firma del Contratista" class="img-firma-estampada" />
+                <q-tooltip>Clic para editar, agrandar o ajustar tu firma</q-tooltip>
+              </div>
+              <div v-else class="contenedor-firma-placeholder no-print">
+                <q-btn
+                  flat
+                  dense
+                  size="xs"
+                  color="primary"
+                  icon="draw"
+                  label="Clic para estampar firma del contratista"
+                />
+              </div>
+              <div class="linea-firma-sola"></div>
+              <div class="texto-firma-sola">Firma del Contratista</div>
+              <div class="nombre-firmante-inf">{{ datosSolicitud.contratista }}</div>
+              <div class="doc-firmante-inf">C.C. {{ datosSolicitud.identificacion }}</div>
+            </div>
+          </div>
+
+          <div class="linea-separador-inf"></div>
+        </div>
       </div>
-    </div>
     </div>
 
     <!-- Diálogo para Pegar o Subir Firma directamente desde el Certificado -->
     <q-dialog v-model="dialogoFirma" persistent>
-      <q-card style="min-width: 480px; max-width: 90vw;">
+      <q-card style="min-width: 480px; max-width: 90vw">
         <q-card-section class="bg-primary text-white row items-center justify-between">
           <div class="text-h6">
             <q-icon name="content_paste" class="q-mr-sm" />
@@ -280,8 +412,8 @@
 
         <q-card-section class="q-pa-md">
           <div class="text-caption text-grey-8 q-mb-sm">
-            Pegue su firma con <strong>Ctrl + V</strong>, cárguela como imagen o trácela en el recuadro.
-            Se estampará directamente en este certificado.
+            Pegue su firma con <strong>Ctrl + V</strong>, cárguela como imagen o trácela en el
+            recuadro. Se estampará directamente en este certificado.
           </div>
           <FirmaCanvas ref="canvasRef" />
         </q-card-section>
@@ -345,7 +477,11 @@ const datosSolicitud = ref({
   regional: 'Tolima',
   direccion: 'Centro de Comercio y Servicios',
   contrato: '',
-  responsable: ''
+  responsable: '',
+  estado: 'En revisión',
+  observacionRechazo: '',
+  bienesFaltantes: [],
+  firmas: [],
 })
 
 onMounted(() => {
@@ -359,20 +495,34 @@ onMounted(() => {
       encontrada = store.obtenerPorCodigo(codigo)
     } else if (Array.isArray(store.solicitudes)) {
       encontrada = store.solicitudes.find(
-        (s) => (s.numeroSolicitud || s.solicitud || s.codigo || s.numeroContrato || s.contrato) === codigo
+        (s) =>
+          (s.numeroSolicitud || s.solicitud || s.codigo || s.numeroContrato || s.contrato) ===
+          codigo,
       )
     }
 
     if (encontrada) {
       datosSolicitud.value = {
-        contratista: encontrada.contratista || encontrada.nombreContratista || 'Paula Valentina Rache Fonseca',
-        identificacion: encontrada.identificacion || encontrada.documento || '',
+        contratista:
+          encontrada.contratista || encontrada.nombreContratista || 'Paula Valentina Rache Fonseca',
+        identificacion:
+          encontrada.identificacion ||
+          encontrada.documento ||
+          encontrada.documentoContratista ||
+          '1098765432',
         ciudad: encontrada.ciudad || 'Ibagué',
         fecha: encontrada.fecha || new Date().toLocaleDateString('es-CO'),
         regional: encontrada.regional || 'Tolima',
-        direccion: encontrada.direccion || encontrada.dependencia || 'Centro de Comercio y Servicios',
+        direccion:
+          encontrada.direccion || encontrada.dependencia || 'Centro de Comercio y Servicios',
         contrato: encontrada.numeroContrato || encontrada.contrato || codigo,
-        responsable: encontrada.responsable || encontrada.supervisor || ''
+        responsable:
+          encontrada.responsable || encontrada.supervisor || 'Johon Fredy Sanabria Muñoz',
+        estado: encontrada.estado || 'En revisión',
+        observacionRechazo:
+          encontrada.observacionRechazo || encontrada.observaciones_supervisor || '',
+        bienesFaltantes: encontrada.bienesFaltantes || [],
+        firmas: encontrada.firmas || [],
       }
     }
   } else {
@@ -381,8 +531,51 @@ onMounted(() => {
   }
 })
 
+function estaFilaFirmada(filaNumero) {
+  const est = datosSolicitud.value.estado
+  if (est === 'Firmado' || est === 'Finalizado') {
+    return true
+  }
+  if (Array.isArray(datosSolicitud.value.firmas) && datosSolicitud.value.firmas.length > 0) {
+    if (filaNumero === 1) {
+      return datosSolicitud.value.firmas.some(
+        (f) =>
+          (f.dependenciaCodigo === 'DEP-01' || f.dependenciaNombre?.includes('TIC')) && f.firmada,
+      )
+    }
+    if (filaNumero === 4) {
+      return datosSolicitud.value.firmas.some(
+        (f) =>
+          (f.dependenciaCodigo === 'DEP-03' || f.dependenciaNombre?.includes('Almac')) && f.firmada,
+      )
+    }
+    if (filaNumero === 14) {
+      return datosSolicitud.value.firmas.some(
+        (f) => f.dependenciaNombre?.includes('Supervisor') && f.firmada,
+      )
+    }
+  }
+  return false
+}
+
+function estaFilaRechazada(filaNumero) {
+  if (datosSolicitud.value.estado === 'Rechazado') {
+    if (filaNumero === 4 || filaNumero === 1) return true
+  }
+  return false
+}
+
 function volver() {
   router.push({ name: 'solicitudes' })
+}
+
+function irAFirmas() {
+  const codigo = route.query.codigo || route.params.id
+  if (codigo) {
+    router.push({ name: 'firmas', query: { codigo } })
+  } else {
+    router.push({ name: 'firmas' })
+  }
 }
 
 function imprimir() {
@@ -935,6 +1128,80 @@ function imprimir() {
   font-size: 8px;
   font-weight: 800;
   color: #000000;
+}
+
+.sello-aprobado {
+  color: #1b5e20;
+  font-size: 6.5px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  background: #e8f5e9;
+  padding: 1px 3px;
+  border-radius: 2px;
+  border: 0.5px solid #81c784;
+}
+
+.sello-sup {
+  background: #e3f2fd;
+  color: #0d47a1;
+  border: 0.5px solid #90caf9;
+}
+
+.sello-novedad {
+  color: #b71c1c;
+  font-size: 6.5px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  background: #ffebee;
+  padding: 1px 3px;
+  border-radius: 2px;
+  border: 0.5px solid #e57373;
+}
+
+.texto-elementos-novedad {
+  color: #b71c1c;
+  font-weight: 700;
+}
+
+.texto-elementos-paz {
+  color: #1b5e20;
+  font-weight: 700;
+}
+
+.caja-firma-bloqueada {
+  width: 220px;
+  text-align: center;
+  padding: 6px;
+  border: 1px dashed #e57373;
+  background: #ffebee;
+  border-radius: 4px;
+}
+
+.aviso-bloqueo-rojo {
+  font-size: 8px;
+  font-weight: 800;
+  color: #b71c1c;
+  margin-bottom: 2px;
+}
+
+.aviso-bloqueo-sub {
+  font-size: 6.5px;
+  color: #616161;
+  margin-bottom: 6px;
+}
+
+.nombre-firmante-inf {
+  font-size: 7px;
+  font-weight: 700;
+  color: #000000;
+  margin-top: 1px;
+}
+
+.doc-firmante-inf {
+  font-size: 6.5px;
+  color: #333333;
 }
 
 /* ===================== IMPRESIÓN ===================== */

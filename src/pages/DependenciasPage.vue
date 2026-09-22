@@ -52,10 +52,18 @@
       <template #body-cell-estado="props">
         <q-td :props="props">
           <q-badge
-            :color="(props.row.estado === 'Inactivo' || props.row.estado === 'Inactiva') ? 'negative' : 'positive'"
+            :color="
+              props.row.estado === 'Inactivo' || props.row.estado === 'Inactiva'
+                ? 'negative'
+                : 'positive'
+            "
             class="q-pa-xs text-weight-bold"
           >
-            {{ (props.row.estado === 'Inactivo' || props.row.estado === 'Inactiva') ? 'Inactiva' : 'Activa' }}
+            {{
+              props.row.estado === 'Inactivo' || props.row.estado === 'Inactiva'
+                ? 'Inactiva'
+                : 'Activa'
+            }}
           </q-badge>
         </q-td>
       </template>
@@ -74,7 +82,11 @@
             icon="domain_disabled"
             @click="eliminarDependencia(props.row.codigo)"
           >
-            <q-tooltip>{{ (props.row.estado === 'Inactivo' || props.row.estado === 'Inactiva') ? 'Activar Dependencia' : 'Desactivar Dependencia' }}</q-tooltip>
+            <q-tooltip>{{
+              props.row.estado === 'Inactivo' || props.row.estado === 'Inactiva'
+                ? 'Activar Dependencia'
+                : 'Desactivar Dependencia'
+            }}</q-tooltip>
           </q-btn>
         </q-td>
       </template>
@@ -159,11 +171,15 @@
             text-color="white"
             class="q-mr-sm"
           />
-          <span class="text-h6">{{ esInactivaSeleccionada ? 'Confirmar activación' : 'Confirmar desactivación' }}</span>
+          <span class="text-h6">{{
+            esInactivaSeleccionada ? 'Confirmar activación' : 'Confirmar desactivación'
+          }}</span>
         </q-card-section>
 
         <q-card-section class="q-pt-none">
-          ¿Está seguro de {{ esInactivaSeleccionada ? 'activar' : 'desactivar' }} la dependencia con código <strong>{{ codigoEliminar }}</strong>?
+          ¿Está seguro de {{ esInactivaSeleccionada ? 'activar' : 'desactivar' }} la dependencia con
+          código <strong>{{ codigoEliminar }}</strong
+          >?
         </q-card-section>
 
         <q-card-actions align="right">
@@ -197,7 +213,7 @@ const indiceEditar = ref(null)
 
 const esInactivaSeleccionada = computed(() => {
   const d = store.dependencias.find((item) => item.codigo === codigoEliminar.value)
-  return d ? (d.estado === 'Inactiva' || d.estado === 'Inactivo') : false
+  return d ? d.estado === 'Inactiva' || d.estado === 'Inactivo' : false
 })
 
 const dependencia = ref({
@@ -306,7 +322,9 @@ function confirmarEliminar() {
   dialogoEliminar.value = false
   $q.notify({
     type: 'info',
-    message: eraInactiva ? 'Dependencia activada correctamente.' : 'Dependencia desactivada correctamente.',
+    message: eraInactiva
+      ? 'Dependencia activada correctamente.'
+      : 'Dependencia desactivada correctamente.',
   })
 }
 
