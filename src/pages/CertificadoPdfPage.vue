@@ -45,47 +45,40 @@
         <div class="clasif-check"></div>
       </div>
 
-      <!-- Datos del Contratista con Líneas Punteadas -->
+      <!-- Datos del Contratista - Cuadrícula Oficial GCCON-F-088 -->
       <div class="seccion-datos">
-        <div class="datos-fila datos-fila-1">
-          <div class="dato-celda celda-nombre">
-            <span class="etiqueta">NOMBRES Y APELLIDOS DEL CONTRATISTA:</span>
-            <span v-if="datosSolicitud.contratista" class="valor-dato">{{ datosSolicitud.contratista }}</span>
-            <span class="linea-punteada"></span>
+        <!-- Fila 1: Nombres y Apellidos del Contratista | Identificación -->
+        <div class="fila-contratista-1">
+          <div class="celda-nombre-contratista">
+            <span class="etiqueta-form">NOMBRES Y APELLIDOS DEL CONTRATISTA:</span>
+            <span class="valor-form text-weight-bold">{{ datosSolicitud.contratista }}</span>
           </div>
-          <div class="dato-celda celda-id">
-            <span class="etiqueta">IDENTIFICACIÓN</span>
-            <span class="linea-punteada"></span>
-          </div>
-        </div>
-
-        <div class="datos-fila datos-fila-2">
-          <div class="dato-celda">
-            <span class="etiqueta">CIUDAD</span>
-            <span class="linea-punteada"></span>
-          </div>
-          <div class="dato-celda">
-            <span class="etiqueta">FECHA</span>
-            <span class="linea-punteada"></span>
-          </div>
-          <div class="dato-celda">
-            <span class="etiqueta">REGIONAL</span>
-            <span class="linea-punteada"></span>
+          <div class="celda-identificacion">
+            <span class="etiqueta-form">IDENTIFICACIÓN</span>
+            <span class="valor-form">{{ datosSolicitud.identificacion }}</span>
           </div>
         </div>
 
-        <div class="datos-fila">
-          <div class="dato-celda">
-            <span class="etiqueta">DIRECCIÓN U OFICINA DONDE SE EJECUTÓ EL CONTRATO:</span>
-            <span class="linea-punteada"></span>
-          </div>
+        <!-- Fila 2: Ciudad | Fecha | Regional -->
+        <div class="fila-contratista-2">
+          <div class="celda-etiqueta celda-ciudad-lbl">CIUDAD</div>
+          <div class="celda-valor celda-ciudad-val">{{ datosSolicitud.ciudad }}</div>
+          <div class="celda-etiqueta celda-fecha-lbl">FECHA</div>
+          <div class="celda-valor celda-fecha-val">{{ datosSolicitud.fecha }}</div>
+          <div class="celda-etiqueta celda-regional-lbl">REGIONAL</div>
+          <div class="celda-valor celda-regional-val">{{ datosSolicitud.regional }}</div>
         </div>
 
-        <div class="datos-fila">
-          <div class="dato-celda">
-            <span class="etiqueta">NÚMERO Y FECHA DE CONTRATO:</span>
-            <span class="linea-punteada"></span>
-          </div>
+        <!-- Fila 3: Dirección u Oficina donde se ejecutó el contrato -->
+        <div class="fila-contratista-3">
+          <div class="celda-etiqueta celda-direccion-lbl">DIRECCIÓN U OFICINA DONDE SE EJECUTÓ EL CONTRATO:</div>
+          <div class="celda-valor celda-direccion-val">{{ datosSolicitud.direccion }}</div>
+        </div>
+
+        <!-- Fila 4: Número y Fecha de Contrato -->
+        <div class="fila-contratista-4">
+          <div class="celda-etiqueta celda-contrato-lbl">NÚMERO Y FECHA DE CONTRATO:</div>
+          <div class="celda-valor celda-contrato-val">{{ datosSolicitud.contrato }}</div>
         </div>
       </div>
 
@@ -548,55 +541,123 @@ function imprimir() {
   border-right: none;
 }
 
-/* Datos del Contratista */
+/* Datos del Contratista - Exacto a Formato Oficial GCCON-F-088 */
 .seccion-datos {
-  border-bottom: 1px dotted #000000;
-  font-size: 8px;
+  border-bottom: 2px solid #000000;
+  font-size: 8.5px;
   font-weight: 700;
+  background: #ffffff;
 }
 
-.datos-fila {
+.fila-contratista-1 {
   display: flex;
   border-bottom: 1px dotted #000000;
-  min-height: 20px;
+  min-height: 22px;
 }
 
-.datos-fila:last-child {
-  border-bottom: none;
-}
-
-.datos-fila-1 {
-  display: grid;
-  grid-template-columns: 3.5fr 1fr;
-}
-
-.datos-fila-2 {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr 1.3fr;
-}
-
-.dato-celda {
+.celda-nombre-contratista {
+  flex: 1;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   padding: 2.5px 6px;
   border-right: 1px dotted #000000;
 }
 
-.dato-celda:last-child {
-  border-right: none;
+.celda-identificacion {
+  width: 22%;
+  display: flex;
+  align-items: center;
+  padding: 2.5px 6px;
 }
 
-.etiqueta {
+.fila-contratista-2 {
+  display: flex;
+  border-bottom: 1px dotted #000000;
+  min-height: 22px;
+}
+
+.celda-ciudad-lbl {
+  width: 60px;
+  flex-shrink: 0;
+}
+
+.celda-ciudad-val {
+  flex: 1.2;
+  border-right: 1px dotted #000000;
+}
+
+.celda-fecha-lbl {
+  width: 55px;
+  flex-shrink: 0;
+}
+
+.celda-fecha-val {
+  flex: 1;
+  border-right: 1px dotted #000000;
+}
+
+.celda-regional-lbl {
+  width: 75px;
+  flex-shrink: 0;
+}
+
+.celda-regional-val {
+  flex: 1.5;
+}
+
+.fila-contratista-3 {
+  display: flex;
+  border-bottom: 1px dotted #000000;
+  min-height: 22px;
+}
+
+.celda-direccion-lbl {
+  width: 335px;
+  flex-shrink: 0;
+}
+
+.celda-direccion-val {
+  flex: 1;
+}
+
+.fila-contratista-4 {
+  display: flex;
+  min-height: 22px;
+}
+
+.celda-contrato-lbl {
+  width: 225px;
+  flex-shrink: 0;
+}
+
+.celda-contrato-val {
+  flex: 1;
+}
+
+.celda-etiqueta {
+  display: flex;
+  align-items: center;
+  padding: 2.5px 6px;
+  border-right: 1px dotted #000000;
+  font-weight: 800;
   white-space: nowrap;
-  margin-right: 4px;
+}
+
+.celda-valor {
+  display: flex;
+  align-items: center;
+  padding: 2.5px 6px;
   font-weight: 700;
 }
 
-.linea-punteada {
-  flex: 1;
-  border-bottom: 1px dotted #000000;
-  height: 1px;
-  margin-bottom: 2px;
+.etiqueta-form {
+  font-weight: 800;
+  margin-right: 6px;
+  white-space: nowrap;
+}
+
+.valor-form {
+  font-weight: 700;
 }
 
 /* Causal de Terminación */
