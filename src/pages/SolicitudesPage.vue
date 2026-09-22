@@ -486,10 +486,6 @@ function abrirDialogoEstado(fila, estadoObjetivo) {
   dialogoEstado.value = true
 }
 
-function eliminarSolicitud(fila) {
-  abrirDialogoEstado(fila, fila.estado === 'Rechazado' ? 'En revisión' : 'Rechazado')
-}
-
 async function confirmarCambioEstado() {
   if (solicitudSeleccionada.value) {
     const id =
