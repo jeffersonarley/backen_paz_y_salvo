@@ -87,15 +87,28 @@
             <q-tooltip>Editar</q-tooltip>
           </q-btn>
 
+          <!-- Acción de Estado (Reactivar si está Rechazado, Desactivar / Rechazar si está en Revisión/Firmado) -->
           <q-btn
+            v-if="props.row.estado === 'Rechazado'"
+            flat
+            round
+            dense
+            color="positive"
+            icon="replay"
+            @click="abrirDialogoEstado(props.row, 'En revisión')"
+          >
+            <q-tooltip>Reactivar / Enviar a Revisión</q-tooltip>
+          </q-btn>
+          <q-btn
+            v-else
             flat
             round
             dense
             color="negative"
             icon="block"
-            @click="eliminarSolicitud(props.row)"
+            @click="abrirDialogoEstado(props.row, 'Rechazado')"
           >
-            <q-tooltip>Desactivar</q-tooltip>
+            <q-tooltip>Desactivar / Rechazar</q-tooltip>
           </q-btn>
         </q-td>
       </template>
@@ -183,20 +196,63 @@
       </q-card>
     </q-dialog>
 
-    <!-- Diálogo Desactivar -->
-    <q-dialog v-model="dialogoEliminar">
-      <q-card style="min-width: 350px">
+    <!-- Diálogo Confirmar Cambio de Estado (Desactivar / Rechazar o Reactivar) -->
+    <q-dialog v-model="dialogoEstado">
+      <q-card style="min-width: 420px; max-width: 90vw">
         <q-card-section class="row items-center">
-          <q-avatar icon="block" color="negative" text-color="white" class="q-mr-sm" />
-          <span class="text-h6">Confirmar desactivación</span>
+          <q-avatar
+            :icon="nuevoEstadoObjetivo === 'Rechazado' ? 'block' : 'replay'"
+            :color="nuevoEstadoObjetivo === 'Rechazado' ? 'negative' : 'positive'"
+            text-color="white"
+            class="q-mr-sm"
+          />
+          <span class="text-h6 text-weight-bold">
+            {{ nuevoEstadoObjetivo === 'Rechazado' ? 'Desactivar / Rechazar Solicitud' : 'Reactivar Solicitud' }}
+          </span>
         </q-card-section>
 
-        <q-card-section class="q-pt-none">
-          ¿Está seguro de desactivar esta solicitud?
+        <q-card-section class="q-pt-none text-body2">
+          <div v-if="nuevoEstadoObjetivo === 'Rechazado'">
+            <p>
+              ¿Está seguro de desactivar o rechazar la solicitud
+              <strong>{{ solicitudSeleccionada?.numeroSolicitud || solicitudSeleccionada?.numeroContrato }}</strong>?
+            </p>
+            <p class="text-grey-8">
+              El estado de la solicitud cambiará inmediatamente a
+              <q-badge color="negative" class="text-weight-bold">Rechazado</q-badge>.
+            </p>
+            <q-input
+              v-model="motivoEstado"
+              outlined
+              dense
+              type="textarea"
+              rows="2"
+              label="Motivo u observación (opcional)"
+              placeholder="Ej: Documentación incompleta o solicitud cancelada"
+              class="q-mt-sm"
+            />
+          </div>
+          <div v-else>
+            <p>
+              ¿Desea reactivar la solicitud
+              <strong>{{ solicitudSeleccionada?.numeroSolicitud || solicitudSeleccionada?.numeroContrato }}</strong>?
+            </p>
+            <p class="text-grey-8">
+              El estado volverá a
+              <q-badge color="primary" class="text-weight-bold">En revisión</q-badge>
+              para continuar con el proceso.
+            </p>
+          </div>
         </q-card-section>
-        <q-card-actions align="right">
+
+        <q-card-actions align="right" class="q-pa-md">
           <q-btn flat label="Cancelar" color="grey-8" v-close-popup />
-          <q-btn unelevated color="negative" label="Desactivar" @click="confirmarEliminar" />
+          <q-btn
+            unelevated
+            :color="nuevoEstadoObjetivo === 'Rechazado' ? 'negative' : 'positive'"
+            :label="nuevoEstadoObjetivo === 'Rechazado' ? 'Desactivar / Rechazar' : 'Reactivar'"
+            @click="confirmarCambioEstado"
+          />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -228,11 +284,13 @@ const OPCIONES_ESTADO = ['En revisión', 'Firmado', 'Rechazado', 'Finalizado']
 const formRef = ref(null)
 const filtro = ref('')
 const dialogo = ref(false)
-const dialogoEliminar = ref(false)
+const dialogoEstado = ref(false)
 
 const editando = ref(false)
 const codigoEditar = ref(null)
-const solicitudEliminar = ref(null)
+const solicitudSeleccionada = ref(null)
+const nuevoEstadoObjetivo = ref('')
+const motivoEstado = ref('')
 
 const rows = computed(() => store.solicitudes || [])
 
@@ -364,7 +422,7 @@ async function guardarSolicitud() {
     if (Array.isArray(store.solicitudes)) {
       const index = store.solicitudes.findIndex(
         (s) =>
-          (s.numeroSolicitud || s.solicitud || s.codigo || s.numeroContrato || s.contrato) ===
+          (s._id || s.numeroSolicitud || s.solicitud || s.codigo || s.numeroContrato || s.contrato || s.id) ===
           idBusqueda,
       )
       if (index !== -1) {
@@ -378,7 +436,7 @@ async function guardarSolicitud() {
         }
       }
     }
-    $q.notify({ type: 'positive', message: 'Solicitud actualizada correctamente.' })
+    $q.notify({ type: 'positive', message: 'Solicitud y estado actualizados correctamente.' })
     limpiarFormulario()
   } else {
     try {
@@ -397,6 +455,7 @@ async function guardarSolicitud() {
 
 function editarSolicitud(fila) {
   const codigoExistente =
+    fila._id ||
     fila.numeroSolicitud ||
     fila.solicitud ||
     fila.codigo ||
@@ -405,6 +464,7 @@ function editarSolicitud(fila) {
     ''
 
   solicitud.value = {
+    _id: fila._id,
     numeroSolicitud: fila.numeroSolicitud || fila.solicitud || fila.codigo || codigoExistente,
     numeroContrato: fila.numeroContrato || fila.contrato || '',
     contratista: fila.contratista || fila.nombreContratista || '',
@@ -419,29 +479,36 @@ function editarSolicitud(fila) {
   dialogo.value = true
 }
 
-function eliminarSolicitud(fila) {
-  solicitudEliminar.value = fila
-  dialogoEliminar.value = true
+function abrirDialogoEstado(fila, estadoObjetivo) {
+  solicitudSeleccionada.value = fila
+  nuevoEstadoObjetivo.value = estadoObjetivo
+  motivoEstado.value = ''
+  dialogoEstado.value = true
 }
 
-async function confirmarEliminar() {
-  if (solicitudEliminar.value) {
+function eliminarSolicitud(fila) {
+  abrirDialogoEstado(fila, fila.estado === 'Rechazado' ? 'En revisión' : 'Rechazado')
+}
+
+async function confirmarCambioEstado() {
+  if (solicitudSeleccionada.value) {
     const id =
-      solicitudEliminar.value.numeroSolicitud ||
-      solicitudEliminar.value.solicitud ||
-      solicitudEliminar.value.codigo ||
-      solicitudEliminar.value.numeroContrato
-    if (typeof store.eliminarSolicitud === 'function') {
-      await store.eliminarSolicitud(id)
-    } else if (Array.isArray(store.solicitudes)) {
-      store.solicitudes = store.solicitudes.filter(
-        (s) => (s.numeroSolicitud || s.solicitud || s.codigo || s.numeroContrato) !== id,
-      )
-    }
-    $q.notify({ type: 'info', message: 'Solicitud desactivada correctamente.' })
+      solicitudSeleccionada.value._id ||
+      solicitudSeleccionada.value.numeroContrato ||
+      solicitudSeleccionada.value.numeroSolicitud ||
+      solicitudSeleccionada.value.id ||
+      solicitudSeleccionada.value.solicitud
+
+    const estadoFinal = nuevoEstadoObjetivo.value
+    await store.cambiarEstado(id, estadoFinal, motivoEstado.value)
+
+    $q.notify({
+      type: estadoFinal === 'Rechazado' ? 'warning' : 'positive',
+      message: `Solicitud actualizada a estado "${estadoFinal}" exitosamente.`,
+    })
   }
-  dialogoEliminar.value = false
-  solicitudEliminar.value = null
+  dialogoEstado.value = false
+  solicitudSeleccionada.value = null
 }
 
 function nuevaSolicitud() {

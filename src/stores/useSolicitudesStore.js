@@ -284,32 +284,63 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
     }
   }
 
-  function actualizarSolicitud(idBusqueda, datosActualizados) {
-    const index = solicitudes.value.findIndex(
-      (s) => (s.id || s.numeroSolicitud || s.solicitud) === idBusqueda,
+  async function actualizarSolicitud(idBusqueda, datosActualizados) {
+    const item = solicitudes.value.find(
+      (s) =>
+        s._id === idBusqueda ||
+        s.id === idBusqueda ||
+        s.numeroSolicitud === idBusqueda ||
+        s.numeroContrato === idBusqueda ||
+        s.solicitud === idBusqueda,
     )
-    if (index !== -1) {
-      solicitudes.value[index] = {
-        ...solicitudes.value[index],
-        ...datosActualizados,
+    if (item) {
+      Object.assign(item, datosActualizados)
+      const idParaApi = item._id || item.numeroContrato || item.id
+      try {
+        await api.put(`/contratos/${idParaApi}`, {
+          numero_contrato: item.numeroContrato,
+          contratista: item.contratista || item.nombreContratista,
+          dependencia: item.dependencia,
+          estado: item.estado,
+          observaciones_supervisor: item.observacionRechazo || item.observaciones_supervisor,
+        })
+      } catch (err) {
+        console.warn('Sincronización con backend falló, mantenido localmente:', err.message)
       }
     }
   }
 
-  async function eliminarSolicitud(idBusqueda) {
-    const sol = solicitudes.value.find(
-      (s) => (s.id || s.numeroSolicitud || s.solicitud || s.numeroContrato) === idBusqueda,
+  async function cambiarEstado(idBusqueda, nuevoEstado, motivo = '') {
+    const item = solicitudes.value.find(
+      (s) =>
+        s._id === idBusqueda ||
+        s.id === idBusqueda ||
+        s.numeroSolicitud === idBusqueda ||
+        s.numeroContrato === idBusqueda ||
+        s.solicitud === idBusqueda,
     )
-    solicitudes.value = solicitudes.value.filter(
-      (s) => (s.id || s.numeroSolicitud || s.solicitud || s.numeroContrato) !== idBusqueda,
-    )
-    if (sol?._id) {
+    if (item) {
+      item.estado = nuevoEstado
+      if (motivo) {
+        item.observacionRechazo = motivo
+        item.observaciones_supervisor = motivo
+      }
+      const idParaApi = item._id || item.numeroContrato || item.id
       try {
-        await api.delete(`/contratos/${sol._id}`)
+        await api.put(`/contratos/${idParaApi}`, {
+          estado: nuevoEstado,
+          observaciones_supervisor: motivo,
+        })
       } catch (err) {
-        console.warn('Eliminación local:', err.message)
+        console.warn('Sincronización de estado falló en backend, aplicado localmente:', err.message)
       }
     }
+    return item
+  }
+
+  async function eliminarSolicitud(idBusqueda) {
+    // En el flujo de Solicitudes, desactivar una solicitud significa transicionar su estado a 'Rechazado'
+    return await cambiarEstado(idBusqueda, 'Rechazado', 'Desactivado desde el módulo de solicitudes')
   }
 
   function registrarFirma(idSolicitud, codigoDependencia) {
@@ -348,6 +379,7 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
     cargarSolicitudes,
     agregarSolicitud,
     actualizarSolicitud,
+    cambiarEstado,
     eliminarSolicitud,
     registrarFirma,
     rechazarSolicitud,
