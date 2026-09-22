@@ -71,10 +71,10 @@
             round
             dense
             color="negative"
-            icon="delete"
+            icon="domain_disabled"
             @click="eliminarDependencia(props.row.codigo)"
           >
-            <q-tooltip>Eliminar Dependencia</q-tooltip>
+            <q-tooltip>Desactivar Dependencia</q-tooltip>
           </q-btn>
         </q-td>
       </template>
@@ -149,22 +149,21 @@
       </q-card>
     </q-dialog>
 
-    <!-- Diálogo Confirmar Eliminación -->
+    <!-- Diálogo Confirmar Desactivación -->
     <q-dialog v-model="dialogoEliminar">
       <q-card style="min-width: 350px">
         <q-card-section class="row items-center">
-          <q-avatar icon="warning" color="negative" text-color="white" class="q-mr-sm" />
-          <span class="text-h6">Confirmar eliminación</span>
+          <q-avatar icon="domain_disabled" color="negative" text-color="white" class="q-mr-sm" />
+          <span class="text-h6">Confirmar desactivación</span>
         </q-card-section>
 
         <q-card-section class="q-pt-none">
-          ¿Está seguro de eliminar la dependencia con código <strong>{{ codigoEliminar }}</strong
-          >?
+          ¿Está seguro de desactivar la dependencia con código <strong>{{ codigoEliminar }}</strong>?
         </q-card-section>
 
         <q-card-actions align="right">
           <q-btn flat label="Cancelar" color="grey-8" v-close-popup />
-          <q-btn unelevated color="negative" label="Eliminar" @click="confirmarEliminar" />
+          <q-btn unelevated color="negative" label="Desactivar" @click="confirmarEliminar" />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -291,7 +290,7 @@ function confirmarEliminar() {
   dialogoEliminar.value = false
   $q.notify({
     type: 'info',
-    message: 'Dependencia eliminada correctamente.',
+    message: 'Dependencia desactivada correctamente.',
   })
 }
 
