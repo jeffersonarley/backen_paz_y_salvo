@@ -1,14 +1,54 @@
 <template>
   <q-page class="page-formato">
     <div class="toolbar no-print">
-      <q-btn flat color="primary" icon="arrow_back" label="Volver" @click="volver" />
-      <div class="q-gutter-sm">
-        <q-btn color="positive" icon="print" label="Imprimir" unelevated @click="imprimir" />
+      <q-btn flat color="dark" icon="arrow_back" label="Volver" @click="volver" />
+      <div v-if="datosSolicitud.estado === 'Rechazado'" class="row items-center q-gutter-xs">
+        <q-badge color="negative" class="text-weight-bold q-px-sm q-py-xs">
+          <q-icon name="block" class="q-mr-xs" /> SOLICITUD RECHAZADA
+        </q-badge>
       </div>
+      <div class="q-gutter-sm">
+        <q-btn
+          :color="datosSolicitud.estado === 'Rechazado' ? 'grey-8' : 'positive'"
+          icon="print"
+          :label="datosSolicitud.estado === 'Rechazado' ? 'Imprimir (Borrador)' : 'Imprimir'"
+          unelevated
+          @click="imprimir"
+        />
+      </div>
+    </div>
+
+    <!-- Banner informativo en pantalla si la solicitud fue rechazada -->
+    <div
+      v-if="datosSolicitud.estado === 'Rechazado'"
+      class="banner-alerta-pantalla no-print q-mb-md"
+    >
+      <q-banner rounded class="bg-red-1 text-negative border-banner-rechazo shadow-2">
+        <template #avatar>
+          <q-avatar icon="error" color="negative" text-color="white" />
+        </template>
+        <div class="text-subtitle1 text-weight-bold">SOLICITUD DE PAZ Y SALVO RECHAZADA</div>
+        <div class="text-body2 text-grey-9 q-mt-xs">
+          Esta solicitud presenta novedades u obligaciones pendientes por subsanar.
+          <strong>La firma del contratista permanece retenida</strong> y el documento no tiene
+          validez legal como paz y salvo definitivo hasta que las dependencias validen y aprueben el
+          trámite.
+        </div>
+        <div
+          v-if="datosSolicitud.observacionRechazo"
+          class="q-mt-sm q-pa-sm bg-white rounded-borders text-caption text-weight-bold text-negative border-novedad-rechazo"
+        >
+          Novedad / Observación reportada: {{ datosSolicitud.observacionRechazo }}
+        </div>
+      </q-banner>
     </div>
 
     <div class="documento-wrapper">
       <div class="documento">
+        <!-- Marca de agua si la solicitud está rechazada -->
+        <div v-if="datosSolicitud.estado === 'Rechazado'" class="marca-agua-rechazado">
+          SOLICITUD RECHAZADA - NO VÁLIDO
+        </div>
         <!-- Encabezado con Logo y Versión -->
         <div class="encabezado-topo">
           <div class="encabezado-spacer"></div>
@@ -264,16 +304,44 @@
 
           <div class="zona-firma-inf">
             <div
-              class="caja-firma-contratista cursor-pointer"
+              class="caja-firma-contratista"
+              :class="{
+                'cursor-pointer': datosSolicitud.estado !== 'Rechazado',
+                'cursor-not-allowed': datosSolicitud.estado === 'Rechazado',
+              }"
               @click="abrirModalFirma"
-              title="Clic para estampar, cambiar o ajustar la firma del contratista"
+              :title="
+                datosSolicitud.estado === 'Rechazado'
+                  ? 'Firma retenida: solicitud rechazada por novedades pendientes'
+                  : 'Clic para estampar, cambiar o ajustar la firma del contratista'
+              "
             >
-              <div v-if="firmaGuardada" class="contenedor-firma-img">
+              <div
+                v-if="firmaGuardada && datosSolicitud.estado !== 'Rechazado'"
+                class="contenedor-firma-img"
+              >
                 <img :src="firmaGuardada" alt="Firma del Contratista" class="img-firma-estampada" />
                 <q-tooltip>Clic para editar, agrandar o ajustar tu firma</q-tooltip>
               </div>
               <div v-else class="contenedor-firma-placeholder no-print">
-                <q-btn flat dense size="xs" color="primary" icon="draw" label="Clic para firmar" />
+                <q-btn
+                  v-if="datosSolicitud.estado === 'Rechazado'"
+                  flat
+                  dense
+                  size="xs"
+                  color="negative"
+                  icon="lock"
+                  label="Firma bloqueada (Rechazado)"
+                />
+                <q-btn
+                  v-else
+                  flat
+                  dense
+                  size="xs"
+                  color="primary"
+                  icon="draw"
+                  label="Clic para firmar"
+                />
               </div>
               <div class="linea-firma-sola"></div>
               <div class="texto-firma-sola">Firma del Contratista</div>
@@ -321,10 +389,12 @@
 <script setup>
 import { ref, onMounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useQuasar } from 'quasar'
 import { useSolicitudesStore } from '../stores/useSolicitudesStore.js'
 import FirmaCanvas from '../components/FirmaCanvas.vue'
 import logoSena from '../images/logo-sena.png'
 
+const $q = useQuasar()
 const router = useRouter()
 const route = useRoute()
 const store = useSolicitudesStore()
@@ -334,6 +404,25 @@ const dialogoFirma = ref(false)
 const canvasRef = ref(null)
 
 function abrirModalFirma() {
+  if (datosSolicitud.value.estado === 'Rechazado') {
+    $q.dialog({
+      title: 'Firma No Habilitada',
+      message: `No es posible firmar este certificado de paz y salvo porque la solicitud se encuentra en estado RECHAZADO por las dependencias.
+
+Motivo de rechazo / novedades:
+"${datosSolicitud.value.observacionRechazo || 'Presenta novedades o bienes pendientes por subsanar ante las dependencias.'}"
+
+Para poder firmar, debe devolver o subsanar los requerimientos y solicitar la reactivación a los responsables de área.`,
+      color: 'negative',
+      icon: 'block',
+      ok: {
+        label: 'Entendido',
+        color: 'negative',
+        unelevated: true,
+      },
+    })
+    return
+  }
   dialogoFirma.value = true
   if (firmaGuardada.value) {
     nextTick(() => {
@@ -422,6 +511,32 @@ function volver() {
 }
 
 function imprimir() {
+  if (datosSolicitud.value.estado === 'Rechazado') {
+    $q.dialog({
+      title: 'Solicitud en Estado Rechazado',
+      message: `Esta solicitud se encuentra RECHAZADA. El documento impreso incluirá la marca de agua que indica que es un borrador no válido como Paz y Salvo oficial.
+
+Motivo registrado: "${datosSolicitud.value.observacionRechazo || 'Bienes o requerimientos pendientes en dependencias'}"
+
+¿Desea imprimir únicamente como constancia informativa de borrador / novedades pendientes?`,
+      icon: 'warning',
+      color: 'warning',
+      cancel: {
+        label: 'Cancelar',
+        flat: true,
+        color: 'grey-8',
+      },
+      ok: {
+        label: 'Imprimir como borrador',
+        color: 'negative',
+        unelevated: true,
+      },
+      persistent: true,
+    }).onOk(() => {
+      window.print()
+    })
+    return
+  }
   window.print()
 }
 </script>
@@ -457,7 +572,39 @@ function imprimir() {
   padding-bottom: 16px;
 }
 
+.banner-alerta-pantalla {
+  max-width: 820px;
+  margin: 0 auto;
+}
+
+.border-banner-rechazo {
+  border: 1.5px solid #d32f2f;
+}
+
+.border-novedad-rechazo {
+  border: 1px dashed #e57373;
+}
+
+.marca-agua-rechazado {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-30deg);
+  font-size: 38px;
+  font-weight: 900;
+  color: rgba(211, 47, 47, 0.22);
+  border: 4px dashed rgba(211, 47, 47, 0.35);
+  padding: 10px 24px;
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 100;
+  text-align: center;
+  letter-spacing: 2px;
+  white-space: nowrap;
+}
+
 .documento {
+  position: relative;
   width: 100%;
   max-width: 820px;
   min-width: 680px;

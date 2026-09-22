@@ -65,11 +65,15 @@
             flat
             round
             dense
-            color="positive"
-            icon="draw"
+            :color="props.row.estado === 'Rechazado' ? 'grey-6' : 'positive'"
+            :icon="props.row.estado === 'Rechazado' ? 'block' : 'draw'"
             @click="irAFirmar(props.row)"
           >
-            <q-tooltip>Firmar / Pegar Firma</q-tooltip>
+            <q-tooltip>{{
+              props.row.estado === 'Rechazado'
+                ? 'Firma bloqueada: Solicitud rechazada por novedades'
+                : 'Firmar / Pegar Firma'
+            }}</q-tooltip>
           </q-btn>
 
           <q-btn
@@ -403,6 +407,40 @@ function obtenerColorEstado(estado) {
 }
 
 function irAFirmar(fila) {
+  if (fila.estado === 'Rechazado') {
+    $q.dialog({
+      title: 'Firma No Habilitada',
+      message: `Esta solicitud se encuentra en estado RECHAZADO por las dependencias.
+
+Motivo: "${fila.observacionRechazo || fila.observaciones_supervisor || 'Presenta novedades o bienes pendientes por subsanar.'}"
+
+¿Desea ingresar a la pantalla de detalle para revisar las observaciones reportadas?`,
+      color: 'negative',
+      icon: 'block',
+      ok: {
+        label: 'Ver detalle y novedades',
+        color: 'negative',
+        unelevated: true,
+      },
+      cancel: {
+        label: 'Cerrar',
+        flat: true,
+        color: 'grey-8',
+      },
+    }).onOk(() => {
+      const codigo =
+        fila.numeroSolicitud ||
+        fila.solicitud ||
+        fila.codigo ||
+        fila.numeroContrato ||
+        fila.contrato
+      router.push({
+        name: 'firmas',
+        query: { codigo: codigo },
+      })
+    })
+    return
+  }
   const codigo =
     fila.numeroSolicitud || fila.solicitud || fila.codigo || fila.numeroContrato || fila.contrato
   router.push({
