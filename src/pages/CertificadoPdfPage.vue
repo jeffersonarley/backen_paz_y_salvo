@@ -53,20 +53,24 @@
             <span class="etiqueta-form">NOMBRES Y APELLIDOS DEL CONTRATISTA:</span>
             <span class="valor-form text-weight-bold">{{ datosSolicitud.contratista }}</span>
           </div>
-          <div class="celda-identificacion">
-            <span class="etiqueta-form">IDENTIFICACIÓN</span>
-            <span class="valor-form">{{ datosSolicitud.identificacion }}</span>
+          <div class="celda-identificacion-header">
+            IDENTIFICACIÓN
           </div>
         </div>
 
-        <!-- Fila 2: Ciudad | Fecha | Regional -->
+        <!-- Fila 2: Ciudad | Fecha | Regional | Valor Identificación -->
         <div class="fila-contratista-2">
-          <div class="celda-etiqueta celda-ciudad-lbl">CIUDAD</div>
-          <div class="celda-valor celda-ciudad-val">{{ datosSolicitud.ciudad }}</div>
-          <div class="celda-etiqueta celda-fecha-lbl">FECHA</div>
-          <div class="celda-valor celda-fecha-val">{{ datosSolicitud.fecha }}</div>
-          <div class="celda-etiqueta celda-regional-lbl">REGIONAL</div>
-          <div class="celda-valor celda-regional-val">{{ datosSolicitud.regional }}</div>
+          <div class="bloque-ciudad-fecha-regional">
+            <div class="celda-etiqueta celda-ciudad-lbl">CIUDAD</div>
+            <div class="celda-valor celda-ciudad-val">{{ datosSolicitud.ciudad }}</div>
+            <div class="celda-etiqueta celda-fecha-lbl">FECHA</div>
+            <div class="celda-valor celda-fecha-val">{{ datosSolicitud.fecha }}</div>
+            <div class="celda-etiqueta celda-regional-lbl">REGIONAL</div>
+            <div class="celda-valor celda-regional-val">{{ datosSolicitud.regional }}</div>
+          </div>
+          <div class="celda-identificacion-valor">
+            {{ datosSolicitud.identificacion }}
+          </div>
         </div>
 
         <!-- Fila 3: Dirección u Oficina donde se ejecutó el contrato -->
@@ -563,10 +567,13 @@ function imprimir() {
   border-right: 1px dotted #000000;
 }
 
-.celda-identificacion {
+.celda-identificacion-header {
   width: 22%;
   display: flex;
   align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-weight: 800;
   padding: 2.5px 6px;
 }
 
@@ -576,8 +583,24 @@ function imprimir() {
   min-height: 22px;
 }
 
+.bloque-ciudad-fecha-regional {
+  flex: 1;
+  display: flex;
+  border-right: 1px dotted #000000;
+}
+
+.celda-identificacion-valor {
+  width: 22%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-weight: 700;
+  padding: 2.5px 6px;
+}
+
 .celda-ciudad-lbl {
-  width: 60px;
+  width: 55px;
   flex-shrink: 0;
 }
 
@@ -587,7 +610,7 @@ function imprimir() {
 }
 
 .celda-fecha-lbl {
-  width: 55px;
+  width: 50px;
   flex-shrink: 0;
 }
 
@@ -597,8 +620,9 @@ function imprimir() {
 }
 
 .celda-regional-lbl {
-  width: 75px;
+  width: 70px;
   flex-shrink: 0;
+  border-right: 1px dotted #000000;
 }
 
 .celda-regional-val {
