@@ -251,44 +251,19 @@
         <!-- Sección Inferior: Elementos faltantes, Otros y Firma del Contratista -->
         <div class="seccion-inferior">
           <div class="fila-elementos">
-            <span
-              >ELEMENTOS FALTANTES U OBLIGACIONES PENDIENTES (Relacionar con su respectivo
-              valor):</span
-            >
-            <span
-              v-if="datosSolicitud.estado === 'Rechazado' && datosSolicitud.observacionRechazo"
-              class="texto-elementos-novedad q-ml-xs"
-            >
-              {{ datosSolicitud.observacionRechazo }}
-            </span>
-            <span v-else class="texto-elementos-paz q-ml-xs"> NINGUNO - PAZ Y SALVO AL DÍA </span>
+            ELEMENTOS FALTANTES U OBLIGACIONES PENDIENTES (Relacionar con su respectivo valor)
           </div>
+          <div class="espacio-elementos"></div>
 
           <div class="fila-otros-inf">
             <span class="otros-label">OTROS :</span>
-            <span class="otros-puntos"
-              >Certificación expedida y validada electrónicamente mediante plataforma GCCON-F-088
-              SENA.</span
-            >
+            <span class="otros-puntos"></span>
           </div>
 
           <div class="linea-separador-inf"></div>
 
           <div class="zona-firma-inf">
-            <!-- Si la solicitud presenta rechazo por bienes pendientes, la firma del contratista permanece retenida -->
-            <div v-if="datosSolicitud.estado === 'Rechazado'" class="caja-firma-bloqueada">
-              <div class="aviso-bloqueo-rojo">FIRMA DEL CONTRATISTA RETENIDA</div>
-              <div class="aviso-bloqueo-sub">
-                Presenta novedades u obligaciones pendientes por subsanar ante las dependencias
-              </div>
-              <div class="linea-firma-sola"></div>
-              <div class="texto-firma-sola">Firma del Contratista</div>
-              <div class="nombre-firmante-inf">{{ datosSolicitud.contratista }}</div>
-              <div class="doc-firmante-inf">C.C. {{ datosSolicitud.identificacion }}</div>
-            </div>
-
             <div
-              v-else
               class="caja-firma-contratista cursor-pointer"
               @click="abrirModalFirma"
               title="Clic para estampar, cambiar o ajustar la firma del contratista"
@@ -298,19 +273,10 @@
                 <q-tooltip>Clic para editar, agrandar o ajustar tu firma</q-tooltip>
               </div>
               <div v-else class="contenedor-firma-placeholder no-print">
-                <q-btn
-                  flat
-                  dense
-                  size="xs"
-                  color="primary"
-                  icon="draw"
-                  label="Clic para estampar firma del contratista"
-                />
+                <q-btn flat dense size="xs" color="primary" icon="draw" label="Clic para firmar" />
               </div>
               <div class="linea-firma-sola"></div>
               <div class="texto-firma-sola">Firma del Contratista</div>
-              <div class="nombre-firmante-inf">{{ datosSolicitud.contratista }}</div>
-              <div class="doc-firmante-inf">C.C. {{ datosSolicitud.identificacion }}</div>
             </div>
           </div>
 
@@ -927,50 +893,57 @@ function imprimir() {
 }
 
 .fila-elementos {
-  padding: 5px 6px 3px;
+  padding: 4px 6px 0;
   font-size: 7.5px;
-  font-weight: 800;
+  font-weight: 700;
+  letter-spacing: 0.1px;
+}
+
+.espacio-elementos {
+  height: 22px;
 }
 
 .fila-otros-inf {
   display: flex;
-  align-items: center;
-  padding: 4px 6px 14px;
+  align-items: baseline;
+  padding: 2px 6px 6px;
 }
 
 .otros-label {
   white-space: nowrap;
   margin-right: 4px;
-  font-weight: 800;
+  font-weight: 700;
+  font-size: 7.5px;
 }
 
 .otros-puntos {
   flex: 1;
   border-bottom: 1px dotted #000000;
   height: 1px;
+  margin-bottom: 2px;
 }
 
 .linea-separador-inf {
-  border-bottom: 1px solid #000000;
+  border-bottom: 1.5px solid #000000;
   width: 100%;
 }
 
 .zona-firma-inf {
-  min-height: 80px;
+  min-height: 65px;
   display: flex;
   justify-content: flex-end;
   align-items: flex-end;
-  padding: 8px 30px 8px 8px;
+  padding: 8px 30px 10px 8px;
 }
 
 .caja-firma-contratista {
-  width: 220px;
+  width: 180px;
   text-align: center;
 }
 
 .contenedor-firma-img {
   width: 100%;
-  height: 65px;
+  height: 52px;
   display: flex;
   justify-content: center;
   align-items: flex-end;
@@ -978,8 +951,8 @@ function imprimir() {
 }
 
 .img-firma-estampada {
-  max-width: 210px;
-  max-height: 62px;
+  max-width: 175px;
+  max-height: 50px;
   object-fit: contain;
   transition: transform 0.15s ease;
 }
@@ -988,67 +961,17 @@ function imprimir() {
   transform: scale(1.04);
 }
 
-.valor-dato {
-  font-weight: 800;
-  margin-right: 6px;
-  font-size: 8px;
-  white-space: nowrap;
-}
-
 .linea-firma-sola {
   width: 100%;
   border-bottom: 1.5px solid #000000;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 .texto-firma-sola {
-  font-size: 8px;
-  font-weight: 800;
+  font-size: 7.5px;
+  font-weight: 700;
   color: #000000;
-}
-
-.texto-elementos-novedad {
-  color: #b71c1c;
-  font-weight: 700;
-}
-
-.texto-elementos-paz {
-  color: #1b5e20;
-  font-weight: 700;
-}
-
-.caja-firma-bloqueada {
-  width: 220px;
   text-align: center;
-  padding: 6px;
-  border: 1px dashed #e57373;
-  background: #ffebee;
-  border-radius: 4px;
-}
-
-.aviso-bloqueo-rojo {
-  font-size: 8px;
-  font-weight: 800;
-  color: #b71c1c;
-  margin-bottom: 2px;
-}
-
-.aviso-bloqueo-sub {
-  font-size: 6.5px;
-  color: #616161;
-  margin-bottom: 6px;
-}
-
-.nombre-firmante-inf {
-  font-size: 7px;
-  font-weight: 700;
-  color: #000000;
-  margin-top: 1px;
-}
-
-.doc-firmante-inf {
-  font-size: 6.5px;
-  color: #333333;
 }
 
 /* ===================== IMPRESIÓN ===================== */
