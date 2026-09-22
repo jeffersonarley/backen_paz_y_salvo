@@ -254,8 +254,27 @@ const menuItems = computed(() => {
 })
 
 function cerrarSesion() {
-  auth.logout()
-  router.push('/login')
+  $q.dialog({
+    title: 'Cerrar sesión',
+    message: '¿Está seguro que desea cerrar la sesión?',
+    cancel: {
+      label: 'CANCELAR',
+      flat: true,
+      textColor: 'primary',
+      noCaps: false,
+    },
+    ok: {
+      label: 'OK',
+      unelevated: true,
+      color: 'green-1',
+      textColor: 'primary',
+      noCaps: false,
+    },
+    persistent: true,
+  }).onOk(() => {
+    auth.logout()
+    router.push('/login')
+  })
 }
 
 function cerrarDrawerEnMovil() {
