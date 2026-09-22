@@ -106,7 +106,7 @@ export const useDependenciasStore = defineStore('dependencias', () => {
         nombre_dependencia: nuevaDependencia.nombre,
         codigo: nuevaDependencia.codigo,
         correo: nuevaDependencia.correo,
-        activo: nuevaDependencia.estado !== 'Inactiva',
+        activo: nuevaDependencia.estado !== 'Inactivo' && nuevaDependencia.estado !== 'Inactiva',
       })
       await cargarDependencias()
     } catch (err) {
@@ -124,7 +124,7 @@ export const useDependenciasStore = defineStore('dependencias', () => {
         try {
           await api.put(`/dependencias/${idAtlas}`, {
             nombre_dependencia: datosActualizados.nombre,
-            activo: datosActualizados.estado !== 'Inactiva',
+            activo: datosActualizados.estado !== 'Inactivo' && datosActualizados.estado !== 'Inactiva',
           })
           await cargarDependencias()
         } catch (err) {
@@ -136,14 +136,18 @@ export const useDependenciasStore = defineStore('dependencias', () => {
 
   async function eliminar(codigoOId) {
     const dep = dependencias.value.find((item) => item.codigo === codigoOId || item._id === codigoOId || item.id === codigoOId)
-    dependencias.value = dependencias.value.filter((item) => item.codigo !== codigoOId && item._id !== codigoOId && item.id !== codigoOId)
-
-    const idAtlas = dep?._id || dep?.id
-    if (idAtlas && idAtlas.length === 24) {
-      try {
-        await api.delete(`/dependencias/${idAtlas}`)
-      } catch (err) {
-        console.warn('Error al eliminar dependencia en Atlas:', err.message)
+    if (dep) {
+      dep.estado = dep.estado === 'Inactiva' || dep.estado === 'Inactivo' ? 'Activa' : 'Inactiva'
+      const idAtlas = dep?._id || dep?.id
+      if (idAtlas && idAtlas.length === 24) {
+        try {
+          await api.put(`/dependencias/${idAtlas}`, {
+            nombre_dependencia: dep.nombre,
+            activo: dep.estado === 'Activa',
+          })
+        } catch (err) {
+          console.warn('Error al actualizar estado de dependencia en Atlas:', err.message)
+        }
       }
     }
   }
