@@ -72,10 +72,10 @@
             round
             dense
             color="negative"
-            icon="delete"
+            icon="person_off"
             @click="eliminarUsuario(props.row)"
           >
-            <q-tooltip>Eliminar Usuario</q-tooltip>
+            <q-tooltip>Desactivar Usuario</q-tooltip>
           </q-btn>
         </q-td>
       </template>
@@ -162,22 +162,21 @@
       </q-card>
     </q-dialog>
 
-    <!-- Diálogo Confirmar Eliminación -->
+    <!-- Diálogo Confirmar Desactivación -->
     <q-dialog v-model="dialogoEliminar">
       <q-card style="min-width: 350px">
         <q-card-section class="row items-center">
-          <q-avatar icon="warning" color="negative" text-color="white" class="q-mr-sm" />
-          <span class="text-h6">Confirmar eliminación</span>
+          <q-avatar icon="person_off" color="negative" text-color="white" class="q-mr-sm" />
+          <span class="text-h6">Confirmar desactivación</span>
         </q-card-section>
 
         <q-card-section class="q-pt-none">
-          ¿Está seguro de eliminar al usuario con documento <strong>{{ documentoEliminar }}</strong
-          >?
+          ¿Está seguro de desactivar al usuario con documento <strong>{{ documentoEliminar }}</strong>?
         </q-card-section>
 
         <q-card-actions align="right">
           <q-btn flat label="Cancelar" color="grey-8" v-close-popup />
-          <q-btn unelevated color="negative" label="Eliminar" @click="confirmarEliminar" />
+          <q-btn unelevated color="negative" label="Desactivar" @click="confirmarEliminar" />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -384,14 +383,14 @@ async function confirmarEliminar() {
     await api.delete(`/usuarios/${idParaBorrar}`)
     $q.notify({
       type: 'info',
-      message: 'Usuario eliminado correctamente de MongoDB Atlas.',
+      message: 'Usuario desactivado correctamente.',
     })
     await cargarUsuarios()
   } catch (err) {
-    console.error('Error al eliminar:', err)
+    console.error('Error al desactivar:', err)
     $q.notify({
       type: 'negative',
-      message: 'Error al eliminar usuario en base de datos.',
+      message: 'Error al desactivar usuario en base de datos.',
     })
   }
   dialogoEliminar.value = false

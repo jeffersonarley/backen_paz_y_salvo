@@ -92,10 +92,10 @@
             round
             dense
             color="negative"
-            icon="delete"
+            icon="block"
             @click="eliminarSolicitud(props.row)"
           >
-            <q-tooltip>Eliminar</q-tooltip>
+            <q-tooltip>Desactivar</q-tooltip>
           </q-btn>
         </q-td>
       </template>
@@ -183,20 +183,20 @@
       </q-card>
     </q-dialog>
 
-    <!-- Diálogo Eliminar -->
+    <!-- Diálogo Desactivar -->
     <q-dialog v-model="dialogoEliminar">
       <q-card style="min-width: 350px">
         <q-card-section class="row items-center">
-          <q-avatar icon="warning" color="negative" text-color="white" class="q-mr-sm" />
-          <span class="text-h6">Confirmar eliminación</span>
+          <q-avatar icon="block" color="negative" text-color="white" class="q-mr-sm" />
+          <span class="text-h6">Confirmar desactivación</span>
         </q-card-section>
 
         <q-card-section class="q-pt-none">
-          ¿Está seguro de eliminar esta solicitud? Esta acción no se puede deshacer.
+          ¿Está seguro de desactivar esta solicitud?
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat label="Cancelar" color="grey-8" v-close-popup />
-          <q-btn unelevated color="negative" label="Eliminar" @click="confirmarEliminar" />
+          <q-btn unelevated color="negative" label="Desactivar" @click="confirmarEliminar" />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -438,7 +438,7 @@ async function confirmarEliminar() {
         (s) => (s.numeroSolicitud || s.solicitud || s.codigo || s.numeroContrato) !== id,
       )
     }
-    $q.notify({ type: 'info', message: 'Solicitud eliminada.' })
+    $q.notify({ type: 'info', message: 'Solicitud desactivada correctamente.' })
   }
   dialogoEliminar.value = false
   solicitudEliminar.value = null
