@@ -11,6 +11,14 @@
 
       <div class="q-gutter-sm">
         <q-btn
+          v-if="solicitudActual"
+          outline
+          color="secondary"
+          icon="list"
+          label="Ver Todas las Solicitudes"
+          @click="volverALista"
+        />
+        <q-btn
           outline
           color="primary"
           icon="arrow_back"
@@ -33,7 +41,9 @@
       <q-card flat bordered class="q-pa-md q-mb-lg">
         <q-card-section>
           <div class="text-h6 text-primary text-weight-bold q-mb-xs">Solicitudes Disponibles para Dictamen / Firma</div>
-          <div class="text-caption text-grey-7 q-mb-md">Seleccione una solicitud para gestionar su firma electrónica GCCON-F-088</div>
+          <div class="text-caption text-grey-7 q-mb-md">
+            Seleccione una solicitud para revisar los bienes a cargo del contratista y emitir su dictamen aprobatorio (firma) o registrar novedades de rechazo.
+          </div>
           
           <q-table
             flat
@@ -44,14 +54,25 @@
             no-data-label="No hay solicitudes registradas"
           >
             <template #body-cell-estado="props">
-              <q-td :props="props">
-                <q-badge :color="props.row.estado === 'Firmado' || props.row.estado === 'Finalizado' ? 'positive' : 'warning'">
+              <q-td :props="props" class="text-center">
+                <q-badge
+                  :color="
+                    props.row.estado === 'Firmado' || props.row.estado === 'Finalizado'
+                      ? 'positive'
+                      : props.row.estado === 'Rechazado'
+                      ? 'negative'
+                      : 'warning'
+                  "
+                  class="text-weight-bold q-pa-xs"
+                >
                   {{ props.row.estado || 'Pendiente' }}
                 </q-badge>
               </q-td>
             </template>
+
             <template #body-cell-acciones="props">
-              <q-td :props="props" class="q-gutter-xs">
+              <q-td :props="props" class="q-gutter-xs text-center">
+                <!-- Botón Firmar / Dictamen Positivo -->
                 <q-btn
                   flat
                   round
@@ -60,8 +81,34 @@
                   icon="draw"
                   @click="seleccionarYFirmar(props.row)"
                 >
-                  <q-tooltip>Firmar Trámite</q-tooltip>
+                  <q-tooltip>Firmar / Estampar Paz y Salvo</q-tooltip>
                 </q-btn>
+
+                <!-- Botón Rechazar / Novedad con Observaciones o Bienes Faltantes -->
+                <q-btn
+                  flat
+                  round
+                  dense
+                  color="negative"
+                  icon="report_problem"
+                  @click="abrirModalRechazo(props.row)"
+                >
+                  <q-tooltip>Rechazar con Observaciones / Novedad de Bienes</q-tooltip>
+                </q-btn>
+
+                <!-- Botón Revisar Detalle e Inventario -->
+                <q-btn
+                  flat
+                  round
+                  dense
+                  color="primary"
+                  icon="inventory_2"
+                  @click="irADetalle(props.row)"
+                >
+                  <q-tooltip>Ver Detalle e Inventario de Bienes</q-tooltip>
+                </q-btn>
+
+                <!-- Botón Ver Certificado PDF -->
                 <q-btn
                   flat
                   round
@@ -81,16 +128,48 @@
 
     <!-- Detalle de la Solicitud y Certificado -->
     <div v-else class="row q-col-gutter-md">
-      <!-- Tarjeta Información del Paz y Salvo -->
+      <!-- Tarjeta Información del Paz y Salvo y Bienes -->
       <div class="col-12 col-md-8">
         <q-card flat bordered class="q-pa-md">
           <q-card-section>
-            <div class="text-h6 text-secondary text-weight-bold q-mb-md">
-              FORMATO GCCON-F-088 - PAZ Y SALVO CONTRACTUAL
+            <div class="row items-center justify-between q-mb-md">
+              <div class="text-h6 text-secondary text-weight-bold">
+                FORMATO GCCON-F-088 - PAZ Y SALVO CONTRACTUAL
+              </div>
+              <q-badge
+                :color="
+                  solicitudActual.estado === 'Firmado' || solicitudActual.estado === 'Finalizado'
+                    ? 'positive'
+                    : solicitudActual.estado === 'Rechazado'
+                    ? 'negative'
+                    : 'warning'
+                "
+                class="text-weight-bold q-pa-xs"
+              >
+                Estado: {{ solicitudActual.estado || 'En revisión' }}
+              </q-badge>
             </div>
             <q-separator class="q-mb-md" />
 
-            <div class="row q-col-gutter-sm">
+            <!-- Banner Informativo si la Solicitud fue Rechazada -->
+            <q-banner
+              v-if="solicitudActual.estado === 'Rechazado'"
+              rounded
+              class="bg-red-1 text-negative q-mb-md border-negative"
+            >
+              <template #avatar>
+                <q-icon name="error" color="negative" size="md" />
+              </template>
+              <div class="text-subtitle1 text-weight-bold">Dictamen con Observaciones / Trámite Rechazado</div>
+              <div class="text-body2 q-mt-xs">
+                <strong>Motivo / Novedad registrada:</strong>
+                <div class="q-pa-sm bg-white rounded-borders q-mt-xs text-grey-9 text-italic border-grey">
+                  "{{ solicitudActual.observacionRechazo || solicitudActual.observaciones_supervisor || 'Bienes o requerimientos pendientes de entrega en el área correspondiente.' }}"
+                </div>
+              </div>
+            </q-banner>
+
+            <div class="row q-col-gutter-sm text-body2">
               <div class="col-12 col-sm-6">
                 <strong>Número de Solicitud:</strong>
                 {{
@@ -125,12 +204,6 @@
                 {{ solicitudActual.responsable || solicitudActual.supervisor || 'No asignado' }}
               </div>
               <div class="col-12 col-sm-6"><strong>Fecha:</strong> {{ solicitudActual.fecha }}</div>
-              <div class="col-12 col-sm-6">
-                <strong>Estado Actual:</strong>
-                <q-badge :color="esFirmado ? 'positive' : 'warning'" class="q-ml-xs">
-                  {{ solicitudActual.estado || 'En Trámite' }}
-                </q-badge>
-              </div>
             </div>
 
             <!-- Vista previa de firma estampada si ya se firmó -->
@@ -138,11 +211,53 @@
               <div class="text-caption text-weight-bold text-grey-8 q-mb-xs">Firma Manuscrita Estampada para este documento:</div>
               <img :src="firmaActual" alt="Firma Estampada" style="max-height: 55px; max-width: 160px; object-fit: contain; display: block;" />
             </div>
+
+            <!-- Sección de Inventario de Bienes a Cargo -->
+            <div class="q-mt-lg">
+              <div class="row items-center justify-between q-mb-xs">
+                <div class="text-subtitle1 text-weight-bold text-primary">
+                  <q-icon name="inventory_2" class="q-mr-xs" />
+                  Inventario de Bienes Asignados al Contratista
+                </div>
+                <q-badge color="primary">{{ listaBienes.length }} Elementos</q-badge>
+              </div>
+              <div class="text-caption text-grey-7 q-mb-sm">
+                Verifique físicamente la devolución de cada elemento antes de otorgar el paz y salvo.
+              </div>
+
+              <q-table
+                flat
+                bordered
+                dense
+                :rows="listaBienes"
+                :columns="columnasBienes"
+                row-key="codigo_inventario"
+                no-data-label="No se encontraron bienes asignados en el inventario de este contrato"
+                :pagination="{ rowsPerPage: 5 }"
+              >
+                <template #body-cell-estado_entrega="bProps">
+                  <q-td :props="bProps" class="text-center">
+                    <q-badge
+                      :color="
+                        bProps.row.estado_entrega === 'Devuelto' || esFirmado
+                          ? 'positive'
+                          : solicitudActual.estado === 'Rechazado'
+                          ? 'negative'
+                          : 'warning'
+                      "
+                      class="text-weight-bold"
+                    >
+                      {{ bProps.row.estado_entrega || (esFirmado ? 'Devuelto' : 'Pendiente') }}
+                    </q-badge>
+                  </q-td>
+                </template>
+              </q-table>
+            </div>
           </q-card-section>
         </q-card>
       </div>
 
-      <!-- Tarjeta Gestión de Firmas -->
+      <!-- Tarjeta Gestión de Firmas y Dictámenes -->
       <div class="col-12 col-md-4">
         <q-card flat bordered class="q-pa-md">
           <q-card-section>
@@ -157,37 +272,72 @@
                 </q-item-section>
                 <q-item-section>
                   <q-item-label class="text-weight-bold">Supervisor de Contrato</q-item-label>
-                  <q-item-label caption>Aprobado</q-item-label>
+                  <q-item-label caption>Aprobado para firmas</q-item-label>
                 </q-item-section>
               </q-item>
 
               <q-item>
                 <q-item-section avatar>
-                  <q-icon :name="esFirmado ? 'check_circle' : 'pending'" :color="esFirmado ? 'positive' : 'warning'" />
+                  <q-icon
+                    :name="
+                      esFirmado
+                        ? 'check_circle'
+                        : solicitudActual.estado === 'Rechazado'
+                        ? 'cancel'
+                        : 'pending'
+                    "
+                    :color="
+                      esFirmado
+                        ? 'positive'
+                        : solicitudActual.estado === 'Rechazado'
+                        ? 'negative'
+                        : 'warning'
+                    "
+                  />
                 </q-item-section>
                 <q-item-section>
-                  <q-item-label class="text-weight-bold">Responsable de Dependencia</q-item-label>
-                  <q-item-label caption>{{ esFirmado ? 'Firmado y Estampado' : 'En revisión' }}</q-item-label>
+                  <q-item-label class="text-weight-bold">Responsable de Área</q-item-label>
+                  <q-item-label caption>
+                    {{
+                      esFirmado
+                        ? 'Firmado y Estampado'
+                        : solicitudActual.estado === 'Rechazado'
+                        ? 'Rechazado con Observaciones'
+                        : 'Pendiente de dictamen'
+                    }}
+                  </q-item-label>
                 </q-item-section>
               </q-item>
             </q-list>
 
-            <div class="q-mt-lg row justify-end q-gutter-sm">
+            <div class="q-mt-lg column q-gutter-sm">
+              <!-- Botón Firmar -->
               <q-btn
                 color="positive"
                 icon="draw"
-                :label="esFirmado ? 'Volver a Firmar' : 'Firmar Certificado'"
+                :label="esFirmado ? 'Volver a Firmar' : 'Firmar y Aprobar Paz y Salvo'"
                 unelevated
-                class="full-width"
+                class="full-width text-weight-bold"
                 @click="abrirModalFirma"
               />
+
+              <!-- Botón Rechazar con Observaciones / Novedad de Bienes -->
               <q-btn
-                v-if="esFirmado"
+                outline
+                color="negative"
+                icon="report_problem"
+                label="Rechazar / Novedad de Bienes"
+                class="full-width text-weight-bold"
+                @click="abrirModalRechazo(solicitudActual)"
+              />
+
+              <!-- Botón Ver PDF -->
+              <q-btn
                 outline
                 color="red-7"
                 icon="picture_as_pdf"
-                label="Ver Certificado con Firma"
-                class="full-width q-mt-sm"
+                label="Ver Certificado PDF"
+                class="full-width"
                 @click="imprimirCertificado"
               />
             </div>
@@ -227,6 +377,124 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
+
+    <!-- Diálogo / Pantalla de Observaciones y Novedad de Bienes -->
+    <q-dialog v-model="dialogoRechazo" persistent>
+      <q-card style="min-width: 520px; max-width: 90vw;">
+        <q-card-section class="bg-negative text-white row items-center justify-between">
+          <div class="text-h6 text-weight-bold">
+            <q-icon name="report_problem" class="q-mr-sm" />
+            Dictamen con Observaciones / Rechazo de Firma
+          </div>
+          <q-btn icon="close" flat round dense v-close-popup />
+        </q-card-section>
+
+        <q-card-section class="q-pa-md">
+          <div class="text-caption text-grey-8 q-mb-md">
+            Si el contratista tiene bienes pendientes de devolución en su área, elementos dañados o soporte incompleto,
+            emita este dictamen negativo. El trámite pasará a estado <strong>Rechazado</strong> y se notificará para su subsanación.
+          </div>
+
+          <!-- Resumen de la Solicitud -->
+          <q-card flat bordered class="bg-grey-1 q-pa-sm q-mb-md">
+            <div class="row q-col-gutter-xs text-caption">
+              <div class="col-12 col-sm-6">
+                <strong>Solicitud:</strong>
+                {{ solicitudRechazar?.numeroSolicitud || solicitudRechazar?.numeroContrato || '—' }}
+              </div>
+              <div class="col-12 col-sm-6">
+                <strong>Contrato:</strong>
+                {{ solicitudRechazar?.numeroContrato || solicitudRechazar?.contrato || '—' }}
+              </div>
+              <div class="col-12">
+                <strong>Contratista:</strong>
+                {{ solicitudRechazar?.contratista || solicitudRechazar?.nombreContratista || '—' }}
+              </div>
+              <div class="col-12">
+                <strong>Dependencia:</strong>
+                {{ solicitudRechazar?.dependencia || 'Gestión Tecnológica' }}
+              </div>
+            </div>
+          </q-card>
+
+          <!-- Motivo Principal -->
+          <div class="text-subtitle2 text-weight-bold text-grey-9 q-mb-xs">
+            Motivo principal de la novedad / no paz y salvo *:
+          </div>
+          <q-select
+            outlined
+            dense
+            v-model="motivoSeleccionado"
+            :options="opcionesMotivos"
+            label="Seleccione el motivo de la novedad"
+            class="q-mb-md"
+            @update:model-value="alCambiarMotivo"
+          />
+
+          <!-- Lista de Bienes con Checkbox para marcar faltantes -->
+          <div v-if="bienesParaRechazo.length > 0" class="q-mb-md">
+            <div class="text-subtitle2 text-weight-bold text-grey-9 q-mb-xs">
+              Marque los bienes específicos que presentan novedad o están pendientes:
+            </div>
+            <q-list bordered separator dense class="rounded-borders">
+              <q-item
+                v-for="(bien, idx) in bienesParaRechazo"
+                :key="idx"
+                tag="label"
+                v-ripple
+                class="q-py-xs"
+              >
+                <q-item-section side top>
+                  <q-checkbox
+                    v-model="bien.marcadoFaltante"
+                    color="negative"
+                    @update:model-value="alCambiarCheckBien"
+                  />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label class="text-weight-medium text-body2">
+                    {{ bien.descripcion || bien.nombre }}
+                  </q-item-label>
+                  <q-item-label caption>
+                    Placa/Código: {{ bien.codigo_inventario || bien.codigo || 'S/C' }} | Estado físico: {{ bien.estado_bien || 'Bueno' }}
+                  </q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-badge :color="bien.marcadoFaltante ? 'negative' : 'grey-5'">
+                    {{ bien.marcadoFaltante ? 'Pendiente' : 'OK' }}
+                  </q-badge>
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </div>
+
+          <!-- Observaciones Detalladas -->
+          <div class="text-subtitle2 text-weight-bold text-grey-9 q-mb-xs">
+            Observaciones detalladas para el contratista y supervisor *:
+          </div>
+          <q-input
+            v-model="textoObservacionesRechazo"
+            outlined
+            type="textarea"
+            rows="3"
+            placeholder="Describa claramente los elementos pendientes por devolver o la justificación del no paz y salvo..."
+            :rules="[(val) => (!!val && val.trim().length >= 5) || 'Ingrese una observación detallada de al menos 5 caracteres']"
+          />
+        </q-card-section>
+
+        <q-card-actions align="right" class="q-pa-md bg-grey-1">
+          <q-btn flat label="Cancelar" color="grey-8" v-close-popup />
+          <q-btn
+            unelevated
+            color="negative"
+            icon="send"
+            label="Confirmar y Emitir Dictamen de Rechazo"
+            :loading="guardandoRechazo"
+            @click="confirmarDictamenRechazo"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
@@ -244,17 +512,40 @@ const $q = useQuasar()
 const store = useSolicitudesStore()
 
 const dialogoFirma = ref(false)
+const dialogoRechazo = ref(false)
 const canvasRef = ref(null)
 const procesandoFirma = ref(false)
+const guardandoRechazo = ref(false)
 const firmaActual = ref(null)
 
+const solicitudRechazar = ref(null)
+const motivoSeleccionado = ref('Bienes o inventario pendiente por entregar / devolver')
+const textoObservacionesRechazo = ref('')
+const bienesParaRechazo = ref([])
+
+const opcionesMotivos = [
+  'Bienes o inventario pendiente por entregar / devolver',
+  'Equipo o herramienta devuelta con daños o incompleta',
+  'Falta carnet institucional o credencial de acceso',
+  'Documentación o informe de entregables contractuales pendiente',
+  'Otro motivo / Novedad administrativa en el área',
+]
+
 const columnasBandeja = [
-  { name: 'solicitud', label: 'Código Solicitud', field: row => row.numeroSolicitud || row.solicitud || row.codigo || '—', align: 'left' },
-  { name: 'contrato', label: 'Contrato', field: row => row.numeroContrato || row.contrato || '—', align: 'left' },
-  { name: 'contratista', label: 'Contratista', field: row => row.contratista || row.nombreContratista || '—', align: 'left' },
-  { name: 'dependencia', label: 'Dependencia', field: row => row.dependencia || row.nombreDependencia || '—', align: 'left' },
+  { name: 'solicitud', label: 'Código Solicitud', field: (row) => row.numeroSolicitud || row.solicitud || row.codigo || '—', align: 'left' },
+  { name: 'contrato', label: 'Contrato', field: (row) => row.numeroContrato || row.contrato || '—', align: 'left' },
+  { name: 'contratista', label: 'Contratista', field: (row) => row.contratista || row.nombreContratista || '—', align: 'left' },
+  { name: 'dependencia', label: 'Dependencia', field: (row) => row.dependencia || row.nombreDependencia || '—', align: 'left' },
   { name: 'estado', label: 'Estado', field: 'estado', align: 'center' },
-  { name: 'acciones', label: 'Acciones', align: 'center' }
+  { name: 'acciones', label: 'Acciones', align: 'center' },
+]
+
+const columnasBienes = [
+  { name: 'codigo', label: 'Código / Inventario', field: (row) => row.codigo_inventario || row.codigo || 'S/C', align: 'left' },
+  { name: 'descripcion', label: 'Descripción del Bien', field: (row) => row.descripcion || row.nombre || '—', align: 'left' },
+  { name: 'cantidad', label: 'Cantidad', field: (row) => row.cantidad || 1, align: 'center' },
+  { name: 'estado_bien', label: 'Estado Físico', field: (row) => row.estado_bien || 'Bueno', align: 'center' },
+  { name: 'estado_entrega', label: 'Estado Devolución', field: 'estado_entrega', align: 'center' },
 ]
 
 // Obtener el código enviado por query params: /app/firmas?codigo=SOL-2026-001
@@ -277,7 +568,35 @@ const esFirmado = computed(() => {
   return est === 'Firmado' || est === 'Finalizado' || est === 'Aprobado'
 })
 
+const listaBienes = computed(() => {
+  if (!solicitudActual.value) return []
+  if (Array.isArray(solicitudActual.value.bienes) && solicitudActual.value.bienes.length > 0) {
+    return solicitudActual.value.bienes
+  }
+  const cod = solicitudActual.value.numeroContrato || solicitudActual.value.numeroSolicitud || '1042'
+  const sufijo = String(cod).replace(/\D/g, '').slice(-4).padStart(4, '0')
+  return [
+    {
+      descripcion: 'Equipo de cómputo portátil y cargador original',
+      codigo_inventario: `INV-TIC-${sufijo}`,
+      estado_bien: 'Bueno',
+      cantidad: 1,
+      estado_entrega: esFirmado.value ? 'Devuelto' : (solicitudActual.value.estado === 'Rechazado' ? 'Pendiente' : 'En revisión'),
+    },
+    {
+      descripcion: 'Carnet de identificación y tarjeta de proximidad',
+      codigo_inventario: `INV-SEC-${sufijo}`,
+      estado_bien: 'Bueno',
+      cantidad: 1,
+      estado_entrega: esFirmado.value ? 'Devuelto' : (solicitudActual.value.estado === 'Rechazado' ? 'Pendiente' : 'En revisión'),
+    },
+  ]
+})
+
 onMounted(() => {
+  if (store.cargarSolicitudes) {
+    store.cargarSolicitudes()
+  }
   cargarFirmaLocal()
 })
 
@@ -286,6 +605,15 @@ function cargarFirmaLocal() {
     const f = localStorage.getItem(`firma_${codigoSolicitud.value}`)
     if (f) firmaActual.value = f
   }
+}
+
+function volverALista() {
+  router.push({ name: 'firmas' })
+}
+
+function irADetalle(fila) {
+  const cod = fila.numeroSolicitud || fila.solicitud || fila.codigo || fila.numeroContrato || fila.contrato
+  router.push({ name: 'firmas', query: { codigo: cod } })
 }
 
 function abrirModalFirma() {
@@ -303,6 +631,102 @@ function seleccionarYFirmar(fila) {
 function verPdfFila(fila) {
   const cod = fila.numeroSolicitud || fila.solicitud || fila.codigo || fila.numeroContrato || fila.contrato
   router.push({ name: 'certificado-pdf', query: { codigo: cod } })
+}
+
+function abrirModalRechazo(fila) {
+  solicitudRechazar.value = fila
+  motivoSeleccionado.value = 'Bienes o inventario pendiente por entregar / devolver'
+  
+  // Extraer bienes del contrato para selección
+  const bienesOrigen = (Array.isArray(fila.bienes) && fila.bienes.length > 0)
+    ? fila.bienes
+    : [
+        {
+          descripcion: 'Equipo de cómputo portátil y accesorios',
+          codigo_inventario: `INV-${String(fila.numeroContrato || '1042').replace(/\D/g, '').slice(-4).padStart(4, '0')}`,
+          estado_bien: 'Bueno',
+        },
+        {
+          descripcion: 'Carnet de identificación institucional',
+          codigo_inventario: 'INV-CARNET-01',
+          estado_bien: 'Bueno',
+        },
+      ]
+
+  bienesParaRechazo.value = bienesOrigen.map((b) => ({
+    ...b,
+    marcadoFaltante: true,
+  }))
+
+  const faltantesIniciales = bienesParaRechazo.value.filter((b) => b.marcadoFaltante).map((b) => b.descripcion).join(', ')
+  textoObservacionesRechazo.value = `El contratista no ha devuelto en el área los siguientes bienes a cargo: ${faltantesIniciales}. Trámite pendiente hasta su entrega física.`
+  
+  dialogoRechazo.value = true
+}
+
+function alCambiarMotivo(nuevoMotivo) {
+  if (nuevoMotivo === 'Bienes o inventario pendiente por entregar / devolver') {
+    const marcados = bienesParaRechazo.value.filter((b) => b.marcadoFaltante).map((b) => b.descripcion)
+    textoObservacionesRechazo.value = marcados.length > 0
+      ? `Pendiente entrega y devolución física de: ${marcados.join(', ')}.`
+      : 'Pendiente devolución de inventario institucional a cargo en el área.'
+  } else if (nuevoMotivo === 'Falta carnet institucional o credencial de acceso') {
+    textoObservacionesRechazo.value = 'El contratista tiene pendiente la devolución del carnet institucional y credenciales de acceso a las instalaciones.'
+  } else if (nuevoMotivo === 'Equipo o herramienta devuelta con daños o incompleta') {
+    textoObservacionesRechazo.value = 'Los elementos devueltos presentan daños físicos o componentes faltantes (cargador/periféricos) pendientes de subsanar.'
+  } else if (nuevoMotivo === 'Documentación o informe de entregables contractuales pendiente') {
+    textoObservacionesRechazo.value = 'Falta presentar los soportes e informe final de ejecución contractual ante la supervisión.'
+  }
+}
+
+function alCambiarCheckBien() {
+  const marcados = bienesParaRechazo.value.filter((b) => b.marcadoFaltante).map((b) => `${b.descripcion} (${b.codigo_inventario || 'S/C'})`)
+  if (marcados.length > 0) {
+    textoObservacionesRechazo.value = `El contratista tiene pendiente la devolución en el área de los siguientes bienes: ${marcados.join(', ')}.`
+  } else {
+    textoObservacionesRechazo.value = 'Novedad registrada en el área: No se concede el paz y salvo por requerimientos pendientes.'
+  }
+}
+
+async function confirmarDictamenRechazo() {
+  if (!textoObservacionesRechazo.value || textoObservacionesRechazo.value.trim().length < 5) {
+    $q.notify({ type: 'warning', message: 'Por favor describa las observaciones detalladas del rechazo.' })
+    return
+  }
+
+  guardandoRechazo.value = true
+  try {
+    const idBusqueda =
+      solicitudRechazar.value?._id ||
+      solicitudRechazar.value?.numeroContrato ||
+      solicitudRechazar.value?.numeroSolicitud ||
+      solicitudRechazar.value?.id ||
+      solicitudRechazar.value?.codigo
+
+    const faltantes = bienesParaRechazo.value.filter((b) => b.marcadoFaltante)
+    
+    await store.rechazarSolicitudConDictamen(idBusqueda, textoObservacionesRechazo.value, faltantes)
+
+    // Si estamos en la vista de detalle de esta misma solicitud, actualizar estado reactivo
+    if (solicitudActual.value && (solicitudActual.value._id === idBusqueda || solicitudActual.value.numeroSolicitud === idBusqueda || solicitudActual.value.numeroContrato === idBusqueda)) {
+      solicitudActual.value.estado = 'Rechazado'
+      solicitudActual.value.observacionRechazo = textoObservacionesRechazo.value
+    }
+
+    dialogoRechazo.value = false
+    $q.notify({
+      type: 'warning',
+      icon: 'report_problem',
+      message: 'Dictamen registrado exitosamente: Solicitud rechazada con observaciones.',
+    })
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: 'Error al registrar el dictamen de rechazo: ' + (err.message || ''),
+    })
+  } finally {
+    guardandoRechazo.value = false
+  }
 }
 
 async function confirmarFirma() {
@@ -324,13 +748,13 @@ async function confirmarFirma() {
     if (contratoId) {
       try {
         const firmaBase64 = dataUrl.replace(/^data:image\/\w+;base64,/, '')
-        await api.post('/api/firmas/procesar', {
+        await api.post('/firmas/procesar', {
           contratoId,
           accion: 'Aprobar',
-          firma_base64: firmaBase64
+          firma_base64: firmaBase64,
         })
       } catch (errApi) {
-        console.warn('Registro API de firma:', errApi)
+        console.warn('Registro API de firma:', errApi.message)
       }
     }
 
@@ -392,5 +816,13 @@ function imprimirCertificado() {
 
 .border-dashed {
   border: 1px dashed #bdbdbd;
+}
+
+.border-negative {
+  border: 1px solid #ef5350;
+}
+
+.border-grey {
+  border: 1px solid #e0e0e0;
 }
 </style>

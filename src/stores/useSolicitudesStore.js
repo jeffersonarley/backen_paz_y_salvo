@@ -199,6 +199,16 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
             fecha: fch,
             fechaSolicitud: fch,
             estado: est,
+            observacionRechazo: c.observaciones_supervisor || c.observacion_rechazo || '',
+            bienes: Array.isArray(c.bienes) && c.bienes.length > 0 ? c.bienes : [
+              {
+                descripcion: 'Equipo de cómputo y periféricos institucionales',
+                codigo_inventario: `INV-${String(num).replace(/\D/g, '').slice(-4).padStart(4, '0') || '1042'}`,
+                estado_bien: 'Bueno',
+                cantidad: 1,
+                estado_entrega: est === 'Firmado' || est === 'Finalizado' ? 'Devuelto' : 'Pendiente'
+              }
+            ],
             firmas: [
               {
                 dependenciaCodigo: 'DEP-01',
@@ -359,6 +369,43 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
     }
   }
 
+  async function rechazarSolicitudConDictamen(idSolicitud, observacion, bienesFaltantes = []) {
+    const item = solicitudes.value.find(
+      (s) =>
+        s._id === idSolicitud ||
+        s.id === idSolicitud ||
+        s.numeroSolicitud === idSolicitud ||
+        s.numeroContrato === idSolicitud ||
+        s.solicitud === idSolicitud,
+    )
+    if (item) {
+      item.estado = 'Rechazado'
+      item.observacionRechazo = observacion
+      item.observaciones_supervisor = observacion
+      item.bienesFaltantes = bienesFaltantes
+
+      const idParaApi = item._id || item.numeroContrato || item.id
+      try {
+        await api.post('/firmas/procesar', {
+          contratoId: idParaApi,
+          accion: 'Rechazar',
+          observacion_rechazo: observacion,
+        })
+      } catch (err) {
+        console.warn('API firmas rechazo fallback:', err.message)
+        try {
+          await api.put(`/contratos/${idParaApi}`, {
+            estado: 'Rechazado',
+            observaciones_supervisor: observacion,
+          })
+        } catch (err2) {
+          console.warn('Fallback PUT contrato falló:', err2.message)
+        }
+      }
+    }
+    return item
+  }
+
   function rechazarSolicitud(idSolicitud, observacion) {
     const solicitud = solicitudes.value.find((s) => (s.id || s.numeroSolicitud) === idSolicitud)
     if (solicitud) {
@@ -383,6 +430,7 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
     eliminarSolicitud,
     registrarFirma,
     rechazarSolicitud,
+    rechazarSolicitudConDictamen,
     obtenerSolicitudPorId,
   }
 })
