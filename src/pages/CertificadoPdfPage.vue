@@ -174,10 +174,7 @@
             <div class="td-dep">GESTIÓN DE TIC</div>
             <div class="td-marca">X</div>
             <div class="td-nombres">Franklin Rolando Chacon Lopez</div>
-            <div class="td-firma">
-              <span v-if="estaFilaFirmada(1)" class="sello-aprobado">✓ Firmado Elec.</span>
-              <span v-else-if="estaFilaRechazada(1)" class="sello-novedad">✗ Novedad</span>
-            </div>
+            <div class="td-firma"></div>
           </div>
 
           <!-- 2 -->
@@ -185,9 +182,7 @@
             <div class="td-dep">ADMINISTRACIÓN DE DOCUMENTOS</div>
             <div class="td-marca">X</div>
             <div class="td-nombres">Hilda Lucia Ramirez Alvarado</div>
-            <div class="td-firma">
-              <span v-if="estaFilaFirmada(2)" class="sello-aprobado">✓ Firmado Elec.</span>
-            </div>
+            <div class="td-firma"></div>
           </div>
 
           <!-- 3 -->
@@ -198,9 +193,7 @@
             </div>
             <div class="td-marca">X</div>
             <div class="td-nombres">Johon Fredy Sanabria Muñoz</div>
-            <div class="td-firma">
-              <span v-if="estaFilaFirmada(3)" class="sello-aprobado">✓ Firmado Elec.</span>
-            </div>
+            <div class="td-firma"></div>
           </div>
 
           <!-- 4 -->
@@ -211,10 +204,7 @@
               Generar reporte de https://miinventario.sena.edu.co/Inicio.aspx y anexar al formato,
               garantizando que no tiene elementos a su cargo.
             </div>
-            <div class="td-firma">
-              <span v-if="estaFilaFirmada(4)" class="sello-aprobado">✓ Paz y Salvo Almacén</span>
-              <span v-else-if="estaFilaRechazada(4)" class="sello-novedad">✗ Novedad Bienes</span>
-            </div>
+            <div class="td-firma"></div>
           </div>
 
           <!-- 5 -->
@@ -224,9 +214,7 @@
             </div>
             <div class="td-marca">X</div>
             <div class="td-nombres">Juan David Silva Gutierrez</div>
-            <div class="td-firma">
-              <span v-if="estaFilaFirmada(5)" class="sello-aprobado">✓ Firmado Elec.</span>
-            </div>
+            <div class="td-firma"></div>
           </div>
 
           <!-- 6 -->
@@ -234,9 +222,7 @@
             <div class="td-dep">CONTABILIDAD</div>
             <div class="td-marca">X</div>
             <div class="td-nombres">Zaida Leny Melgarejo Ballesteros</div>
-            <div class="td-firma">
-              <span v-if="estaFilaFirmada(6)" class="sello-aprobado">✓ Firmado Elec.</span>
-            </div>
+            <div class="td-firma"></div>
           </div>
 
           <!-- 7 -->
@@ -244,9 +230,7 @@
             <div class="td-dep">TESORERÍA</div>
             <div class="td-marca">X</div>
             <div class="td-nombres">Nelcy Mabel Mayorga Pinto</div>
-            <div class="td-firma">
-              <span v-if="estaFilaFirmada(7)" class="sello-aprobado">✓ Firmado Elec.</span>
-            </div>
+            <div class="td-firma"></div>
           </div>
 
           <!-- 8 -->
@@ -254,9 +238,7 @@
             <div class="td-dep">COORDINACIÓN DE: ÁREA/GRUPO/ACADÉMICA</div>
             <div class="td-marca">X</div>
             <div class="td-nombres">Johon Fredy Sanabria Muñoz</div>
-            <div class="td-firma">
-              <span v-if="estaFilaFirmada(8)" class="sello-aprobado">✓ Firmado Elec.</span>
-            </div>
+            <div class="td-firma"></div>
           </div>
 
           <!-- 9 -->
@@ -266,9 +248,7 @@
             <div class="td-nombres">
               Andrea Juliana Celis Camacho / Yudith Milagros Martinez Bautista
             </div>
-            <div class="td-firma">
-              <span v-if="estaFilaFirmada(9)" class="sello-aprobado">✓ Firmado Elec.</span>
-            </div>
+            <div class="td-firma"></div>
           </div>
 
           <!-- 10 -->
@@ -276,9 +256,7 @@
             <div class="td-dep">OTRO (LÍDER SIGA)</div>
             <div class="td-marca">X</div>
             <div class="td-nombres">Zaida Jebridy Garcia Jaimes</div>
-            <div class="td-firma">
-              <span v-if="estaFilaFirmada(10)" class="sello-aprobado">✓ Firmado Elec.</span>
-            </div>
+            <div class="td-firma"></div>
           </div>
 
           <!-- 11 -->
@@ -286,9 +264,7 @@
             <div class="td-dep">OTRO (ADMINISTRACIÓN EDUCATIVA)</div>
             <div class="td-marca">X</div>
             <div class="td-nombres">Erika Johana Gómez Verdugo</div>
-            <div class="td-firma">
-              <span v-if="estaFilaFirmada(11)" class="sello-aprobado">✓ Firmado Elec.</span>
-            </div>
+            <div class="td-firma"></div>
           </div>
 
           <!-- 12 -->
@@ -300,9 +276,7 @@
             <div class="td-nombres">
               Nelson Fabian Duarte Peñaloza / Eileen Erfensi Hurtado Ariza
             </div>
-            <div class="td-firma">
-              <span v-if="estaFilaFirmada(12)" class="sello-aprobado">✓ Firmado Elec.</span>
-            </div>
+            <div class="td-firma"></div>
           </div>
 
           <!-- 13 -->
@@ -310,9 +284,7 @@
             <div class="td-dep">APOYO ETAPA PRODUCTIVA</div>
             <div class="td-marca">X</div>
             <div class="td-nombres">Karen Andrea García Carreño</div>
-            <div class="td-firma">
-              <span v-if="estaFilaFirmada(13)" class="sello-aprobado">✓ Firmado Elec.</span>
-            </div>
+            <div class="td-firma"></div>
           </div>
 
           <!-- 14 -->
@@ -320,11 +292,7 @@
             <div class="td-dep">SUPERVISOR DE CONTRATO</div>
             <div class="td-marca">X</div>
             <div class="td-nombres">Johon Fredy Sanabria Muñoz</div>
-            <div class="td-firma">
-              <span v-if="estaFilaFirmada(14)" class="sello-aprobado sello-sup"
-                >✓ V°B° Supervisor</span
-              >
-            </div>
+            <div class="td-firma"></div>
           </div>
         </div>
 
@@ -530,40 +498,6 @@ onMounted(() => {
     if (f) firmaGuardada.value = f
   }
 })
-
-function estaFilaFirmada(filaNumero) {
-  const est = datosSolicitud.value.estado
-  if (est === 'Firmado' || est === 'Finalizado') {
-    return true
-  }
-  if (Array.isArray(datosSolicitud.value.firmas) && datosSolicitud.value.firmas.length > 0) {
-    if (filaNumero === 1) {
-      return datosSolicitud.value.firmas.some(
-        (f) =>
-          (f.dependenciaCodigo === 'DEP-01' || f.dependenciaNombre?.includes('TIC')) && f.firmada,
-      )
-    }
-    if (filaNumero === 4) {
-      return datosSolicitud.value.firmas.some(
-        (f) =>
-          (f.dependenciaCodigo === 'DEP-03' || f.dependenciaNombre?.includes('Almac')) && f.firmada,
-      )
-    }
-    if (filaNumero === 14) {
-      return datosSolicitud.value.firmas.some(
-        (f) => f.dependenciaNombre?.includes('Supervisor') && f.firmada,
-      )
-    }
-  }
-  return false
-}
-
-function estaFilaRechazada(filaNumero) {
-  if (datosSolicitud.value.estado === 'Rechazado') {
-    if (filaNumero === 4 || filaNumero === 1) return true
-  }
-  return false
-}
 
 function volver() {
   router.push({ name: 'solicitudes' })
@@ -1128,36 +1062,6 @@ function imprimir() {
   font-size: 8px;
   font-weight: 800;
   color: #000000;
-}
-
-.sello-aprobado {
-  color: #1b5e20;
-  font-size: 6.5px;
-  font-weight: 800;
-  display: inline-flex;
-  align-items: center;
-  background: #e8f5e9;
-  padding: 1px 3px;
-  border-radius: 2px;
-  border: 0.5px solid #81c784;
-}
-
-.sello-sup {
-  background: #e3f2fd;
-  color: #0d47a1;
-  border: 0.5px solid #90caf9;
-}
-
-.sello-novedad {
-  color: #b71c1c;
-  font-size: 6.5px;
-  font-weight: 800;
-  display: inline-flex;
-  align-items: center;
-  background: #ffebee;
-  padding: 1px 3px;
-  border-radius: 2px;
-  border: 0.5px solid #e57373;
 }
 
 .texto-elementos-novedad {
