@@ -131,8 +131,8 @@
                   </q-btn>
                 </template>
 
-                <!-- Para RESPONSABLE DE ÁREA y SUPERVISOR: Dictámenes y gestión -->
-                <template v-else>
+                <!-- Para RESPONSABLE DE ÁREA: Dictamen y firma oficial -->
+                <template v-else-if="esResponsableArea">
                   <!-- Botón Firmar / Dictamen Positivo -->
                   <q-btn
                     flat
@@ -167,6 +167,20 @@
                     @click="irADetalle(props.row)"
                   >
                     <q-tooltip>Ver Detalle e Inventario de Bienes</q-tooltip>
+                  </q-btn>
+                </template>
+
+                <!-- Para Otros Roles (Supervisor / Administrador): Solo consulta de detalle -->
+                <template v-else>
+                  <q-btn
+                    flat
+                    round
+                    dense
+                    color="primary"
+                    icon="inventory_2"
+                    @click="irADetalle(props.row)"
+                  >
+                    <q-tooltip>Consultar Detalle e Inventario</q-tooltip>
                   </q-btn>
                 </template>
 

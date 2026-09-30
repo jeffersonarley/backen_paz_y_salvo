@@ -107,7 +107,7 @@ const routes = [
         component: () => import('@/pages/FirmasPage.vue'),
         meta: {
           titulo: 'Gestionar Firmas',
-          roles: ['ADMINISTRADOR', 'SUPERVISOR', 'CONTRATISTA', 'RESPONSABLE_AREA'],
+          roles: ['RESPONSABLE_AREA'],
         },
       },
       {
