@@ -30,17 +30,31 @@ async function resolverDependencia(valor) {
     return porNombre;
 }
 
+// La fecha de fin no puede ser anterior a la de inicio
+function validarRangoFechas(inicio, fin) {
+    if (inicio && fin && new Date(fin) < new Date(inicio)) {
+        throw new AppError('La fecha de fin no puede ser anterior a la fecha de inicio.', 400);
+    }
+}
+
 // Diagrama 2: Registro contractual e inventario (transacción atómica + fallback)
 exports.crearContrato = asyncHandler(async (req, res) => {
     const { numero, telefono, dependencia, bienes, objeto_contractual, fecha_inicio, fecha_fin, adjunto_nombre } = req.body;
 
-    const usuarioId = req.usuario?.id || req.usuario?._id || req.usuario?.uid;
+    const usuarioId = req.usuario?.id;
     if (!usuarioId) {
         throw new AppError('No se pudo identificar al usuario autenticado.', 401);
     }
 
     if (!numero || !telefono || !dependencia) {
         throw new AppError('Todos los campos obligatorios del contrato (numero, telefono, dependencia) deben estar diligenciados.', 400);
+    }
+
+    validarRangoFechas(fecha_inicio, fecha_fin);
+
+    // Duplicado explícito: da un 400 claro en lugar de un 500 genérico
+    if (await Contrato.exists({ numero_contrato: String(numero).trim() })) {
+        throw new AppError('Ya existe un contrato con ese número.', 400);
     }
 
     const dependenciaArea = await resolverDependencia(dependencia);
@@ -103,19 +117,30 @@ exports.crearContrato = asyncHandler(async (req, res) => {
         });
         creado = true;
     } catch (txError) {
+        // Un duplicado o un error de validación NO es un problema de transacciones: se informa tal cual
+        if (txError.code === 11000 || txError.name === 'ValidationError') {
+            throw txError;
+        }
         console.warn('Transacción fallida o no soportada, intentando fallback:', txError.message);
     } finally {
-        try { session.endSession(); } catch (e) { /* noop */ }
+        try { await session.endSession(); } catch (e) { /* noop */ }
     }
 
-    // Fallback secuencial con compensación manual (standalone)
+    // Fallback secuencial con compensación manual (MongoDB standalone, sin replica set)
     if (!creado) {
         try {
+            nuevoContrato.isNew = true;
             await nuevoContrato.save();
             await BienEntregado.insertMany(bienesConContrato);
         } catch (fallbackErr) {
+            // Compensación: no se deja un contrato a medias (ni contrato sin bienes ni bienes huérfanos)
+            await BienEntregado.deleteMany({ contrato_id: nuevoContrato._id }).catch(() => {});
             await Contrato.findByIdAndDelete(nuevoContrato._id).catch(() => {});
-            throw new AppError('Error interno del servidor al procesar el contrato (fallback).', 500);
+            if (fallbackErr.code === 11000 || fallbackErr.name === 'ValidationError') {
+                throw fallbackErr;
+            }
+            console.error('Error creando contrato (fallback):', fallbackErr);
+            throw new AppError('Error interno del servidor al procesar el contrato.', 500);
         }
     }
 
@@ -134,7 +159,7 @@ exports.crearContrato = asyncHandler(async (req, res) => {
 
 // RF-005: Contratista consulta el estado de sus propias solicitudes
 exports.misSolicitudes = asyncHandler(async (req, res) => {
-    const usuarioId = req.usuario?.id || req.usuario?._id || req.usuario?.uid;
+    const usuarioId = req.usuario?.id;
     const contratos = await Contrato.find({ usuario: usuarioId })
         .populate('dependencia', 'nombre_dependencia')
         .populate('supervisor', 'nombre_completo correo_institucional')
@@ -145,7 +170,7 @@ exports.misSolicitudes = asyncHandler(async (req, res) => {
 // Listar contratos según el rol (Supervisor: asignados; ResponsableArea: con firma en su área; Admin: todos)
 exports.listarContratos = asyncHandler(async (req, res) => {
     const rol = req.usuario?.rol;
-    const usuarioId = req.usuario?.id || req.usuario?._id || req.usuario?.uid;
+    const usuarioId = req.usuario?.id;
     let filtro = {};
 
     if (rol === 'Supervisor') {
@@ -181,7 +206,7 @@ exports.obtenerContrato = asyncHandler(async (req, res) => {
     }
 
     const rol = req.usuario?.rol;
-    const usuarioId = req.usuario?.id || req.usuario?._id || req.usuario?.uid;
+    const usuarioId = req.usuario?.id;
 
     if (rol === 'Contratista' && String(contrato.usuario?._id || contrato.usuario) !== String(usuarioId)) {
         throw new AppError('Acceso denegado. Este contrato no te pertenece.', 403);
@@ -189,6 +214,21 @@ exports.obtenerContrato = asyncHandler(async (req, res) => {
 
     if (rol === 'Supervisor' && String(contrato.supervisor?._id || contrato.supervisor) !== String(usuarioId)) {
         throw new AppError('Acceso denegado. No estás asignado a este contrato.', 403);
+    }
+
+    // ResponsableArea: solo los contratos donde su dependencia tiene un casillero de firma
+    if (rol === 'ResponsableArea') {
+        const dependenciaId = req.usuario?.dependencia_id;
+        const tieneCasillero = dependenciaId
+            && await TrazabilidadFirma.exists({ contrato_id: contrato._id, area_id: dependenciaId });
+        if (!tieneCasillero) {
+            throw new AppError('Acceso denegado. Este contrato no está asignado a su área.', 403);
+        }
+    }
+
+    // Cualquier otro rol no contemplado no tiene acceso
+    if (!['Contratista', 'Supervisor', 'ResponsableArea', 'Administrador'].includes(rol)) {
+        throw new AppError('Acceso denegado.', 403);
     }
 
     const bienes = await BienEntregado.find({ contrato_id: contrato._id });
@@ -202,7 +242,7 @@ exports.actualizarContrato = asyncHandler(async (req, res) => {
         throw new AppError('Contrato no encontrado.', 404);
     }
 
-    const usuarioId = req.usuario?.id || req.usuario?._id || req.usuario?.uid;
+    const usuarioId = req.usuario?.id;
     if (String(contrato.usuario) !== String(usuarioId)) {
         throw new AppError('Acceso denegado. Este contrato no te pertenece.', 403);
     }
@@ -222,6 +262,8 @@ exports.actualizarContrato = asyncHandler(async (req, res) => {
     if (fecha_inicio !== undefined) contrato.fecha_inicio = fecha_inicio || null;
     if (fecha_fin !== undefined) contrato.fecha_fin = fecha_fin || null;
 
+    validarRangoFechas(contrato.fecha_inicio, contrato.fecha_fin);
+
     await contrato.save();
     res.status(200).json({ mensaje: 'Contrato actualizado exitosamente.', contrato });
 });
@@ -233,7 +275,7 @@ exports.cancelarContrato = asyncHandler(async (req, res) => {
         throw new AppError('Contrato no encontrado.', 404);
     }
 
-    const usuarioId = req.usuario?.id || req.usuario?._id || req.usuario?.uid;
+    const usuarioId = req.usuario?.id;
     if (String(contrato.usuario) !== String(usuarioId)) {
         throw new AppError('Acceso denegado. Este contrato no te pertenece.', 403);
     }
@@ -264,13 +306,18 @@ exports.eliminarBien = asyncHandler(async (req, res) => {
         throw new AppError('Contrato no encontrado.', 404);
     }
 
-    const usuarioId = req.usuario?.id || req.usuario?._id || req.usuario?.uid;
+    const usuarioId = req.usuario?.id;
     if (String(contrato.usuario) !== String(usuarioId)) {
         throw new AppError('Acceso denegado. Este contrato no te pertenece.', 403);
     }
 
     if (contrato.estado !== 'Borrador') {
         throw new AppError('Solo se puede modificar el inventario en estado Borrador.', 400);
+    }
+
+    const totalBienes = await BienEntregado.countDocuments({ contrato_id: contrato._id });
+    if (totalBienes <= 1) {
+        throw new AppError('El contrato debe conservar al menos un bien en el inventario.', 400);
     }
 
     const bien = await BienEntregado.findOneAndDelete({ _id: bienId, contrato_id: contrato._id });
@@ -295,7 +342,7 @@ exports.obtenerObservaciones = asyncHandler(async (req, res) => {
         throw new AppError('Contrato no encontrado.', 404);
     }
 
-    const usuarioId = req.usuario?.id || req.usuario?._id || req.usuario?.uid;
+    const usuarioId = req.usuario?.id;
     const rol = req.usuario?.rol;
     const esDueno = String(contrato.usuario) === String(usuarioId);
     const esSupervisor = rol === 'Supervisor' && String(contrato.supervisor) === String(usuarioId);

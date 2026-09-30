@@ -1,7 +1,8 @@
 require('dotenv').config();
 const conectarDB = require('../src/config/db');
 const Usuario = require('../src/models/Usuario');
-const bcrypt = require('bcrypt');
+const { hashPassword } = require('../src/utils/password');
+const validarPassword = require('../src/utils/validarPassword');
 
 async function crearAdministrador() {
   try {
@@ -10,9 +11,14 @@ async function crearAdministrador() {
     const datos = {
       nombre_completo: process.env.SEED_ADMIN_NOMBRE || 'Administrador General',
       correo_institucional: process.env.SEED_ADMIN_EMAIL || 'admin@institucion.edu.co',
-      password: process.env.SEED_ADMIN_PASSWORD || 'AdminSeguro123!',
+      password: process.env.SEED_ADMIN_PASSWORD,
       rol: 'Administrador'
     };
+
+    const politica = validarPassword(datos.password);
+    if (!politica.valida) {
+      throw new Error(`Defina SEED_ADMIN_PASSWORD en el .env. ${politica.mensaje}`);
+    }
 
     const existente = await Usuario.findOne({ correo_institucional: datos.correo_institucional });
     if (existente) {
@@ -20,8 +26,7 @@ async function crearAdministrador() {
       process.exit(0);
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const password_hash = await bcrypt.hash(datos.password, salt);
+    const password_hash = await hashPassword(datos.password);
 
     const nuevo = new Usuario({
       nombre_completo: datos.nombre_completo,
@@ -33,7 +38,6 @@ async function crearAdministrador() {
 
     await nuevo.save();
     console.log('Administrador creado:', datos.correo_institucional);
-    console.log('Contraseña temporal:', datos.password);
     process.exit(0);
   } catch (error) {
     console.error('Error creando administrador:', error.message);

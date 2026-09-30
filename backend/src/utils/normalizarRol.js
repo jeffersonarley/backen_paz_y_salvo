@@ -20,9 +20,8 @@ const normalizarRol = (rol) => {
 
   const limpio = rol.trim();
   const clave = limpio.toLowerCase().replace(/[\s-]+/g, '_');
-  const normalizado = MAPA_NORMALIZACION[clave] || limpio;
-
-  return ROLES_CANONICOS.includes(normalizado) ? normalizado : normalizado;
+  return MAPA_NORMALIZACION[clave] || limpio;
 };
 
 module.exports = normalizarRol;
+module.exports.ROLES_CANONICOS = ROLES_CANONICOS;

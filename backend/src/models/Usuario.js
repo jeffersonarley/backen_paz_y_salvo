@@ -61,6 +61,11 @@ const usuarioSchema = new mongoose.Schema({
     token_expiracion: {
         type: Date,
         default: null
+    },
+    // Se actualiza al cambiar/restablecer la contraseña: invalida los tokens JWT anteriores
+    password_changed_at: {
+        type: Date,
+        default: null
     }
 }, {
     timestamps: true,

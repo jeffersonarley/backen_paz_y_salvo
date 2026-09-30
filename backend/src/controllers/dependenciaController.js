@@ -1,25 +1,26 @@
+const mongoose = require('mongoose');
 const DependenciaArea = require('../models/DependenciaArea');
 const Usuario = require('../models/Usuario');
 const { registrar } = require('../services/auditoriaService');
 const asyncHandler = require('../utils/asyncHandler');
 const AppError = require('../utils/AppError');
 
-const usuarioIdActual = (req) => req.usuario?.id || req.usuario?._id || req.usuario?.uid;
+const usuarioIdActual = (req) => req.usuario?.id;
 
 // RF-012: Crear dependencia (Supervisor)
 exports.crearDependencia = asyncHandler(async (req, res) => {
     const { nombre_dependencia } = req.body;
 
-    if (!nombre_dependencia) {
+    if (typeof nombre_dependencia !== 'string' || !nombre_dependencia.trim()) {
         throw new AppError('El nombre de la dependencia es obligatorio.', 400);
     }
 
-    const existente = await DependenciaArea.findOne({ nombre_dependencia });
+    const existente = await DependenciaArea.findOne({ nombre_dependencia: nombre_dependencia.trim() });
     if (existente) {
         throw new AppError('La dependencia ya se encuentra creada.', 400);
     }
 
-    const nueva = await DependenciaArea.create({ nombre_dependencia, activo: true });
+    const nueva = await DependenciaArea.create({ nombre_dependencia: nombre_dependencia.trim(), activo: true });
 
     await registrar({
         usuario_id: usuarioIdActual(req),
@@ -45,7 +46,12 @@ exports.actualizarDependencia = asyncHandler(async (req, res) => {
     }
 
     const { nombre_dependencia, activo } = req.body;
-    if (nombre_dependencia !== undefined) dependencia.nombre_dependencia = nombre_dependencia;
+    if (nombre_dependencia !== undefined) {
+        if (typeof nombre_dependencia !== 'string' || !nombre_dependencia.trim()) {
+            throw new AppError('El nombre de la dependencia debe ser un texto no vacío.', 400);
+        }
+        dependencia.nombre_dependencia = nombre_dependencia.trim();
+    }
     if (activo !== undefined) dependencia.activo = !!activo;
 
     await dependencia.save();
@@ -68,8 +74,8 @@ exports.asignarResponsable = asyncHandler(async (req, res) => {
     }
 
     const { responsable_id } = req.body;
-    if (!responsable_id) {
-        throw new AppError('Debe indicar el responsable_id.', 400);
+    if (typeof responsable_id !== 'string' || !mongoose.isValidObjectId(responsable_id)) {
+        throw new AppError('Debe indicar un responsable_id válido.', 400);
     }
 
     const responsable = await Usuario.findById(responsable_id);
@@ -79,6 +85,22 @@ exports.asignarResponsable = asyncHandler(async (req, res) => {
 
     if (responsable.rol !== 'ResponsableArea') {
         throw new AppError('El usuario asignado debe tener rol ResponsableArea.', 400);
+    }
+
+    // Limpieza de vínculos anteriores para no dejar dos responsables "activos" en una misma dependencia
+    const responsableAnteriorId = dependencia.responsable_id;
+    if (responsableAnteriorId && String(responsableAnteriorId) !== String(responsable._id)) {
+        await Usuario.updateOne(
+            { _id: responsableAnteriorId, dependencia_id: dependencia._id },
+            { $set: { dependencia_id: null } }
+        );
+    }
+    // Si el nuevo responsable venía de otra dependencia, esa dependencia queda sin responsable
+    if (responsable.dependencia_id && String(responsable.dependencia_id) !== String(dependencia._id)) {
+        await DependenciaArea.updateOne(
+            { _id: responsable.dependencia_id, responsable_id: responsable._id },
+            { $set: { responsable_id: null } }
+        );
     }
 
     dependencia.responsable_id = responsable._id;
