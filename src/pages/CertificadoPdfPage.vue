@@ -224,7 +224,17 @@
           <div class="fila-elementos">
             ELEMENTOS FALTANTES U OBLIGACIONES PENDIENTES (Relacionar con su respectivo valor)
           </div>
-          <div class="espacio-elementos"></div>
+          <div class="espacio-elementos">
+            <div v-if="listaNovedadesCertificado.length > 0" class="lista-elementos-pendientes">
+              <div
+                v-for="(nov, idx) in listaNovedadesCertificado"
+                :key="idx"
+                class="item-novedad-cert"
+              >
+                • <strong>{{ nov.dependencia }}:</strong> {{ nov.motivo }}
+              </div>
+            </div>
+          </div>
 
           <div class="fila-otros-inf">
             <span class="otros-label">OTROS :</span>
@@ -576,8 +586,37 @@ const datosSolicitud = ref({
   responsable: '',
   estado: 'En revisión',
   observacionRechazo: '',
+  dependenciaRechazo: '',
+  novedades: [],
   bienesFaltantes: [],
   firmas: [],
+})
+
+const listaNovedadesCertificado = computed(() => {
+  if (Array.isArray(datosSolicitud.value.novedades) && datosSolicitud.value.novedades.length > 0) {
+    return datosSolicitud.value.novedades
+  }
+  if (
+    Array.isArray(datosSolicitud.value.bienesFaltantes) &&
+    datosSolicitud.value.bienesFaltantes.length > 0
+  ) {
+    return datosSolicitud.value.bienesFaltantes.map((b) => ({
+      dependencia: b.dependencia || 'Almacén e Inventarios',
+      motivo: `${b.descripcion || 'Bien pendiente'} (${b.codigo_inventario || 'S/C'})`,
+    }))
+  }
+  if (datosSolicitud.value.observacionRechazo) {
+    return [
+      {
+        dependencia:
+          datosSolicitud.value.dependenciaRechazo ||
+          datosSolicitud.value.direccion ||
+          'Área Evaluadora',
+        motivo: datosSolicitud.value.observacionRechazo,
+      },
+    ]
+  }
+  return []
 })
 
 onMounted(async () => {
@@ -626,6 +665,8 @@ onMounted(async () => {
         estado: encontrada.estado || 'En revisión',
         observacionRechazo:
           encontrada.observacionRechazo || encontrada.observaciones_supervisor || '',
+        dependenciaRechazo: encontrada.dependenciaRechazo || '',
+        novedades: encontrada.novedades || [],
         bienesFaltantes: encontrada.bienesFaltantes || [],
         firmas: encontrada.firmas || [],
       }
@@ -1240,7 +1281,18 @@ Motivo registrado: "${datosSolicitud.value.observacionRechazo || 'Bienes o reque
 }
 
 .espacio-elementos {
-  height: 22px;
+  min-height: 22px;
+  padding: 2px 6px;
+}
+
+.lista-elementos-pendientes {
+  font-size: 7px;
+  color: #c62828;
+  line-height: 1.3;
+}
+
+.item-novedad-cert {
+  margin-bottom: 2px;
 }
 
 .fila-otros-inf {

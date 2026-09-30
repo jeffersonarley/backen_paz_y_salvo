@@ -51,15 +51,53 @@
       <!-- Badge de Estado -->
       <template #body-cell-estado="props">
         <q-td :props="props" class="text-center">
-          <q-badge :color="obtenerColorEstado(props.row.estado)" class="q-pa-xs text-weight-bold">
-            {{ props.row.estado || 'Pendiente' }}
-          </q-badge>
-          <div
-            v-if="props.row.estado === 'Rechazado'"
-            class="text-caption text-negative text-weight-bold q-mt-xs"
-            style="font-size: 10px; line-height: 1.1;"
-          >
-            Novedad en: {{ props.row.dependenciaRechazo || props.row.dependencia || 'Área' }}
+          <div class="column items-center q-gutter-xs">
+            <q-badge :color="obtenerColorEstado(props.row.estado)" class="q-pa-xs text-weight-bold">
+              {{ props.row.estado || 'Pendiente' }}
+            </q-badge>
+
+            <!-- Si está Rechazado / Con Novedad -->
+            <template v-if="props.row.estado === 'Rechazado'">
+              <!-- Si hay 1 sola área con novedad: píldora pequeña y elegante -->
+              <q-chip
+                v-if="obtenerNovedadesFila(props.row).length <= 1"
+                dense
+                size="xs"
+                color="red-1"
+                text-color="negative"
+                icon="warning"
+                class="cursor-pointer q-ma-none text-weight-medium"
+                clickable
+                @click.stop="abrirModalNovedades(props.row)"
+              >
+                {{ obtenerNovedadesFila(props.row)[0]?.dependencia || props.row.dependencia || '1 Novedad' }}
+                <q-tooltip class="bg-grey-9 text-caption">
+                  {{ obtenerNovedadesFila(props.row)[0]?.motivo || props.row.observacionRechazo || 'Clic para ver detalle de la novedad' }}
+                </q-tooltip>
+              </q-chip>
+
+              <!-- Si hay 2 o más áreas: se resume limpiamente sin amontonar la tabla -->
+              <q-chip
+                v-else
+                dense
+                size="xs"
+                color="red-2"
+                text-color="negative"
+                icon="report_problem"
+                class="cursor-pointer q-ma-none text-weight-bold"
+                clickable
+                @click.stop="abrirModalNovedades(props.row)"
+              >
+                {{ obtenerNovedadesFila(props.row).length }} áreas pendientes
+                <q-tooltip class="bg-grey-9 text-caption">
+                  <div class="text-weight-bold text-negative q-mb-xs">Áreas con novedades pendientes:</div>
+                  <div v-for="(nov, i) in obtenerNovedadesFila(props.row)" :key="i">
+                    • <strong>{{ nov.dependencia }}:</strong> {{ nov.motivo }}
+                  </div>
+                  <div class="text-caption text-italic q-mt-xs text-amber-3">Clic para abrir detalle</div>
+                </q-tooltip>
+              </q-chip>
+            </template>
           </div>
         </q-td>
       </template>
@@ -329,6 +367,68 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
+
+    <!-- Diálogo Detalle de Novedades por Dependencia (Multi-Área) -->
+    <q-dialog v-model="dialogoNovedades">
+      <q-card style="min-width: 480px; max-width: 95vw" class="rounded-borders">
+        <q-card-section class="row items-center bg-red-1 text-negative q-py-sm">
+          <q-avatar icon="report_problem" color="negative" text-color="white" size="md" class="q-mr-sm" />
+          <div>
+            <div class="text-subtitle1 text-weight-bold">
+              Novedades Reportadas por Dependencia ({{ novedadesSeleccionadas.length }})
+            </div>
+            <div class="text-caption text-grey-8">
+              {{ solicitudSeleccionadaNovedad?.numeroSolicitud || solicitudSeleccionadaNovedad?.numeroContrato }} — {{ solicitudSeleccionadaNovedad?.contratista }}
+            </div>
+          </div>
+          <q-space />
+          <q-btn icon="close" flat round dense v-close-popup />
+        </q-card-section>
+
+        <q-card-section class="q-pa-md">
+          <q-banner rounded dense class="bg-amber-1 text-brown-9 q-mb-md border-amber">
+            <template #avatar>
+              <q-icon name="info" color="warning" />
+            </template>
+            <div class="text-caption">
+              <strong>Procedimiento de Subsanación:</strong> El contratista solo debe acudir a las dependencias relacionadas a continuación para subsanar los requerimientos. Las aprobaciones y firmas de las demás áreas permanecen intactas y válidas.
+            </div>
+          </q-banner>
+
+          <q-list bordered separator class="rounded-borders">
+            <q-item v-for="(nov, idx) in novedadesSeleccionadas" :key="idx" class="q-py-md">
+              <q-item-section avatar top>
+                <q-avatar color="red-1" text-color="negative" icon="apartment" />
+              </q-item-section>
+              <q-item-section>
+                <div class="row items-center justify-between">
+                  <span class="text-subtitle2 text-weight-bold text-dark">{{ nov.dependencia }}</span>
+                  <q-badge color="negative" class="text-weight-bold q-px-xs">Pendiente de Subsanar</q-badge>
+                </div>
+                <div class="text-body2 text-grey-9 q-mt-xs">
+                  <strong>Novedad / Observación:</strong> {{ nov.motivo }}
+                </div>
+                <div v-if="nov.responsable" class="text-caption text-grey-7 q-mt-xs">
+                  Responsable a cargo: {{ nov.responsable }}
+                </div>
+              </q-item-section>
+            </q-item>
+          </q-list>
+        </q-card-section>
+
+        <q-card-actions align="right" class="q-pa-md bg-grey-1">
+          <q-btn flat label="Cerrar" color="grey-8" v-close-popup />
+          <q-btn
+            unelevated
+            color="primary"
+            icon="picture_as_pdf"
+            label="Ver Certificado GCCON-F-088"
+            @click="verCertificado(solicitudSeleccionadaNovedad)"
+            v-close-popup
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
@@ -430,6 +530,60 @@ const codigoEditar = ref(null)
 const solicitudSeleccionada = ref(null)
 const nuevoEstadoObjetivo = ref('')
 const motivoEstado = ref('')
+const dialogoNovedades = ref(false)
+const solicitudSeleccionadaNovedad = ref(null)
+const novedadesSeleccionadas = ref([])
+
+function obtenerNovedadesFila(fila) {
+  if (!fila) return []
+  if (Array.isArray(fila.novedades) && fila.novedades.length > 0) {
+    return fila.novedades
+  }
+  if (Array.isArray(fila.firmas)) {
+    const rechazadas = fila.firmas.filter((f) => f.estado === 'Rechazado' || f.rechazada)
+    if (rechazadas.length > 0) {
+      return rechazadas.map((f) => ({
+        dependencia: f.dependenciaNombre || f.dependencia || 'Área',
+        motivo:
+          f.observacion ||
+          f.motivo ||
+          fila.observacionRechazo ||
+          'Requerimiento pendiente de entrega',
+        responsable: f.responsable || '',
+      }))
+    }
+  }
+  if (Array.isArray(fila.dependenciasRechazo) && fila.dependenciasRechazo.length > 0) {
+    return fila.dependenciasRechazo.map((d) =>
+      typeof d === 'string'
+        ? {
+            dependencia: d,
+            motivo: fila.observacionRechazo || 'Requerimiento pendiente de entrega',
+            responsable: '',
+          }
+        : d,
+    )
+  }
+  if (fila.dependenciaRechazo || (fila.estado === 'Rechazado' && fila.observacionRechazo)) {
+    return [
+      {
+        dependencia: fila.dependenciaRechazo || fila.dependencia || 'Área Evaluadora',
+        motivo:
+          fila.observacionRechazo ||
+          fila.observaciones_supervisor ||
+          'Requerimiento o bienes pendientes de entrega',
+        responsable: fila.responsable || '',
+      },
+    ]
+  }
+  return []
+}
+
+function abrirModalNovedades(fila) {
+  solicitudSeleccionadaNovedad.value = fila
+  novedadesSeleccionadas.value = obtenerNovedadesFila(fila)
+  dialogoNovedades.value = true
+}
 
 const rows = computed(() => store.solicitudes || [])
 

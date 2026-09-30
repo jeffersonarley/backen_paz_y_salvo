@@ -81,7 +81,20 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
       responsable: 'Dra. Ana María Gómez',
       fecha: '2026-09-10',
       fechaSolicitud: '2026-09-10',
-      estado: 'En revisión',
+      estado: 'Rechazado',
+      observacionRechazo: 'Presenta novedades pendientes en Biblioteca y Almacén e Inventarios.',
+      novedades: [
+        {
+          dependencia: 'Biblioteca',
+          motivo: 'Pendiente devolución de libro de cálculo integral (código BIB-2026-04).',
+          responsable: 'Lic. Jorge Biblioteca',
+        },
+        {
+          dependencia: 'Almacén e Inventarios',
+          motivo: 'Pendiente reintegro de adaptador de corriente y carnet institucional.',
+          responsable: 'Lic. Martha Almacén',
+        },
+      ],
       firmas: [
         {
           dependenciaCodigo: 'DEP-01',
