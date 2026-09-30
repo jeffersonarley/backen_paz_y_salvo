@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="estado">
     <div class="estado-icono">
       <q-icon :name="icono" size="96px" :color="iconoColor" />
@@ -30,7 +30,7 @@ const props = defineProps({
   icono: { type: String, default: 'error' },
   boton: { type: String, default: '' },
   botonAccion: { type: Function, default: null },
-  tipo: { type: String, default: 'error' }
+  tipo: { type: String, default: 'error' },
 })
 
 const iconoColor = computed(() => (props.tipo === 'info' ? 'primary' : 'grey-8'))

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <q-page class="q-pa-lg">
     <div class="text-h4 text-weight-bold text-grey-9 q-mb-lg">Perfil de Usuario</div>
 
@@ -114,8 +114,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useQuasar } from 'quasar'
-import api, { getErrorMessage } from '@/services/axios'
-import { useAuthStore } from '@/stores/authStore'
+import api from '../services/api'
+import { useAuthStore } from '../stores/authStore'
 
 const $q = useQuasar()
 const auth = useAuthStore()
@@ -123,9 +123,9 @@ const auth = useAuthStore()
 const perfil = ref({
   nombre: auth.nombre,
   correo: auth.correo,
-  documento: '',
+  documento: auth.documento,
   telefono: '',
-  rol: auth.rol
+  rol: auth.rol,
 })
 
 const claves = ref({ actual: '', nueva: '', confirmar: '' })
@@ -137,16 +137,16 @@ onMounted(cargarPerfil)
 async function cargarPerfil() {
   if (!auth.id) return
   try {
-    const { data } = await api.get(`/usuarios/${auth.id}`)
+    const { data } = await api.get(`/api/usuarios/${auth.id}`)
     perfil.value = {
       nombre: data.nombre_completo,
       correo: data.correo_institucional,
-      documento: data.documento || data.telefono || '',
+      documento: data.documento || '',
       telefono: data.telefono || '',
-      rol: data.rol
+      rol: data.rol,
     }
   } catch (error) {
-    $q.notify({ type: 'negative', message: getErrorMessage(error, 'No se pudo cargar su perfil.') })
+    $q.notify({ type: 'negative', message: error.mensaje || 'No se pudo cargar su perfil.' })
   }
 }
 
@@ -174,14 +174,14 @@ async function actualizarPassword() {
 
   procesando.value = true
   try {
-    const { data } = await api.put('/auth/cambiar-password', {
+    const { data } = await api.put('/api/auth/cambiar-password', {
       password_actual: claves.value.actual,
-      nueva_password: claves.value.nueva
+      nueva_password: claves.value.nueva,
     })
     $q.notify({ type: 'positive', message: data.mensaje || 'Contraseña actualizada.' })
     claves.value = { actual: '', nueva: '', confirmar: '' }
   } catch (error) {
-    $q.notify({ type: 'negative', message: getErrorMessage(error, 'No se pudo cambiar la contraseña.') })
+    $q.notify({ type: 'negative', message: error.mensaje || 'No se pudo cambiar la contraseña.' })
   } finally {
     procesando.value = false
   }

@@ -1,153 +1,268 @@
 <template>
-  <q-layout view="lHh LpR lFf">
-    <q-page-container>
-      <q-page class="login-page flex flex-center bg-primary">
-        <q-card class="login-card q-pa-md" style="min-width: 360px">
-          <q-card-section class="text-center">
-            <q-icon name="school" color="primary" size="56px" />
-            <div class="text-h5 text-primary text-weight-bold q-mt-sm">
-              Paz y Salvo SENA
-            </div>
-            <div class="text-subtitle2 text-grey-7">Inicio de sesión</div>
-          </q-card-section>
+  <q-page class="login-page">
+    <q-card class="login-card">
+      <img :src="logoSena" class="logo" alt="Logo SENA" />
 
-          <q-card-section>
-            <q-form ref="formRef" class="q-gutter-md" @submit.prevent="onSubmit">
-              <q-select
-                v-model="rolSeleccionado"
-                label="Rol"
-                outlined
-                dense
-                emit-value
-                map-options
-                :options="rolesOptions"
-                clearable
-              >
-                <template #prepend>
-                  <q-icon name="badge" />
-                </template>
-              </q-select>
+      <q-form @submit.prevent="ingresar" class="q-gutter-y-xs">
+        <!-- Selector de Rol -->
+        <q-select
+          v-model="rolSeleccionado"
+          :options="opcionesRoles"
+          option-label="label"
+          outlined
+          dense
+          label="Seleccionar Tipo de Usuario / Rol *"
+          class="q-mb-md"
+          @update:model-value="alCambiarRol"
+        >
+          <template #prepend>
+            <q-icon
+              :name="rolSeleccionado ? rolSeleccionado.icon : 'account_circle'"
+              color="positive"
+            />
+          </template>
 
-              <q-input
-                v-model="form.correo_institucional"
-                type="email"
-                label="Correo institucional"
-                outlined
-                dense
-                lazy-rules
-                autocomplete="username"
-                :rules="[
-                  (val) => (val && val.length > 0) || 'El correo es obligatorio',
-                  (val) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(val) || 'Correo inválido'
-                ]"
-              >
-                <template #prepend>
-                  <q-icon name="mail" />
-                </template>
-              </q-input>
+          <template #option="scope">
+            <q-item v-bind="scope.itemProps">
+              <q-item-section avatar>
+                <q-icon :name="scope.opt.icon" color="positive" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label class="text-weight-bold">{{ scope.opt.label }}</q-item-label>
+                <q-item-label caption>{{ scope.opt.descripcion }}</q-item-label>
+              </q-item-section>
+            </q-item>
+          </template>
+        </q-select>
 
-              <q-input
-                v-model="form.password"
-                :type="showPassword ? 'text' : 'password'"
-                label="Contraseña"
-                outlined
-                dense
-                lazy-rules
-                autocomplete="current-password"
-                :rules="[(val) => (val && val.length > 0) || 'La contraseña es obligatoria']"
-              >
-                <template #prepend>
-                  <q-icon name="lock" />
-                </template>
-                <template #append>
-                  <q-icon
-                    :name="showPassword ? 'visibility' : 'visibility_off'"
-                    class="cursor-pointer"
-                    @click="showPassword = !showPassword"
-                  />
-                </template>
-              </q-input>
+        <!-- Campo Credencial -->
+        <q-input
+          v-model="credencial"
+          outlined
+          dense
+          label="Correo o Documento de Identidad *"
+          class="q-mb-md"
+          :rules="[(val) => !!val || 'El correo o documento es requerido']"
+        >
+          <template #prepend>
+            <q-icon name="person" />
+          </template>
+        </q-input>
 
-              <q-btn
-                type="submit"
-                color="primary"
-                label="Ingresar"
-                class="full-width"
-                unelevated
-                no-caps
-                :loading="loading"
-              />
+        <!-- Campo Contraseña -->
+        <q-input
+          v-model="password"
+          outlined
+          dense
+          :type="verPassword ? 'text' : 'password'"
+          label="Contraseña *"
+          class="q-mb-lg"
+          :rules="[(val) => !!val || 'La contraseña es requerida']"
+        >
+          <template #prepend>
+            <q-icon name="lock" />
+          </template>
+          <template #append>
+            <q-icon
+              :name="verPassword ? 'visibility_off' : 'visibility'"
+              class="cursor-pointer"
+              @click="verPassword = !verPassword"
+            />
+          </template>
+        </q-input>
 
-              <div class="text-center q-mt-sm">
-                <router-link to="/recuperar" class="text-subtitle2 text-primary">
-                  ¿Olvidaste tu contraseña?
-                </router-link>
-              </div>
-            </q-form>
-          </q-card-section>
-        </q-card>
-      </q-page>
-    </q-page-container>
-  </q-layout>
+        <q-btn
+          type="submit"
+          color="positive"
+          label="Iniciar sesión"
+          class="full-width boton"
+          unelevated
+          :loading="cargando"
+        />
+
+        <div class="row justify-center q-mt-sm">
+          <q-btn
+            flat
+            no-caps
+            dense
+            color="primary"
+            label="¿Olvidó su contraseña?"
+            :to="{ name: 'recuperar' }"
+          />
+        </div>
+      </q-form>
+
+      <div class="texto-footer">Servicio Nacional de Aprendizaje - SENA</div>
+    </q-card>
+  </q-page>
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useQuasar } from 'quasar'
-import { login } from '@/services/authService'
-import { getErrorMessage } from '@/services/axios'
-import { ROL, ROL_LABELS } from '@/constants/roles'
-import { CUENTAS_DEMO } from '@/constants/demoAccounts'
+import { Notify } from 'quasar'
+import { useAuthStore } from '../stores/authStore.js'
+import logoSena from '../images/logo-sena.png'
 
-const $q = useQuasar()
 const router = useRouter()
-
-const formRef = ref(null)
-const form = ref({
-  correo_institucional: '',
-  password: ''
-})
-const showPassword = ref(false)
-const loading = ref(false)
-
-const rolesOptions = Object.values(ROL).map((rol) => ({
-  label: ROL_LABELS[rol],
-  value: rol
-}))
+const auth = useAuthStore()
 
 const rolSeleccionado = ref(null)
+const credencial = ref('')
+const password = ref('')
+const verPassword = ref(false)
+const cargando = ref(false)
 
-watch(rolSeleccionado, (rol) => {
-  const cuenta = CUENTAS_DEMO[rol]
-  if (cuenta) {
-    form.value.correo_institucional = cuenta.correo
-    form.value.password = cuenta.password
-  } else {
-    form.value.correo_institucional = ''
-    form.value.password = ''
-  }
-})
+const opcionesRoles = [
+  {
+    label: 'Administrador',
+    value: 'ADMINISTRADOR',
+    correo: 'admin@gccon.com',
+    pass: 'admin',
+    icon: 'admin_panel_settings',
+    descripcion: 'Gestión global y supervisores',
+  },
+  {
+    label: 'Supervisor',
+    value: 'SUPERVISOR',
+    correo: 'supervisor@gccon.com',
+    pass: 'super',
+    icon: 'supervisor_account',
+    descripcion: 'Gestión de contratistas y dependencias',
+  },
+  {
+    label: 'Contratista',
+    value: 'CONTRATISTA',
+    correo: 'carlos.mendoza@email.com',
+    pass: '123',
+    icon: 'person',
+    descripcion: 'Registro de contrato y solicitud',
+  },
+  {
+    label: 'Responsable de Área',
+    value: 'RESPONSABLE_AREA',
+    correo: 'responsable@gccon.com',
+    pass: '123',
+    icon: 'draw',
+    descripcion: 'Aprobación y firma electrónica',
+  },
+]
 
-async function onSubmit() {
-  const valido = await formRef.value.validate()
-  if (!valido) return
-
-  loading.value = true
-  try {
-    await login({ ...form.value })
-    $q.notify({
-      type: 'positive',
-      message: 'Inicio de sesión exitoso.'
-    })
-    router.push({ name: 'dashboard' })
-  } catch (error) {
-    $q.notify({
-      type: 'negative',
-      message: getErrorMessage(error, 'No se pudo iniciar sesión.')
-    })
-  } finally {
-    loading.value = false
+function alCambiarRol(opcion) {
+  if (opcion) {
+    credencial.value = opcion.correo
+    password.value = opcion.pass
   }
 }
+
+const normalizarRol = (valor) => {
+  const v = String(valor || '')
+    .trim()
+    .toUpperCase()
+    .replace(/[\s_-]+/g, '')
+  if (v.includes('ADMIN')) return 'ADMINISTRADOR'
+  if (v.includes('SUPER')) return 'SUPERVISOR'
+  if (v.includes('RESPONSABLE')) return 'RESPONSABLE_AREA'
+  if (v.includes('CONTRAT')) return 'CONTRATISTA'
+  return v
+}
+
+async function ingresar() {
+  if (!credencial.value || !password.value) return
+
+  cargando.value = true
+
+  const resultado = await auth.login(credencial.value, password.value)
+
+  if (!resultado.success) {
+    cargando.value = false
+    Notify.create({
+      type: 'negative',
+      icon: 'error',
+      message: resultado.message || 'Credenciales inválidas',
+      position: 'top-right',
+    })
+    return
+  }
+
+  const rolSeleccionadoReal = normalizarRol(
+    resultado.user?.rol || rolSeleccionado.value?.value || 'ADMINISTRADOR',
+  )
+  rolSeleccionado.value =
+    opcionesRoles.find((rol) => normalizarRol(rol.value) === rolSeleccionadoReal) || null
+
+  try {
+    Notify.create({
+      type: 'positive',
+      icon: 'check_circle',
+      message: `Inicio de sesión exitoso: ${resultado.user?.nombre || 'Usuario'}`,
+      position: 'top-right',
+    })
+  } catch {
+    // Ignorar si la notificación falla
+  }
+
+  try {
+    await router.push({ name: 'solicitudes' })
+  } catch {
+    window.location.href = '/solicitudes'
+  }
+
+  cargando.value = false
+}
 </script>
+
+<style scoped>
+.login-page {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  background-color: #ffffff;
+}
+
+.login-card {
+  position: relative;
+  z-index: 1;
+  width: 480px;
+  max-width: 92vw;
+  padding: 48px 42px;
+  border-radius: 18px;
+  text-align: center;
+  background: #ffffff;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.35);
+}
+
+.logo {
+  display: block;
+  width: 95px;
+  margin: 0 auto 12px;
+}
+
+.titulo {
+  color: #39a900;
+  margin: 0 0 4px 0;
+  font-weight: bold;
+  font-size: 1.6rem;
+}
+
+.subtitulo {
+  color: #757575;
+  margin-bottom: 22px;
+  font-size: 0.95rem;
+}
+
+.boton {
+  height: 44px;
+  font-weight: bold;
+  font-size: 0.95rem;
+  border-radius: 8px;
+}
+
+.texto-footer {
+  margin-top: 25px;
+  color: #888;
+  font-size: 11px;
+}
+</style>

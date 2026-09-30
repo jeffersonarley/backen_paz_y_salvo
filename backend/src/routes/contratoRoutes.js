@@ -18,7 +18,10 @@ const validarContrato = [
   validarCampos
 ];
 
-// Diagrama 2: crear contrato e inventario (Contratista)
+// Diagrama 2: crear contrato e inventario (Contratista) - alias para compatibilidad con frontend Paula
+router.post('/', verificarToken, verificarRol('Contratista'), validarContrato, contratoController.crearContrato);
+
+// Diagrama 2: crear contrato e inventario (Contratista) - alias legado
 router.post('/nuevo', verificarToken, verificarRol('Contratista'), validarContrato, contratoController.crearContrato);
 
 // RF-005: consultar mis solicitudes (Contratista)

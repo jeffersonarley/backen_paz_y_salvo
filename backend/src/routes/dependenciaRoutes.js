@@ -10,4 +10,7 @@ router.get('/', verificarToken, dependenciaController.obtenerDependencias);
 router.put('/:id', verificarToken, verificarRol('Supervisor'), dependenciaController.actualizarDependencia);
 router.post('/:id/responsable', verificarToken, verificarRol('Supervisor'), dependenciaController.asignarResponsable);
 
+// Toggle estado (activar/desactivar) - usado por frontend Paula
+router.delete('/:id', verificarToken, verificarRol('Supervisor'), dependenciaController.toggleEstado);
+
 module.exports = router;

@@ -1,5 +1,6 @@
 <template>
   <q-page class="q-pa-lg">
+    <!-- Encabezado -->
     <div class="row items-center justify-between q-mb-lg">
       <div>
         <div class="text-h4 text-primary text-weight-bold">Contratistas</div>
@@ -17,6 +18,7 @@
       />
     </div>
 
+    <!-- Filtro de Búsqueda -->
     <div class="row q-mb-md">
       <q-input
         v-model="filtro"
@@ -32,15 +34,17 @@
       </q-input>
     </div>
 
+    <!-- Tabla de Contratistas -->
     <q-table
       title="Listado de Contratistas"
-      :rows="contratistas"
+      :rows="store.contratistas || []"
       :columns="columns"
       :filter="filtro"
       row-key="id"
       flat
       bordered
-      :loading="cargando"
+      :rows-per-page-options="[10, 25, 50, 0]"
+      :pagination="{ rowsPerPage: 25 }"
       no-data-label="No hay contratistas registrados"
       no-results-label="No se encontraron coincidencias"
     >
@@ -55,15 +59,16 @@
             round
             dense
             color="negative"
-            icon="delete"
+            icon="person_off"
             @click="eliminarContratista(props.row.documento)"
           >
-            <q-tooltip>Eliminar Contratista</q-tooltip>
+            <q-tooltip>Desactivar Contratista</q-tooltip>
           </q-btn>
         </q-td>
       </template>
     </q-table>
 
+    <!-- Diálogo Formulario Creación / Edición -->
     <q-dialog v-model="dialogo" persistent>
       <q-card style="min-width: 500px; max-width: 90vw">
         <q-card-section class="row items-center justify-between">
@@ -102,7 +107,8 @@
               type="email"
               :rules="[
                 (val) => !!val || 'El correo es obligatorio',
-                (val) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) || 'Ingrese un correo electrónico válido'
+                (val) =>
+                  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) || 'Ingrese un correo electrónico válido',
               ]"
             />
 
@@ -126,28 +132,29 @@
 
           <q-card-actions align="right" class="q-pa-md">
             <q-btn flat label="Cancelar" color="grey-8" @click="cancelar" />
-            <q-btn unelevated type="submit" color="positive" label="Guardar" :loading="guardando" />
+            <q-btn unelevated type="submit" color="positive" label="Guardar" />
           </q-card-actions>
         </q-form>
       </q-card>
     </q-dialog>
 
+    <!-- Diálogo Confirmar Desactivación -->
     <q-dialog v-model="dialogoEliminar">
       <q-card style="min-width: 350px">
         <q-card-section class="row items-center">
-          <q-avatar icon="warning" color="negative" text-color="white" class="q-mr-sm" />
-          <span class="text-h6">Confirmar eliminación</span>
+          <q-avatar icon="person_off" color="negative" text-color="white" class="q-mr-sm" />
+          <span class="text-h6">Confirmar desactivación</span>
         </q-card-section>
 
         <q-card-section class="q-pt-none">
-          ¿Está seguro de eliminar al contratista con documento
+          ¿Está seguro de desactivar al contratista con documento
           <strong>{{ documentoEliminar }}</strong
           >?
         </q-card-section>
 
         <q-card-actions align="right">
           <q-btn flat label="Cancelar" color="grey-8" v-close-popup />
-          <q-btn unelevated color="negative" label="Eliminar" :loading="guardando" @click="confirmarEliminar" />
+          <q-btn unelevated color="negative" label="Desactivar" @click="confirmarEliminar" />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -155,79 +162,96 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref } from 'vue'
 import { useQuasar } from 'quasar'
-import { getErrorMessage } from '@/services/axios'
-import { useContratistasStore } from '@/stores/useContratistasStore'
+import { useContratistasStore } from '../stores/useContratistasStore.js'
 
+// Instancia del Store de Pinia para Contratistas
 const store = useContratistasStore()
 const $q = useQuasar()
-
-const contratistas = computed(() => store.contratistas)
-const cargando = computed(() => store.cargando)
 
 const dialogo = ref(false)
 const dialogoEliminar = ref(false)
 const documentoEliminar = ref('')
 const editando = ref(false)
-const guardando = ref(false)
-const filtro = ref('')
+const indiceEditar = ref(null)
+const filtro = ref('') // <--- Agregada aquí para que la plantilla deje de dar el aviso
 
 const contratista = ref({
   documento: '',
   nombre: '',
   correo: '',
   telefono: '',
-  password: ''
+  password: '',
 })
 
 const columns = [
-  { name: 'documento', label: 'Documento', field: 'documento', align: 'left', sortable: true },
-  { name: 'nombre', label: 'Nombre', field: 'nombre', align: 'left', sortable: true },
-  { name: 'correo', label: 'Correo', field: 'correo', align: 'left', sortable: true },
-  { name: 'telefono', label: 'Teléfono', field: 'telefono', align: 'left', sortable: true },
-  { name: 'acciones', label: 'Acciones', field: 'acciones', align: 'center' }
+  {
+    name: 'documento',
+    label: 'Documento',
+    field: 'documento',
+    align: 'left',
+    sortable: true,
+  },
+  {
+    name: 'nombre',
+    label: 'Nombre',
+    field: 'nombre',
+    align: 'left',
+    sortable: true,
+  },
+  {
+    name: 'correo',
+    label: 'Correo',
+    field: 'correo',
+    align: 'left',
+    sortable: true,
+  },
+  {
+    name: 'telefono',
+    label: 'Teléfono',
+    field: 'telefono',
+    align: 'left',
+    sortable: true,
+  },
+  {
+    name: 'acciones',
+    label: 'Acciones',
+    field: 'acciones',
+    align: 'center',
+  },
 ]
 
-onMounted(cargarInicial)
-
-async function cargarInicial() {
-  try {
-    await store.cargarContratistas()
-  } catch (error) {
-    $q.notify({ type: 'negative', message: getErrorMessage(error, 'No se pudieron cargar los contratistas.') })
-  }
-}
-
 async function guardarContratista() {
+  const lista = store.contratistas
+
   if (!editando.value) {
-    const existeDocumento = store.contratistas.some(
-      (item) => item.documento === contratista.value.documento
-    )
+    const existeDocumento = lista.some((item) => item.documento === contratista.value.documento)
+
     if (existeDocumento) {
       $q.notify({
         type: 'negative',
-        message: 'Ya existe un contratista registrado con ese documento.'
+        message: 'Ya existe un contratista registrado con ese documento.',
       })
       return
     }
   }
 
-  guardando.value = true
-  try {
-    if (editando.value) {
-      await store.editar({ ...contratista.value })
-      $q.notify({ type: 'positive', message: 'Contratista actualizado correctamente.' })
-    } else {
-      await store.agregar({ ...contratista.value })
-      $q.notify({ type: 'positive', message: 'Contratista registrado correctamente.' })
-    }
-    limpiarFormulario()
-  } catch (error) {
-    $q.notify({ type: 'negative', message: getErrorMessage(error, 'No se pudo guardar el contratista.') })
-  } finally {
-    guardando.value = false
+  if (editando.value) {
+    store.editar(indiceEditar.value, { ...contratista.value })
+    $q.notify({
+      type: 'positive',
+      message: 'Contratista actualizado correctamente.',
+    })
+  } else {
+    await store.agregar({ ...contratista.value })
+    $q.notify({
+      type: 'positive',
+      message: 'Contratista registrado correctamente.',
+    })
   }
+
+  limpiarFormulario()
 }
 
 function nuevoContratista() {
@@ -236,10 +260,15 @@ function nuevoContratista() {
 }
 
 function editarContratista(fila) {
+  const lista = store.contratistas
+
   contratista.value = {
     ...fila,
-    password: ''
+    password: fila.password || '',
   }
+
+  indiceEditar.value = lista.findIndex((item) => item.documento === fila.documento)
+
   editando.value = true
   dialogo.value = true
 }
@@ -249,18 +278,15 @@ function eliminarContratista(documento) {
   dialogoEliminar.value = true
 }
 
-async function confirmarEliminar() {
-  guardando.value = true
-  try {
-    await store.eliminar(documentoEliminar.value)
-    $q.notify({ type: 'info', message: 'Contratista eliminado correctamente.' })
-  } catch (error) {
-    $q.notify({ type: 'negative', message: getErrorMessage(error, 'No se pudo eliminar el contratista.') })
-  } finally {
-    guardando.value = false
-    documentoEliminar.value = ''
-    dialogoEliminar.value = false
-  }
+function confirmarEliminar() {
+  store.eliminar(documentoEliminar.value)
+
+  documentoEliminar.value = ''
+  dialogoEliminar.value = false
+  $q.notify({
+    type: 'info',
+    message: 'Contratista desactivado correctamente.',
+  })
 }
 
 function cancelar() {
@@ -273,9 +299,10 @@ function limpiarFormulario() {
     nombre: '',
     correo: '',
     telefono: '',
-    password: ''
+    password: '',
   }
   dialogo.value = false
   editando.value = false
+  indiceEditar.value = null
 }
 </script>

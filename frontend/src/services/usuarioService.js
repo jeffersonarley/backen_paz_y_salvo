@@ -1,29 +1,42 @@
-import api from './axios'
+import api from './api'
 
-/**
- * Módulo de Usuarios (Admin / Supervisor).
- * GET    /api/usuarios
- * POST   /api/usuarios
- * GET    /api/usuarios/:id
- * PATCH  /api/usuarios/:id
- * PATCH  /api/usuarios/estado/:id
- */
-export function listarUsuarios() {
-  return api.get('/usuarios')
+// Servicios para Usuarios
+export async function listarUsuarios(params = {}) {
+  const { data } = await api.get('/usuarios', { params })
+  return data
 }
 
-export function crearUsuario(payload) {
-  return api.post('/usuarios', payload)
+export async function obtenerUsuario(id) {
+  const { data } = await api.get(`/usuarios/${id}`)
+  return data
 }
 
-export function obtenerUsuario(id) {
-  return api.get(`/usuarios/${id}`)
+export async function crearUsuario(datos) {
+  const { data } = await api.post('/usuarios', datos)
+  return data
 }
 
-export function actualizarUsuario(id, payload) {
-  return api.patch(`/usuarios/${id}`, payload)
+export async function actualizarUsuario(id, datos) {
+  const { data } = await api.patch(`/usuarios/${id}`, datos)
+  return data
 }
 
-export function cambiarEstadoUsuario(id, activo) {
-  return api.patch(`/usuarios/estado/${id}`, { activo })
+export async function eliminarUsuario(id) {
+  const { data } = await api.delete(`/usuarios/${id}`)
+  return data
+}
+
+export async function cambiarEstadoUsuario(id, estado) {
+  const { data } = await api.patch(`/usuarios/estado/${id}`, { activo: estado })
+  return data
+}
+
+export async function listarPorRol(rol) {
+  const { data } = await api.get('/usuarios', { params: { rol } })
+  return data
+}
+
+export async function obtenerPorId(id) {
+  const { data } = await api.get(`/usuarios/${id}`)
+  return data
 }

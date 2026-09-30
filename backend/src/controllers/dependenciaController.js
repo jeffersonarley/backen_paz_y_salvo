@@ -98,3 +98,26 @@ exports.asignarResponsable = asyncHandler(async (req, res) => {
         dependencia
     });
 });
+
+// Toggle estado (activar/desactivar) - usado por frontend Paula
+exports.toggleEstado = asyncHandler(async (req, res) => {
+    const dependencia = await DependenciaArea.findById(req.params.id);
+    if (!dependencia) {
+        throw new AppError('Dependencia no encontrada.', 404);
+    }
+
+    dependencia.activo = !dependencia.activo;
+    await dependencia.save();
+
+    await registrar({
+        usuario_id: usuarioIdActual(req),
+        accion: dependencia.activo ? 'ACTIVAR_DEPENDENCIA' : 'DESACTIVAR_DEPENDENCIA',
+        entidad_afectada: 'dependencias_areas',
+        detalles: { dependencia_id: dependencia._id, nuevo_estado: dependencia.activo }
+    });
+
+    res.status(200).json({
+        mensaje: `Dependencia ${dependencia.activo ? 'activada' : 'desactivada'} correctamente.`,
+        dependencia
+    });
+});

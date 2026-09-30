@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="recuperar-wrap">
     <div class="recuperar-card">
       <h4 class="brand">GCCON-F-088</h4>
@@ -68,7 +68,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import api from '@/services/axios'
+import api from '../services/api'
 
 const router = useRouter()
 const correo = ref('')
@@ -81,7 +81,7 @@ async function enviar() {
   }
   cargando.value = true
   try {
-    await api.post('/auth/recuperar', { correo_institucional: correo.value.trim() })
+    await api.post('/api/auth/recuperar', { correo_institucional: correo.value.trim() })
     enviado.value = true
   } catch {
     // El backend responde 200 aunque el correo no exista; solo informamos del envío.
@@ -92,7 +92,7 @@ async function enviar() {
 }
 
 function volver() {
-  router.push({ name: 'login' })
+  router.push('/')
 }
 </script>
 

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <q-page class="q-pa-lg">
     <EstadoPantalla
       titulo="No tiene permisos para acceder a esta sección"
@@ -12,11 +12,11 @@
 
 <script setup>
 import { useRouter } from 'vue-router'
-import EstadoPantalla from '@/components/EstadoPantalla.vue'
+import EstadoPantalla from '../components/EstadoPantalla.vue'
 
 const router = useRouter()
 
 function volver() {
-  router.push({ name: 'dashboard' })
+  router.push('/app')
 }
 </script>

@@ -1,19 +1,22 @@
-import api from './axios'
+import api from './api'
 
-/**
- * Módulo de Firmas (ResponsableArea / Admin).
- * GET   /api/firmas/pendientes
- * GET   /api/firmas/historial
- * POST  /api/firmas/procesar
- */
-export function listarPendientes() {
-  return api.get('/firmas/pendientes')
+// Servicios para Firmas
+export async function procesarFirma(contratoId, accion, firma_base64, observacion_rechazo) {
+  const { data } = await api.post('/firmas/procesar', {
+    contratoId,
+    accion,
+    firma_base64,
+    observacion_rechazo,
+  })
+  return data
 }
 
-export function listarHistorial() {
-  return api.get('/firmas/historial')
+export async function listarPendientes() {
+  const { data } = await api.get('/firmas/pendientes')
+  return data
 }
 
-export function procesarFirma(payload) {
-  return api.post('/firmas/procesar', payload)
+export async function listarHistorial() {
+  const { data } = await api.get('/firmas/historial')
+  return data
 }

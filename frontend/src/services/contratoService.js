@@ -1,54 +1,56 @@
-import api from './axios'
+import api from './api'
 
-/**
- * Módulo de Contratos e Inventario.
- * POST    /api/contratos/nuevo
- * GET     /api/contratos/mis-solicitudes   (Contratista)
- * GET     /api/contratos                   (Supervisor / Admin / ResponsableArea)
- * GET     /api/contratos/:id               -> { contrato, bienes }
- * PUT     /api/contratos/:id               (Contratista, estado Borrador)
- * DELETE  /api/contratos/:id               (Contratista, estado Borrador)
- * DELETE  /api/contratos/:id/bienes/:bienId
- * GET     /api/contratos/:id/observaciones
- * GET     /api/contratos/:id/pdf
- */
-export function listarContratos() {
-  return api.get('/contratos')
+// Servicios para Contratos
+export async function listarContratos(params = {}) {
+  const { data } = await api.get('/contratos', { params })
+  return data
 }
 
-export function misSolicitudes() {
-  return api.get('/contratos/mis-solicitudes')
+export async function misSolicitudes() {
+  const { data } = await api.get('/contratos/mis-solicitudes')
+  return data
 }
 
-export function obtenerContrato(id) {
-  return api.get(`/contratos/${id}`)
+export async function obtenerContrato(id) {
+  const { data } = await api.get(`/contratos/${id}`)
+  return data
 }
 
-export function crearContrato(payload) {
-  return api.post('/contratos/nuevo', payload)
+export async function obtenerObservaciones(id) {
+  const { data } = await api.get(`/contratos/${id}/observaciones`)
+  return data
 }
 
-export function actualizarContrato(id, payload) {
-  return api.put(`/contratos/${id}`, payload)
+export async function crearContrato(contratoData) {
+  const { data } = await api.post('/contratos', contratoData)
+  return data
 }
 
-export function cancelarContrato(id) {
-  return api.delete(`/contratos/${id}`)
+export async function actualizarContrato(id, datos) {
+  const { data } = await api.put(`/contratos/${id}`, datos)
+  return data
 }
 
-export function eliminarBien(id, bienId) {
-  return api.delete(`/contratos/${id}/bienes/${bienId}`)
+export async function cancelarContrato(id) {
+  const { data } = await api.delete(`/contratos/${id}`)
+  return data
 }
 
-export function obtenerObservaciones(id) {
-  return api.get(`/contratos/${id}/observaciones`)
+export async function eliminarBien(id, bienId) {
+  const { data } = await api.delete(`/contratos/${id}/bienes/${bienId}`)
+  return data
 }
 
-// Supervisión (Diagrama 3): PUT /api/contratos/evaluar/:id
-export function evaluarContrato(id, payload) {
-  return api.put(`/contratos/evaluar/${id}`, payload)
+export async function descargarPdf(id) {
+  const response = await api.get(`/contratos/${id}/pdf`, {
+    responseType: 'blob',
+  })
+  return response.data
 }
 
-export function descargarPdf(id) {
-  return api.get(`/contratos/${id}/pdf`, { responseType: 'blob' })
+export async function obtenerPorCodigo(codigo) {
+  // Buscar por número de contrato o número de solicitud
+  const { data } = await api.get('/contratos', { params: { busqueda: codigo } })
+  const lista = Array.isArray(data) ? data : data?.contratos || data?.data || []
+  return lista.find(c => c.numero_contrato === codigo || c.numero === codigo)
 }

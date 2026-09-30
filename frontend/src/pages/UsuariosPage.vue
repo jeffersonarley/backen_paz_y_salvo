@@ -1,187 +1,184 @@
 <template>
-  <q-page padding>
-    <div class="text-h5 text-weight-bold q-mb-md">Gestión de Usuarios</div>
-
-    <q-card flat bordered>
-      <q-card-section class="row items-center q-col-gutter-md">
-        <div class="col-12 col-sm-4">
-          <q-input
-            v-model="busqueda"
-            outlined
-            dense
-            debounce="300"
-            label="Buscar..."
-            clearable
-          >
-            <template #prepend>
-              <q-icon name="search" />
-            </template>
-          </q-input>
+  <q-page class="q-pa-lg">
+    <!-- Encabezado -->
+    <div class="row items-center justify-between q-mb-lg">
+      <div>
+        <div class="text-h4 text-primary text-weight-bold">Gestión de Usuarios</div>
+        <div class="text-subtitle2 text-grey-7">
+          Administración de cuentas y roles del sistema GCCON-F-088
         </div>
+      </div>
 
-        <div class="col-12 col-sm-4">
-          <q-select
-            v-model="filtroRol"
-            outlined
-            dense
-            label="Filtrar por rol"
-            :options="rolesFiltro"
-            emit-value
-            map-options
-            clearable
-          />
-        </div>
+      <q-btn color="positive" icon="add" label="Nuevo Usuario" unelevated @click="nuevoUsuario" />
+    </div>
 
-        <div class="col-12 col-sm-4 text-right">
-          <q-btn
-            color="primary"
-            icon="add"
-            label="Nuevo Usuario"
-            unelevated
-            no-caps
-            @click="abrirNuevo"
-          />
-        </div>
-      </q-card-section>
-
-      <q-table
-        :rows="registrosFiltrados"
-        :columns="columns"
-        row-key="_id"
-        :loading="loading"
-        v-model:pagination="pagination"
-        :rows-per-page-options="[5, 10, 15, 20]"
-        flat
-        bordered
-        no-data-label="No hay usuarios disponibles"
-        loading-label="Cargando usuarios..."
+    <!-- Filtro de Búsqueda -->
+    <div class="row q-mb-md">
+      <q-input
+        v-model="filtro"
+        outlined
+        dense
+        clearable
+        style="width: 320px"
+        placeholder="Buscar por documento, nombre o correo..."
       >
-        <template #body-cell-rol="props">
-          <q-td :props="props">
-            <q-badge color="primary" outline :label="rolLabel(props.row.rol)" />
-          </q-td>
+        <template #prepend>
+          <q-icon name="search" />
         </template>
+      </q-input>
+    </div>
 
-        <template #body-cell-activo="props">
-          <q-td :props="props">
-            <q-badge
-              :color="props.row.activo ? 'positive' : 'negative'"
-              :label="props.row.activo ? 'Activo' : 'Inactivo'"
-            />
-          </q-td>
-        </template>
+    <!-- Tabla de Usuarios -->
+    <q-table
+      title="Listado de Usuarios"
+      :rows="rows"
+      :columns="columns"
+      :filter="filtro"
+      row-key="id"
+      flat
+      bordered
+      :rows-per-page-options="[10, 25, 50, 0]"
+      :pagination="{ rowsPerPage: 25 }"
+      no-data-label="No hay usuarios registrados"
+      no-results-label="No se encontraron coincidencias"
+    >
+      <template #body-cell-rol="props">
+        <q-td :props="props">
+          <q-badge
+            :color="
+              props.row.rol === 'Administrador'
+                ? 'purple'
+                : props.row.rol === 'Supervisor'
+                  ? 'indigo'
+                  : props.row.rol === 'Responsable de Área'
+                    ? 'teal'
+                    : 'blue-grey'
+            "
+            class="q-pa-xs text-weight-bold"
+          >
+            {{ props.row.rol }}
+          </q-badge>
+        </q-td>
+      </template>
 
-        <template #body-cell-acciones="props">
-          <q-td :props="props" class="text-right">
-            <q-btn
-              flat
-              round
-              dense
-              color="primary"
-              icon="edit"
-              @click="abrirEditar(props.row)"
-            >
-              <q-tooltip>Editar</q-tooltip>
-            </q-btn>
+      <template #body-cell-acciones="props">
+        <q-td :props="props">
+          <q-btn flat round dense color="primary" icon="edit" @click="editarUsuario(props.row)">
+            <q-tooltip>Editar Usuario</q-tooltip>
+          </q-btn>
 
-            <q-btn
-              v-if="esAdmin"
-              flat
-              round
-              dense
-              :color="props.row.activo ? 'negative' : 'positive'"
-              :icon="props.row.activo ? 'block' : 'check_circle'"
-              @click="confirmarCambiarEstado(props.row)"
-            >
-              <q-tooltip>{{ props.row.activo ? 'Deshabilitar' : 'Habilitar' }}</q-tooltip>
-            </q-btn>
-          </q-td>
-        </template>
-      </q-table>
-    </q-card>
+          <q-btn
+            flat
+            round
+            dense
+            color="negative"
+            icon="person_off"
+            @click="eliminarUsuario(props.row)"
+          >
+            <q-tooltip>Desactivar Usuario</q-tooltip>
+          </q-btn>
+        </q-td>
+      </template>
+    </q-table>
 
-    <q-dialog v-model="dialog" persistent>
-      <q-card style="min-width: 420px">
-        <q-card-section>
-          <div class="text-h6">
+    <!-- Diálogo Formulario Creación / Edición -->
+    <q-dialog v-model="dialogo" persistent>
+      <q-card style="min-width: 500px; max-width: 90vw">
+        <q-card-section class="row items-center justify-between">
+          <div class="text-h6 text-primary text-weight-bold">
             {{ editando ? 'Editar Usuario' : 'Nuevo Usuario' }}
           </div>
+          <q-btn icon="close" flat round dense v-close-popup @click="cancelar" />
         </q-card-section>
 
-        <q-card-section>
-          <q-form ref="formRef" class="q-gutter-md" @submit.prevent="guardar">
+        <q-separator />
+
+        <q-form @submit.prevent="guardarUsuario">
+          <q-card-section class="q-gutter-y-sm">
             <q-input
-              v-model="form.nombre_completo"
-              label="Nombre completo"
+              v-model="usuario.documento"
+              label="Documento de Identidad *"
               outlined
               dense
-              lazy-rules
-              :rules="[(val) => (val && val.trim().length > 0) || 'El nombre es obligatorio']"
+              :disable="editando"
+              :rules="[(val) => !!val || 'El documento es obligatorio']"
             />
 
             <q-input
-              v-if="!editando"
-              v-model="form.correo_institucional"
-              type="email"
-              label="Correo institucional"
+              v-model="usuario.nombre"
+              label="Nombre Completo *"
               outlined
               dense
-              lazy-rules
+              :rules="[(val) => !!val || 'El nombre es obligatorio']"
+            />
+
+            <q-input
+              v-model="usuario.correo"
+              label="Correo Electrónico *"
+              outlined
+              dense
+              type="email"
               :rules="[
-                (val) => (val && val.length > 0) || 'El correo es obligatorio',
-                (val) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(val) || 'Correo inválido'
+                (val) => !!val || 'El correo es obligatorio',
+                (val) =>
+                  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) || 'Ingrese un correo electrónico válido',
               ]"
             />
 
-            <q-input
-              v-if="!editando"
-              v-model="form.password"
-              type="password"
-              label="Contraseña"
-              outlined
-              dense
-              lazy-rules
-              :rules="[(val) => (val && val.length > 0) || 'La contraseña es obligatoria']"
-            />
+            <q-input v-model="usuario.telefono" label="Teléfono" outlined dense />
 
             <q-select
-              v-if="!editando"
-              v-model="form.rol"
-              label="Rol"
+              v-model="usuario.rol"
+              :options="roles"
+              label="Rol de Usuario *"
               outlined
               dense
-              emit-value
-              map-options
-              :options="rolesCreables"
-              :rules="[(val) => !!val || 'Seleccione un rol']"
+              :rules="[(val) => !!val || 'Debe seleccionar un rol']"
             />
 
             <q-input
-              v-model="form.telefono"
-              label="Teléfono"
+              v-model="usuario.password"
+              :label="editando ? 'Nueva Contraseña (Opcional)' : 'Contraseña *'"
+              :type="mostrarPassword ? 'text' : 'password'"
               outlined
               dense
-            />
+              :rules="editando ? [] : [(val) => !!val || 'La contraseña es obligatoria']"
+            >
+              <template #append>
+                <q-icon
+                  :name="mostrarPassword ? 'visibility_off' : 'visibility'"
+                  class="cursor-pointer"
+                  @click="mostrarPassword = !mostrarPassword"
+                />
+              </template>
+            </q-input>
+          </q-card-section>
 
-            <q-input
-              v-model="form.cargo"
-              label="Cargo"
-              outlined
-              dense
-            />
-          </q-form>
+          <q-card-actions align="right" class="q-pa-md">
+            <q-btn flat label="Cancelar" color="grey-8" @click="cancelar" />
+            <q-btn unelevated type="submit" color="positive" label="Guardar" />
+          </q-card-actions>
+        </q-form>
+      </q-card>
+    </q-dialog>
+
+    <!-- Diálogo Confirmar Desactivación -->
+    <q-dialog v-model="dialogoEliminar">
+      <q-card style="min-width: 350px">
+        <q-card-section class="row items-center">
+          <q-avatar icon="person_off" color="negative" text-color="white" class="q-mr-sm" />
+          <span class="text-h6">Confirmar desactivación</span>
+        </q-card-section>
+
+        <q-card-section class="q-pt-none">
+          ¿Está seguro de desactivar al usuario con documento
+          <strong>{{ documentoEliminar }}</strong
+          >?
         </q-card-section>
 
         <q-card-actions align="right">
-          <q-btn flat label="Cancelar" color="grey-8" no-caps v-close-popup />
-          <q-btn
-            color="primary"
-            :label="editando ? 'Actualizar' : 'Guardar'"
-            unelevated
-            no-caps
-            :loading="guardando"
-            @click="guardar"
-          />
+          <q-btn flat label="Cancelar" color="grey-8" v-close-popup />
+          <q-btn unelevated color="negative" label="Desactivar" @click="confirmarEliminar" />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -189,190 +186,236 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useQuasar } from 'quasar'
-import {
-  listarUsuarios,
-  crearUsuario,
-  actualizarUsuario,
-  cambiarEstadoUsuario
-} from '@/services/usuarioService'
-import { getRol } from '@/services/authService'
-import { getErrorMessage } from '@/services/axios'
-import { ROL, ROLES_CREABLES_POR_ROL, ROL_LABELS } from '@/constants/roles'
+import api from '../services/api'
+import { useAuthStore } from '../stores/authStore.js'
 
 const $q = useQuasar()
+const auth = useAuthStore()
 
 const columns = [
-  { name: 'nombre_completo', label: 'Nombre', field: 'nombre_completo', align: 'left', sortable: true },
-  { name: 'correo_institucional', label: 'Correo', field: 'correo_institucional', align: 'left', sortable: true },
-  { name: 'rol', label: 'Rol', field: 'rol', align: 'center', sortable: true },
-  { name: 'activo', label: 'Estado', field: 'activo', align: 'center', sortable: true },
-  { name: 'acciones', label: 'Acciones', align: 'right' }
+  {
+    name: 'documento',
+    label: 'Documento',
+    field: 'documento',
+    align: 'left',
+    sortable: true,
+  },
+  {
+    name: 'nombre',
+    label: 'Nombre',
+    field: 'nombre',
+    align: 'left',
+    sortable: true,
+  },
+  {
+    name: 'correo',
+    label: 'Correo',
+    field: 'correo',
+    align: 'left',
+    sortable: true,
+  },
+  {
+    name: 'rol',
+    label: 'Rol',
+    field: 'rol',
+    align: 'left',
+    sortable: true,
+  },
+  {
+    name: 'acciones',
+    label: 'Acciones',
+    field: 'acciones',
+    align: 'center',
+  },
 ]
 
-const rol = getRol()
-const esAdmin = rol === ROL.ADMINISTRADOR
-
-const rolesCreables = computed(() =>
-  (ROLES_CREABLES_POR_ROL[rol] || []).map((r) => ({ label: ROL_LABELS[r], value: r }))
-)
-
-const rolesFiltro = Object.values(ROL).map((r) => ({ label: ROL_LABELS[r], value: r }))
-
 const rows = ref([])
-const loading = ref(false)
-const busqueda = ref('')
-const filtroRol = ref(null)
-const pagination = ref({
-  page: 1,
-  rowsPerPage: 10,
-  sortBy: 'nombre_completo',
-  descending: false
-})
-
-const dialog = ref(false)
+const filtro = ref('')
+const dialogo = ref(false)
+const dialogoEliminar = ref(false)
+const documentoEliminar = ref('')
 const editando = ref(false)
-const guardando = ref(false)
-const formRef = ref(null)
+const indiceEditar = ref(null)
+const mostrarPassword = ref(false)
+const cargando = ref(false)
 
-const form = ref({
-  _id: null,
-  nombre_completo: '',
-  correo_institucional: '',
-  password: '',
-  rol: '',
+const roles = ['Administrador', 'Supervisor', 'Responsable de Área', 'Contratista']
+
+const usuario = ref({
+  documento: '',
+  nombre: '',
+  correo: '',
   telefono: '',
-  cargo: ''
+  rol: '',
+  password: '',
 })
 
-const registrosFiltrados = computed(() => {
-  const texto = busqueda.value.trim().toLowerCase()
-
-  return rows.value.filter((row) => {
-    const coincideTexto =
-      !texto ||
-      String(row.nombre_completo ?? '').toLowerCase().includes(texto) ||
-      String(row.correo_institucional ?? '').toLowerCase().includes(texto)
-
-    const coincideRol = !filtroRol.value || row.rol === filtroRol.value
-
-    return coincideTexto && coincideRol
-  })
-})
-
-watch([busqueda, filtroRol], () => {
-  pagination.value.page = 1
-})
-
-function rolLabel(value) {
-  return ROL_LABELS[value] || value
+function normalizarRolParaBackend(rolUI) {
+  if (rolUI === 'Responsable de Área') return 'ResponsableArea'
+  return rolUI || 'Contratista'
 }
 
-async function cargarDatos() {
-  loading.value = true
+function normalizarRolParaUI(rolBackend) {
+  if (rolBackend === 'ResponsableArea' || rolBackend === 'RESPONSABLE_AREA')
+    return 'Responsable de Área'
+  if (rolBackend === 'ADMINISTRADOR') return 'Administrador'
+  if (rolBackend === 'SUPERVISOR') return 'Supervisor'
+  if (rolBackend === 'CONTRATISTA') return 'Contratista'
+  return rolBackend || 'Contratista'
+}
+
+const usuarioEliminar = ref(null)
+
+async function cargarUsuarios() {
+  cargando.value = true
   try {
-    const { data } = await listarUsuarios()
-    rows.value = Array.isArray(data) ? data : data?.data ?? []
-  } catch (error) {
-    $q.notify({
-      type: 'negative',
-      message: getErrorMessage(error, 'No se pudieron cargar los usuarios.')
-    })
-  } finally {
-    loading.value = false
-  }
-}
-
-function resetForm() {
-  form.value = {
-    _id: null,
-    nombre_completo: '',
-    correo_institucional: '',
-    password: '',
-    rol: '',
-    telefono: '',
-    cargo: ''
-  }
-}
-
-function abrirNuevo() {
-  resetForm()
-  editando.value = false
-  dialog.value = true
-}
-
-function abrirEditar(row) {
-  form.value = {
-    _id: row._id,
-    nombre_completo: row.nombre_completo ?? '',
-    correo_institucional: row.correo_institucional ?? '',
-    password: '',
-    rol: row.rol ?? '',
-    telefono: row.telefono ?? '',
-    cargo: row.cargo ?? ''
-  }
-  editando.value = true
-  dialog.value = true
-}
-
-async function guardar() {
-  const valido = await formRef.value.validate()
-  if (!valido) return
-
-  guardando.value = true
-  try {
-    if (editando.value) {
-      await actualizarUsuario(form.value._id, {
-        nombre_completo: form.value.nombre_completo,
-        telefono: form.value.telefono,
-        cargo: form.value.cargo
-      })
-      $q.notify({ type: 'positive', message: 'Usuario actualizado correctamente.' })
-    } else {
-      await crearUsuario({
-        nombre_completo: form.value.nombre_completo,
-        correo_institucional: form.value.correo_institucional,
-        password: form.value.password,
-        rol: form.value.rol,
-        telefono: form.value.telefono,
-        cargo: form.value.cargo
-      })
-      $q.notify({ type: 'positive', message: 'Usuario creado correctamente.' })
+    const resp = await api.get('/usuarios')
+    const lista = Array.isArray(resp.data) ? resp.data : resp.data?.usuarios || []
+    if (Array.isArray(lista)) {
+      rows.value = lista.map((u, idx) => ({
+        id: (u._id || u.id || `usr_${idx}`).toString(),
+        documento: u.documento || u.telefono || `DOC-${idx + 1}`,
+        nombre: u.nombre_completo || u.nombre || '—',
+        correo: u.correo_institucional || u.correo || '—',
+        telefono: u.telefono || '—',
+        rol: normalizarRolParaUI(u.rol),
+      }))
     }
-    dialog.value = false
-    await cargarDatos()
-  } catch (error) {
-    $q.notify({
-      type: 'negative',
-      message: getErrorMessage(error, 'No se pudo guardar el usuario.')
-    })
+  } catch (err) {
+    console.warn('Error al cargar usuarios desde Atlas:', err)
   } finally {
-    guardando.value = false
+    cargando.value = false
   }
 }
 
-function confirmarCambiarEstado(row) {
-  const accion = row.activo ? 'deshabilitar' : 'habilitar'
-  $q.dialog({
-    title: 'Cambiar estado',
-    message: `¿Está seguro que desea ${accion} a "${row.nombre_completo}"?`,
-    cancel: true,
-    persistent: true,
-    ok: { color: 'negative', label: 'Confirmar', noCaps: true }
-  }).onOk(async () => {
-    try {
-      await cambiarEstadoUsuario(row._id, !row.activo)
-      $q.notify({ type: 'positive', message: `Usuario ${row.activo ? 'deshabilitado' : 'habilitado'} correctamente.` })
-      await cargarDatos()
-    } catch (error) {
+onMounted(() => {
+  cargarUsuarios()
+})
+
+async function guardarUsuario() {
+  const rolBackend = normalizarRolParaBackend(usuario.value.rol)
+
+  if (!editando.value) {
+    const doc = (usuario.value.documento || '').trim()
+    const existeDocumento = doc && rows.value.some((item) => item.documento === doc)
+
+    if (existeDocumento) {
       $q.notify({
         type: 'negative',
-        message: getErrorMessage(error, 'No se pudo cambiar el estado del usuario.')
+        message: 'Ya existe un usuario registrado con ese documento.',
+      })
+      return
+    }
+  }
+
+  try {
+    if (editando.value) {
+      const uEditado = rows.value[indiceEditar.value]
+      if (uEditado?.id) {
+        await api.patch(`/usuarios/${uEditado.id}`, {
+          nombre_completo: usuario.value.nombre,
+          telefono: usuario.value.telefono,
+          rol: rolBackend,
+        })
+      }
+      $q.notify({
+        type: 'positive',
+        message: 'Usuario actualizado correctamente en MongoDB Atlas.',
+      })
+    } else {
+      // Guardar en MongoDB Atlas
+      await api.post('/usuarios', {
+        nombre: usuario.value.nombre,
+        nombre_completo: usuario.value.nombre,
+        correo: usuario.value.correo,
+        correo_institucional: usuario.value.correo,
+        documento: usuario.value.documento,
+        telefono: usuario.value.telefono,
+        rol: rolBackend,
+        password: usuario.value.password || '12345678',
+      })
+
+      // Registrar para inicio de sesión local también
+      auth.registrarUsuarioLocal({
+        nombre: usuario.value.nombre,
+        correo: usuario.value.correo,
+        password: usuario.value.password || '123',
+        rol: rolBackend.toUpperCase(),
+      })
+
+      $q.notify({
+        type: 'positive',
+        message: 'Usuario registrado exitosamente en MongoDB Atlas.',
       })
     }
-  })
+    await cargarUsuarios()
+  } catch (err) {
+    console.error('Error al guardar en MongoDB Atlas:', err)
+    $q.notify({
+      type: 'negative',
+      message: err.response?.data?.mensaje || 'Error al guardar usuario en base de datos.',
+    })
+  }
+
+  limpiarFormulario()
 }
 
-onMounted(cargarDatos)
+function nuevoUsuario() {
+  limpiarFormulario()
+  dialogo.value = true
+}
+
+function editarUsuario(fila) {
+  usuario.value = { ...fila, password: '' }
+  indiceEditar.value = rows.value.findIndex((item) => item.id === fila.id)
+  editando.value = true
+  dialogo.value = true
+}
+
+function eliminarUsuario(fila) {
+  usuarioEliminar.value = fila
+  documentoEliminar.value = fila.nombre || fila.documento
+  dialogoEliminar.value = true
+}
+
+async function confirmarEliminar() {
+  try {
+    const idParaBorrar =
+      usuarioEliminar.value?.id || usuarioEliminar.value?._id || documentoEliminar.value
+    await api.delete(`/usuarios/${idParaBorrar}`)
+    $q.notify({
+      type: 'info',
+      message: 'Usuario desactivado correctamente.',
+    })
+    await cargarUsuarios()
+  } catch (err) {
+    console.error('Error al desactivar:', err)
+    $q.notify({
+      type: 'negative',
+      message: 'Error al desactivar usuario en base de datos.',
+    })
+  }
+  dialogoEliminar.value = false
+}
+
+function cancelar() {
+  limpiarFormulario()
+}
+
+function limpiarFormulario() {
+  usuario.value = {
+    documento: '',
+    nombre: '',
+    correo: '',
+    telefono: '',
+    rol: '',
+    password: '',
+  }
+  dialogo.value = false
+  editando.value = false
+  indiceEditar.value = null
+  mostrarPassword.value = false
+}
 </script>

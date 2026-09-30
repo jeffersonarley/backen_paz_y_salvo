@@ -1,24 +1,32 @@
-import api from './axios'
+import api from './api'
 
-/**
- * Módulo de Dependencias y Responsables (RF-012, Supervisor / Admin).
- * POST   /api/dependencias
- * GET    /api/dependencias
- * PUT    /api/dependencias/:id
- * POST   /api/dependencias/:id/responsable
- */
-export function listarDependencias() {
-  return api.get('/dependencias')
+// Servicios para Dependencias
+export async function listarDependencias(params = {}) {
+  const { data } = await api.get('/dependencias', { params })
+  return data
 }
 
-export function crearDependencia(payload) {
-  return api.post('/dependencias', payload)
+export async function obtenerDependencia(id) {
+  const { data } = await api.get(`/dependencias/${id}`)
+  return data
 }
 
-export function actualizarDependencia(id, payload) {
-  return api.put(`/dependencias/${id}`, payload)
+export async function crearDependencia(datos) {
+  const { data } = await api.post('/dependencias', datos)
+  return data
 }
 
-export function asignarResponsable(id, responsableId) {
-  return api.post(`/dependencias/${id}/responsable`, { responsable_id: responsableId })
+export async function actualizarDependencia(id, datos) {
+  const { data } = await api.put(`/dependencias/${id}`, datos)
+  return data
+}
+
+export async function toggleEstado(id) {
+  const { data } = await api.delete(`/dependencias/${id}`)
+  return data
+}
+
+export async function asignarResponsable(id, responsable_id) {
+  const { data } = await api.post(`/dependencias/${id}/responsable`, { responsable_id })
+  return data
 }

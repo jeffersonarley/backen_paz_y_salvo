@@ -1,21 +1,54 @@
 <template>
   <q-page class="page-formato">
     <div class="toolbar no-print">
-      <q-btn flat color="primary" icon="arrow_back" label="Volver" @click="volver" />
+      <q-btn flat color="dark" icon="arrow_back" label="Volver" @click="volver" />
+      <div v-if="datosSolicitud.estado === 'Rechazado'" class="row items-center q-gutter-xs">
+        <q-badge color="negative" class="text-weight-bold q-px-sm q-py-xs">
+          <q-icon name="block" class="q-mr-xs" /> SOLICITUD RECHAZADA
+        </q-badge>
+      </div>
       <div class="q-gutter-sm">
         <q-btn
-          color="primary"
-          icon="content_paste"
-          label="Pegar / Subir Firma"
+          :color="datosSolicitud.estado === 'Rechazado' ? 'grey-8' : 'positive'"
+          icon="print"
+          :label="datosSolicitud.estado === 'Rechazado' ? 'Imprimir (Borrador)' : 'Imprimir'"
           unelevated
-          @click="abrirModalFirma"
+          @click="imprimir"
         />
-        <q-btn color="positive" icon="print" label="Imprimir" unelevated @click="imprimir" />
       </div>
+    </div>
+
+    <!-- Banner informativo en pantalla si la solicitud fue rechazada -->
+    <div
+      v-if="datosSolicitud.estado === 'Rechazado'"
+      class="banner-alerta-pantalla no-print q-mb-md"
+    >
+      <q-banner rounded class="bg-red-1 text-negative border-banner-rechazo shadow-2">
+        <template #avatar>
+          <q-avatar icon="error" color="negative" text-color="white" />
+        </template>
+        <div class="text-subtitle1 text-weight-bold">SOLICITUD DE PAZ Y SALVO RECHAZADA</div>
+        <div class="text-body2 text-grey-9 q-mt-xs">
+          Esta solicitud presenta novedades u obligaciones pendientes por subsanar.
+          <strong>La firma del contratista permanece retenida</strong> y el documento no tiene
+          validez legal como paz y salvo definitivo hasta que las dependencias validen y aprueben el
+          trámite.
+        </div>
+        <div
+          v-if="datosSolicitud.observacionRechazo"
+          class="q-mt-sm q-pa-sm bg-white rounded-borders text-caption text-weight-bold text-negative border-novedad-rechazo"
+        >
+          Novedad / Observación reportada: {{ datosSolicitud.observacionRechazo }}
+        </div>
+      </q-banner>
     </div>
 
     <div class="documento-wrapper">
       <div class="documento">
+        <!-- Marca de agua si la solicitud está rechazada -->
+        <div v-if="datosSolicitud.estado === 'Rechazado'" class="marca-agua-rechazado">
+          SOLICITUD RECHAZADA - NO VÁLIDO
+        </div>
         <!-- Encabezado con Logo y Versión -->
         <div class="encabezado-topo">
           <div class="encabezado-spacer"></div>
@@ -51,53 +84,44 @@
           <div class="clasif-check"></div>
         </div>
 
-        <!-- Datos del Contratista con Líneas Punteadas -->
+        <!-- Datos del Contratista - Cuadrícula Oficial GCCON-F-088 -->
         <div class="seccion-datos">
-          <div class="datos-fila datos-fila-1">
-            <div class="dato-celda celda-nombre">
-              <span class="etiqueta">NOMBRES Y APELLIDOS DEL CONTRATISTA:</span>
-              <span v-if="datosSolicitud.contratista" class="valor-dato">{{ datosSolicitud.contratista }}</span>
-              <span class="linea-punteada"></span>
+          <!-- Fila 1: Nombres y Apellidos del Contratista | Identificación -->
+          <div class="fila-contratista-1">
+            <div class="celda-nombre-contratista">
+              <span class="etiqueta-form">NOMBRES Y APELLIDOS DEL CONTRATISTA:</span>
+              <span class="valor-form text-weight-bold">{{ datosSolicitud.contratista }}</span>
             </div>
-            <div class="dato-celda celda-id">
-              <span class="etiqueta">IDENTIFICACIÓN</span>
-              <span v-if="datosSolicitud.identificacion" class="valor-dato">{{ datosSolicitud.identificacion }}</span>
-              <span class="linea-punteada"></span>
+            <div class="celda-identificacion-header">IDENTIFICACIÓN</div>
+          </div>
+
+          <!-- Fila 2: Ciudad | Fecha | Regional | Valor Identificación -->
+          <div class="fila-contratista-2">
+            <div class="bloque-ciudad-fecha-regional">
+              <div class="celda-etiqueta celda-ciudad-lbl">CIUDAD</div>
+              <div class="celda-valor celda-ciudad-val">{{ datosSolicitud.ciudad }}</div>
+              <div class="celda-etiqueta celda-fecha-lbl">FECHA</div>
+              <div class="celda-valor celda-fecha-val">{{ datosSolicitud.fecha }}</div>
+              <div class="celda-etiqueta celda-regional-lbl">REGIONAL</div>
+              <div class="celda-valor celda-regional-val">{{ datosSolicitud.regional }}</div>
+            </div>
+            <div class="celda-identificacion-valor">
+              {{ datosSolicitud.identificacion }}
             </div>
           </div>
 
-          <div class="datos-fila datos-fila-2">
-            <div class="dato-celda">
-              <span class="etiqueta">CIUDAD</span>
-              <span v-if="datosSolicitud.ciudad" class="valor-dato">{{ datosSolicitud.ciudad }}</span>
-              <span class="linea-punteada"></span>
+          <!-- Fila 3: Dirección u Oficina donde se ejecutó el contrato -->
+          <div class="fila-contratista-3">
+            <div class="celda-etiqueta celda-direccion-lbl">
+              DIRECCIÓN U OFICINA DONDE SE EJECUTÓ EL CONTRATO:
             </div>
-            <div class="dato-celda">
-              <span class="etiqueta">FECHA</span>
-              <span v-if="datosSolicitud.fecha" class="valor-dato">{{ datosSolicitud.fecha }}</span>
-              <span class="linea-punteada"></span>
-            </div>
-            <div class="dato-celda">
-              <span class="etiqueta">REGIONAL</span>
-              <span v-if="datosSolicitud.regional" class="valor-dato">{{ datosSolicitud.regional }}</span>
-              <span class="linea-punteada"></span>
-            </div>
+            <div class="celda-valor celda-direccion-val">{{ datosSolicitud.direccion }}</div>
           </div>
 
-          <div class="datos-fila">
-            <div class="dato-celda">
-              <span class="etiqueta">DIRECCIÓN U OFICINA DONDE SE EJECUTÓ EL CONTRATO:</span>
-              <span v-if="datosSolicitud.direccion" class="valor-dato">{{ datosSolicitud.direccion }}</span>
-              <span class="linea-punteada"></span>
-            </div>
-          </div>
-
-          <div class="datos-fila">
-            <div class="dato-celda">
-              <span class="etiqueta">NÚMERO Y FECHA DE CONTRATO:</span>
-              <span v-if="datosSolicitud.contrato" class="valor-dato">{{ datosSolicitud.contrato }}</span>
-              <span class="linea-punteada"></span>
-            </div>
+          <!-- Fila 4: Número y Fecha de Contrato -->
+          <div class="fila-contratista-4">
+            <div class="celda-etiqueta celda-contrato-lbl">NÚMERO Y FECHA DE CONTRATO:</div>
+            <div class="celda-valor celda-contrato-val">{{ datosSolicitud.contrato }}</div>
           </div>
         </div>
 
@@ -106,7 +130,7 @@
 
         <div class="fila-causales">
           <div class="causal-item">
-            <span class="causal-nombre">LIQUIDACIÓN POR MUTUO<br>ACUERDO</span>
+            <span class="causal-nombre">LIQUIDACIÓN POR MUTUO<br />ACUERDO</span>
             <div class="causal-caja-cuadrada"></div>
           </div>
           <div class="causal-item">
@@ -114,11 +138,11 @@
             <div class="causal-caja-rect"></div>
           </div>
           <div class="causal-item">
-            <span class="causal-nombre">LIQUIDACIÓN ANTICIPADA<br>POR MUTUO ACUERDO</span>
+            <span class="causal-nombre">LIQUIDACIÓN ANTICIPADA<br />POR MUTUO ACUERDO</span>
             <div class="causal-caja-cuadrada"></div>
           </div>
           <div class="causal-item">
-            <span class="causal-nombre">TERMINACIÓN<br>UNILATERAL</span>
+            <span class="causal-nombre">TERMINACIÓN<br />UNILATERAL</span>
             <div class="causal-caja-cuadrada"></div>
           </div>
         </div>
@@ -127,7 +151,7 @@
         <div class="tabla-dep">
           <div class="tr-head">
             <div class="th-dep">DEPENDENCIA SENA</div>
-            <div class="th-marca">Marcar<br>con x</div>
+            <div class="th-marca">Marcar<br />con x</div>
             <div class="th-resp-wrap">
               <div class="th-resp-top">RESPONSABLES</div>
               <div class="th-resp-sub">
@@ -155,7 +179,10 @@
 
           <!-- 3 -->
           <div class="tr-row">
-            <div class="td-dep">ENTREGA CARNÉ (Al Supervisor del Contrato en las Regionales y Centros de Formación)<br>SECRETARÍA GENERAL</div>
+            <div class="td-dep">
+              ENTREGA CARNÉ (Al Supervisor del Contrato en las Regionales y Centros de Formación)<br />SECRETARÍA
+              GENERAL
+            </div>
             <div class="td-marca">X</div>
             <div class="td-nombres">Johon Fredy Sanabria Muñoz</div>
             <div class="td-firma"></div>
@@ -165,13 +192,18 @@
           <div class="tr-row">
             <div class="td-dep">ALMACÉN E INVENTARIOS</div>
             <div class="td-marca">X</div>
-            <div class="td-nombres">Generar reporte de https://miinventario.sena.edu.co/Inicio.aspx y anexar al formato, garantizando que no tiene elementos a su cargo.</div>
+            <div class="td-nombres">
+              Generar reporte de https://miinventario.sena.edu.co/Inicio.aspx y anexar al formato,
+              garantizando que no tiene elementos a su cargo.
+            </div>
             <div class="td-firma"></div>
           </div>
 
           <!-- 5 -->
           <div class="tr-row">
-            <div class="td-dep">SERVICIOS GENERALES, ADQUISICIONES<br>(Administración de edificio; Contratación)</div>
+            <div class="td-dep">
+              SERVICIOS GENERALES, ADQUISICIONES<br />(Administración de edificio; Contratación)
+            </div>
             <div class="td-marca">X</div>
             <div class="td-nombres">Juan David Silva Gutierrez</div>
             <div class="td-firma"></div>
@@ -205,7 +237,9 @@
           <div class="tr-row">
             <div class="td-dep">BIBLIOTECA</div>
             <div class="td-marca">X</div>
-            <div class="td-nombres">Andrea Juliana Celis Camacho / Yudith Milagros Martinez Bautista</div>
+            <div class="td-nombres">
+              Andrea Juliana Celis Camacho / Yudith Milagros Martinez Bautista
+            </div>
             <div class="td-firma"></div>
           </div>
 
@@ -227,9 +261,13 @@
 
           <!-- 12 -->
           <div class="tr-row">
-            <div class="td-dep">APOYO AL SEGUIMIENTO DE LOS PROCESOS ADMINISTRATIVOS Y NOVEDADES</div>
+            <div class="td-dep">
+              APOYO AL SEGUIMIENTO DE LOS PROCESOS ADMINISTRATIVOS Y NOVEDADES
+            </div>
             <div class="td-marca">X</div>
-            <div class="td-nombres">Nelson Fabian Duarte Peñaloza / Eileen Erfensi Hurtado Ariza</div>
+            <div class="td-nombres">
+              Nelson Fabian Duarte Peñaloza / Eileen Erfensi Hurtado Ariza
+            </div>
             <div class="td-firma"></div>
           </div>
 
@@ -255,6 +293,7 @@
           <div class="fila-elementos">
             ELEMENTOS FALTANTES U OBLIGACIONES PENDIENTES (Relacionar con su respectivo valor)
           </div>
+          <div class="espacio-elementos"></div>
 
           <div class="fila-otros-inf">
             <span class="otros-label">OTROS :</span>
@@ -264,9 +303,45 @@
           <div class="linea-separador-inf"></div>
 
           <div class="zona-firma-inf">
-            <div class="caja-firma-contratista">
-              <div v-if="firmaGuardada" class="contenedor-firma-img">
+            <div
+              class="caja-firma-contratista"
+              :class="{
+                'cursor-pointer': datosSolicitud.estado !== 'Rechazado',
+                'cursor-not-allowed': datosSolicitud.estado === 'Rechazado',
+              }"
+              @click="abrirModalFirma"
+              :title="
+                datosSolicitud.estado === 'Rechazado'
+                  ? 'Firma retenida: solicitud rechazada por novedades pendientes'
+                  : 'Clic para estampar, cambiar o ajustar la firma del contratista'
+              "
+            >
+              <div
+                v-if="firmaGuardada && datosSolicitud.estado !== 'Rechazado'"
+                class="contenedor-firma-img"
+              >
                 <img :src="firmaGuardada" alt="Firma del Contratista" class="img-firma-estampada" />
+                <q-tooltip>Clic para editar, agrandar o ajustar tu firma</q-tooltip>
+              </div>
+              <div v-else class="contenedor-firma-placeholder no-print">
+                <q-btn
+                  v-if="datosSolicitud.estado === 'Rechazado'"
+                  flat
+                  dense
+                  size="xs"
+                  color="negative"
+                  icon="lock"
+                  label="Firma bloqueada (Rechazado)"
+                />
+                <q-btn
+                  v-else
+                  flat
+                  dense
+                  size="xs"
+                  color="primary"
+                  icon="draw"
+                  label="Clic para firmar"
+                />
               </div>
               <div class="linea-firma-sola"></div>
               <div class="texto-firma-sola">Firma del Contratista</div>
@@ -280,7 +355,7 @@
 
     <!-- Diálogo para Pegar o Subir Firma directamente desde el Certificado -->
     <q-dialog v-model="dialogoFirma" persistent>
-      <q-card style="min-width: 480px; max-width: 90vw;">
+      <q-card style="min-width: 480px; max-width: 90vw">
         <q-card-section class="bg-primary text-white row items-center justify-between">
           <div class="text-h6">
             <q-icon name="content_paste" class="q-mr-sm" />
@@ -291,8 +366,8 @@
 
         <q-card-section class="q-pa-md">
           <div class="text-caption text-grey-8 q-mb-sm">
-            Pegue su firma con <strong>Ctrl + V</strong>, cárguela como imagen o trácela en el recuadro.
-            Se estampará directamente en este certificado.
+            Pegue su firma con <strong>Ctrl + V</strong>, cárguela como imagen o trácela en el
+            recuadro. Se estampará directamente en este certificado.
           </div>
           <FirmaCanvas ref="canvasRef" />
         </q-card-section>
@@ -312,24 +387,50 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useQuasar } from 'quasar'
-import { obtenerContrato } from '@/services/contratoService'
-import { getErrorMessage } from '@/services/axios'
-import FirmaCanvas from '@/components/FirmaCanvas.vue'
-import logoSena from '@/assets/logo-sena.png'
+import { useSolicitudesStore } from '../stores/useSolicitudesStore.js'
+import FirmaCanvas from '../components/FirmaCanvas.vue'
+import logoSena from '../images/logo-sena.png'
 
+const $q = useQuasar()
 const router = useRouter()
 const route = useRoute()
-const $q = useQuasar()
+const store = useSolicitudesStore()
 
 const firmaGuardada = ref(null)
 const dialogoFirma = ref(false)
 const canvasRef = ref(null)
 
 function abrirModalFirma() {
+  if (datosSolicitud.value.estado === 'Rechazado') {
+    $q.dialog({
+      title: 'Firma No Habilitada',
+      message: `No es posible firmar este certificado de paz y salvo porque la solicitud se encuentra en estado RECHAZADO por las dependencias.
+
+Motivo de rechazo / novedades:
+"${datosSolicitud.value.observacionRechazo || 'Presenta novedades o bienes pendientes por subsanar ante las dependencias.'}"
+
+Para poder firmar, debe devolver o subsanar los requerimientos y solicitar la reactivación a los responsables de área.`,
+      color: 'negative',
+      icon: 'block',
+      ok: {
+        label: 'Entendido',
+        color: 'negative',
+        unelevated: true,
+      },
+    })
+    return
+  }
   dialogoFirma.value = true
+  if (firmaGuardada.value) {
+    nextTick(() => {
+      if (canvasRef.value && typeof canvasRef.value.cargarDataUrl === 'function') {
+        canvasRef.value.cargarDataUrl(firmaGuardada.value)
+      }
+    })
+  }
 }
 
 function guardarFirmaCertificado() {
@@ -343,7 +444,6 @@ function guardarFirmaCertificado() {
   localStorage.setItem('ultima_firma', dataUrl)
   dialogoFirma.value = false
 }
-
 const datosSolicitud = ref({
   contratista: '',
   identificacion: '',
@@ -352,45 +452,91 @@ const datosSolicitud = ref({
   regional: 'Tolima',
   direccion: 'Centro de Comercio y Servicios',
   contrato: '',
-  responsable: ''
+  responsable: '',
+  estado: 'En revisión',
+  observacionRechazo: '',
+  bienesFaltantes: [],
+  firmas: [],
 })
 
-onMounted(async () => {
+onMounted(() => {
   const codigo = route.query.codigo || route.params.id
-  const firma =
-    (codigo && localStorage.getItem(`firma_${codigo}`)) || localStorage.getItem('ultima_firma') || null
-  if (firma) firmaGuardada.value = firma
-
   if (codigo) {
-    try {
-      const { data } = await obtenerContrato(codigo)
-      const c = data.contrato || {}
-      datosSolicitud.value = {
-        contratista: c.nombre_contratista || '',
-        identificacion: '',
-        ciudad: 'Ibagué',
-        fecha: c.createdAt
-          ? new Date(c.createdAt).toLocaleDateString('es-CO')
-          : new Date().toLocaleDateString('es-CO'),
-        regional: 'Tolima',
-        direccion: c.dependencia?.nombre_dependencia || '',
-        contrato: c.numero_contrato || codigo,
-        responsable: c.supervisor?.nombre_completo || ''
-      }
-    } catch (error) {
-      $q.notify({
-        type: 'negative',
-        message: getErrorMessage(error, 'No se pudo cargar el contrato para el formato.')
-      })
+    const f = localStorage.getItem(`firma_${codigo}`) || localStorage.getItem('ultima_firma')
+    if (f) firmaGuardada.value = f
+
+    let encontrada = null
+    if (typeof store.obtenerPorCodigo === 'function') {
+      encontrada = store.obtenerPorCodigo(codigo)
+    } else if (Array.isArray(store.solicitudes)) {
+      encontrada = store.solicitudes.find(
+        (s) =>
+          (s.numeroSolicitud || s.solicitud || s.codigo || s.numeroContrato || s.contrato) ===
+          codigo,
+      )
     }
+
+    if (encontrada) {
+      datosSolicitud.value = {
+        contratista:
+          encontrada.contratista || encontrada.nombreContratista || 'Paula Valentina Rache Fonseca',
+        identificacion:
+          encontrada.identificacion ||
+          encontrada.documento ||
+          encontrada.documentoContratista ||
+          '1098765432',
+        ciudad: encontrada.ciudad || 'Ibagué',
+        fecha: encontrada.fecha || new Date().toLocaleDateString('es-CO'),
+        regional: encontrada.regional || 'Tolima',
+        direccion:
+          encontrada.direccion || encontrada.dependencia || 'Centro de Comercio y Servicios',
+        contrato: encontrada.numeroContrato || encontrada.contrato || codigo,
+        responsable:
+          encontrada.responsable || encontrada.supervisor || 'Johon Fredy Sanabria Muñoz',
+        estado: encontrada.estado || 'En revisión',
+        observacionRechazo:
+          encontrada.observacionRechazo || encontrada.observaciones_supervisor || '',
+        bienesFaltantes: encontrada.bienesFaltantes || [],
+        firmas: encontrada.firmas || [],
+      }
+    }
+  } else {
+    const f = localStorage.getItem('ultima_firma')
+    if (f) firmaGuardada.value = f
   }
 })
 
 function volver() {
-  router.push({ name: 'contratos' })
+  router.push({ name: 'solicitudes' })
 }
 
 function imprimir() {
+  if (datosSolicitud.value.estado === 'Rechazado') {
+    $q.dialog({
+      title: 'Solicitud en Estado Rechazado',
+      message: `Esta solicitud se encuentra RECHAZADA. El documento impreso incluirá la marca de agua que indica que es un borrador no válido como Paz y Salvo oficial.
+
+Motivo registrado: "${datosSolicitud.value.observacionRechazo || 'Bienes o requerimientos pendientes en dependencias'}"
+
+¿Desea imprimir únicamente como constancia informativa de borrador / novedades pendientes?`,
+      icon: 'warning',
+      color: 'warning',
+      cancel: {
+        label: 'Cancelar',
+        flat: true,
+        color: 'grey-8',
+      },
+      ok: {
+        label: 'Imprimir como borrador',
+        color: 'negative',
+        unelevated: true,
+      },
+      persistent: true,
+    }).onOk(() => {
+      window.print()
+    })
+    return
+  }
   window.print()
 }
 </script>
@@ -426,7 +572,39 @@ function imprimir() {
   padding-bottom: 16px;
 }
 
+.banner-alerta-pantalla {
+  max-width: 820px;
+  margin: 0 auto;
+}
+
+.border-banner-rechazo {
+  border: 1.5px solid #d32f2f;
+}
+
+.border-novedad-rechazo {
+  border: 1px dashed #e57373;
+}
+
+.marca-agua-rechazado {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-30deg);
+  font-size: 38px;
+  font-weight: 900;
+  color: rgba(211, 47, 47, 0.22);
+  border: 4px dashed rgba(211, 47, 47, 0.35);
+  padding: 10px 24px;
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 100;
+  text-align: center;
+  letter-spacing: 2px;
+  white-space: nowrap;
+}
+
 .documento {
+  position: relative;
   width: 100%;
   max-width: 820px;
   min-width: 680px;
@@ -550,55 +728,143 @@ function imprimir() {
   border-right: none;
 }
 
-/* Datos del Contratista */
+/* Datos del Contratista - Exacto a Formato Oficial GCCON-F-088 */
 .seccion-datos {
-  border-bottom: 1px dotted #000000;
-  font-size: 8px;
+  border-bottom: 2px solid #000000;
+  font-size: 8.5px;
   font-weight: 700;
+  background: #ffffff;
 }
 
-.datos-fila {
+.fila-contratista-1 {
   display: flex;
   border-bottom: 1px dotted #000000;
-  min-height: 20px;
+  min-height: 22px;
 }
 
-.datos-fila:last-child {
-  border-bottom: none;
-}
-
-.datos-fila-1 {
-  display: grid;
-  grid-template-columns: 3.5fr 1fr;
-}
-
-.datos-fila-2 {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr 1.3fr;
-}
-
-.dato-celda {
+.celda-nombre-contratista {
+  flex: 1;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   padding: 2.5px 6px;
   border-right: 1px dotted #000000;
 }
 
-.dato-celda:last-child {
-  border-right: none;
+.celda-identificacion-header {
+  width: 22%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-weight: 800;
+  padding: 2.5px 6px;
 }
 
-.etiqueta {
+.fila-contratista-2 {
+  display: flex;
+  border-bottom: 1px dotted #000000;
+  min-height: 22px;
+}
+
+.bloque-ciudad-fecha-regional {
+  flex: 1;
+  display: flex;
+  border-right: 1px dotted #000000;
+}
+
+.celda-identificacion-valor {
+  width: 22%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-weight: 700;
+  padding: 2.5px 6px;
+}
+
+.celda-ciudad-lbl {
+  width: 55px;
+  flex-shrink: 0;
+}
+
+.celda-ciudad-val {
+  flex: 1.2;
+  border-right: 1px dotted #000000;
+}
+
+.celda-fecha-lbl {
+  width: 50px;
+  flex-shrink: 0;
+}
+
+.celda-fecha-val {
+  flex: 1;
+  border-right: 1px dotted #000000;
+}
+
+.celda-regional-lbl {
+  width: 70px;
+  flex-shrink: 0;
+  border-right: 1px dotted #000000;
+}
+
+.celda-regional-val {
+  flex: 1.5;
+}
+
+.fila-contratista-3 {
+  display: flex;
+  border-bottom: 1px dotted #000000;
+  min-height: 22px;
+}
+
+.celda-direccion-lbl {
+  width: 335px;
+  flex-shrink: 0;
+}
+
+.celda-direccion-val {
+  flex: 1;
+}
+
+.fila-contratista-4 {
+  display: flex;
+  min-height: 22px;
+}
+
+.celda-contrato-lbl {
+  width: 225px;
+  flex-shrink: 0;
+}
+
+.celda-contrato-val {
+  flex: 1;
+}
+
+.celda-etiqueta {
+  display: flex;
+  align-items: center;
+  padding: 2.5px 6px;
+  border-right: 1px dotted #000000;
+  font-weight: 800;
   white-space: nowrap;
-  margin-right: 4px;
+}
+
+.celda-valor {
+  display: flex;
+  align-items: center;
+  padding: 2.5px 6px;
   font-weight: 700;
 }
 
-.linea-punteada {
-  flex: 1;
-  border-bottom: 1px dotted #000000;
-  height: 1px;
-  margin-bottom: 2px;
+.etiqueta-form {
+  font-weight: 800;
+  margin-right: 6px;
+  white-space: nowrap;
+}
+
+.valor-form {
+  font-weight: 700;
 }
 
 /* Causal de Terminación */
@@ -774,31 +1040,38 @@ function imprimir() {
 }
 
 .fila-elementos {
-  padding: 5px 6px 3px;
+  padding: 4px 6px 0;
   font-size: 7.5px;
-  font-weight: 800;
+  font-weight: 700;
+  letter-spacing: 0.1px;
+}
+
+.espacio-elementos {
+  height: 22px;
 }
 
 .fila-otros-inf {
   display: flex;
-  align-items: center;
-  padding: 4px 6px 14px;
+  align-items: baseline;
+  padding: 2px 6px 6px;
 }
 
 .otros-label {
   white-space: nowrap;
   margin-right: 4px;
-  font-weight: 800;
+  font-weight: 700;
+  font-size: 7.5px;
 }
 
 .otros-puntos {
   flex: 1;
   border-bottom: 1px dotted #000000;
   height: 1px;
+  margin-bottom: 2px;
 }
 
 .linea-separador-inf {
-  border-bottom: 1px solid #000000;
+  border-bottom: 1.5px solid #000000;
   width: 100%;
 }
 
@@ -807,17 +1080,17 @@ function imprimir() {
   display: flex;
   justify-content: flex-end;
   align-items: flex-end;
-  padding: 8px 30px 8px 8px;
+  padding: 8px 30px 10px 8px;
 }
 
 .caja-firma-contratista {
-  width: 160px;
+  width: 180px;
   text-align: center;
 }
 
 .contenedor-firma-img {
   width: 100%;
-  height: 48px;
+  height: 52px;
   display: flex;
   justify-content: center;
   align-items: flex-end;
@@ -825,28 +1098,27 @@ function imprimir() {
 }
 
 .img-firma-estampada {
-  max-width: 150px;
-  max-height: 46px;
+  max-width: 175px;
+  max-height: 50px;
   object-fit: contain;
+  transition: transform 0.15s ease;
 }
 
-.valor-dato {
-  font-weight: 800;
-  margin-right: 6px;
-  font-size: 8px;
-  white-space: nowrap;
+.caja-firma-contratista:hover .img-firma-estampada {
+  transform: scale(1.04);
 }
 
 .linea-firma-sola {
   width: 100%;
   border-bottom: 1.5px solid #000000;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 .texto-firma-sola {
-  font-size: 8px;
-  font-weight: 800;
+  font-size: 7.5px;
+  font-weight: 700;
   color: #000000;
+  text-align: center;
 }
 
 /* ===================== IMPRESIÓN ===================== */
@@ -864,8 +1136,8 @@ function imprimir() {
     box-sizing: border-box;
   }
 
-  html,
-  body {
+  :global(html),
+  :global(body) {
     background: #ffffff !important;
     margin: 0 !important;
     padding: 0 !important;
