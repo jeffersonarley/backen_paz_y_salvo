@@ -54,6 +54,13 @@
           <q-badge :color="obtenerColorEstado(props.row.estado)" class="q-pa-xs text-weight-bold">
             {{ props.row.estado || 'Pendiente' }}
           </q-badge>
+          <div
+            v-if="props.row.estado === 'Rechazado'"
+            class="text-caption text-negative text-weight-bold q-mt-xs"
+            style="font-size: 10px; line-height: 1.1;"
+          >
+            Novedad en: {{ props.row.dependenciaRechazo || props.row.dependencia || 'Área' }}
+          </div>
         </q-td>
       </template>
 

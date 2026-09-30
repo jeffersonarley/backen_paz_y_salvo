@@ -53,6 +53,7 @@
                   outlined
                   dense
                   label="Dependencia / Centro *"
+                  hint="Dependencia principal de adscripción. Un único trámite valida todas las áreas del formato GCCON-F-088."
                   :options="opcionesDependencias"
                   :rules="[(val) => !!val || 'Seleccione la dependencia']"
                 >
