@@ -439,6 +439,20 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
     )
   }
 
+  function obtenerPorCodigo(codigo) {
+    if (!codigo) return null
+    const c = String(codigo).toLowerCase()
+    return solicitudes.value.find(
+      (s) =>
+        (s.id && String(s.id).toLowerCase() === c) ||
+        (s._id && String(s._id).toLowerCase() === c) ||
+        (s.numeroSolicitud && String(s.numeroSolicitud).toLowerCase() === c) ||
+        (s.solicitud && String(s.solicitud).toLowerCase() === c) ||
+        (s.numeroContrato && String(s.numeroContrato).toLowerCase() === c) ||
+        (s.contrato && String(s.contrato).toLowerCase() === c),
+    )
+  }
+
   return {
     solicitudes,
     cargando,
@@ -451,5 +465,6 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
     rechazarSolicitud,
     rechazarSolicitudConDictamen,
     obtenerSolicitudPorId,
+    obtenerPorCodigo,
   }
 })

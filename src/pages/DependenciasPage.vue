@@ -106,34 +106,99 @@
 
         <q-form @submit.prevent="guardarDependencia">
           <q-card-section class="q-gutter-y-sm">
+            <q-banner dense rounded class="bg-green-1 text-positive q-mb-sm">
+              <template #avatar>
+                <q-icon name="verified_user" color="positive" />
+              </template>
+              <div class="text-caption">
+                <strong>Destinatario oficial:</strong> Toda solicitud o paz y salvo vinculado a esta dependencia va dirigido directamente a este Responsable de Área para su revisión y firma oficial.
+              </div>
+            </q-banner>
+
             <q-input
               v-model="dependencia.codigo"
-              label="Código *"
+              label="Código de la Dependencia *"
               outlined
               dense
               :disable="editando"
               :rules="[(val) => !!val || 'El código es obligatorio']"
-            />
+            >
+              <template #prepend>
+                <q-icon name="tag" color="grey-7" />
+              </template>
+            </q-input>
 
-            <q-input
+            <!-- Nombre de la Dependencia con sugerencias estándar -->
+            <q-select
               v-model="dependencia.nombre"
-              label="Nombre *"
+              label="Nombre de la Dependencia *"
               outlined
               dense
+              use-input
+              fill-input
+              hide-selected
+              input-debounce="0"
+              new-value-mode="add-unique"
+              :options="filtroNombresDependencias"
+              option-label="nombre"
+              option-value="nombre"
+              emit-value
+              map-options
+              @filter="filtrarNombresDependencias"
+              @update:model-value="onSeleccionarNombreDependencia"
               :rules="[(val) => !!val || 'El nombre es obligatorio']"
-            />
+              hint="Elija un área estándar o escriba un nombre personalizado"
+            >
+              <template #prepend>
+                <q-icon name="business" color="primary" />
+              </template>
+              <template #option="scope">
+                <q-item v-bind="scope.itemProps">
+                  <q-item-section avatar>
+                    <q-avatar :icon="scope.opt.icono || 'business'" color="primary" text-color="white" size="sm" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label class="text-weight-bold">{{ scope.opt.nombre }}</q-item-label>
+                    <q-item-label caption>{{ scope.opt.descripcion }}</q-item-label>
+                  </q-item-section>
+                </q-item>
+              </template>
+            </q-select>
 
-            <q-input
-              v-model="dependencia.responsable"
-              label="Responsable de Área *"
+            <!-- Responsable de Área con Selección Automática -->
+            <q-select
+              v-model="responsableSeleccionado"
+              label="Responsable de Área Destinatario *"
               outlined
               dense
-              :rules="[(val) => !!val || 'El responsable es obligatorio']"
-            />
+              :options="opcionesResponsables"
+              option-label="etiqueta"
+              use-input
+              input-debounce="0"
+              new-value-mode="add-unique"
+              @update:model-value="onSeleccionarResponsable"
+              :rules="[(val) => !!dependencia.responsable || !!val || 'El responsable es obligatorio']"
+              hint="Seleccione el responsable registrado o escriba uno nuevo"
+            >
+              <template #prepend>
+                <q-icon name="badge" color="primary" />
+              </template>
+              <template #option="scope">
+                <q-item v-bind="scope.itemProps">
+                  <q-item-section avatar>
+                    <q-avatar icon="person" color="primary" text-color="white" size="sm" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label class="text-weight-bold">{{ scope.opt.nombre }}</q-item-label>
+                    <q-item-label caption>{{ scope.opt.correo || 'Responsable de Área' }}</q-item-label>
+                  </q-item-section>
+                </q-item>
+              </template>
+            </q-select>
 
             <q-input
               v-model="dependencia.correo"
-              label="Correo *"
+              label="Correo Institucional del Responsable *"
               outlined
               dense
               type="email"
@@ -142,20 +207,37 @@
                 (val) =>
                   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) || 'Ingrese un correo electrónico válido',
               ]"
-            />
+            >
+              <template #prepend>
+                <q-icon name="email" color="grey-7" />
+              </template>
+            </q-input>
+
+            <!-- Estado: Activa por defecto al crear, editable solo al editar -->
+            <div v-if="!editando" class="row items-center q-pa-sm bg-green-1 text-positive rounded-borders q-mt-xs">
+              <q-icon name="check_circle" color="positive" size="sm" class="q-mr-sm" />
+              <div class="text-caption">
+                <strong>Estado:</strong> Activa (queda habilitada automáticamente para recibir solicitudes y firmas).
+              </div>
+            </div>
 
             <q-select
+              v-else
               v-model="dependencia.estado"
-              :options="['Activo', 'Inactivo']"
-              label="Estado"
+              :options="['Activa', 'Inactiva']"
+              label="Estado de la Dependencia"
               outlined
               dense
-            />
+            >
+              <template #prepend>
+                <q-icon name="toggle_on" :color="dependencia.estado === 'Activa' ? 'positive' : 'grey-7'" />
+              </template>
+            </q-select>
           </q-card-section>
 
           <q-card-actions align="right" class="q-pa-md">
             <q-btn flat label="Cancelar" color="grey-8" @click="cancelar" />
-            <q-btn unelevated type="submit" color="positive" label="Guardar" />
+            <q-btn unelevated type="submit" color="positive" label="Guardar Dependencia" icon="save" />
           </q-card-actions>
         </q-form>
       </q-card>
@@ -197,9 +279,10 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useQuasar } from 'quasar'
 import { useDependenciasStore } from '../stores/useDependenciasStore.js'
+import api from '../services/api'
 
 const $q = useQuasar()
 const store = useDependenciasStore()
@@ -210,6 +293,204 @@ const dialogoEliminar = ref(false)
 const codigoEliminar = ref('')
 const editando = ref(false)
 const indiceEditar = ref(null)
+const responsableSeleccionado = ref(null)
+
+const responsablesPredefinidos = [
+  {
+    id: 'usr_tic',
+    nombre: 'Ing. Roberto Gómez',
+    correo: 'area.tic@gccon.com',
+    dependenciaSugerida: 'Gestión Tecnológica (TIC)',
+    etiqueta: 'Ing. Roberto Gómez (Gestión Tecnológica - TIC)',
+  },
+  {
+    id: 'usr_almacen',
+    nombre: 'Lic. Martha Almacén',
+    correo: 'area.almacen@gccon.com',
+    dependenciaSugerida: 'Almacén e Inventarios',
+    etiqueta: 'Lic. Martha Almacén (Almacén e Inventarios)',
+  },
+  {
+    id: 'usr_rrhh',
+    nombre: 'Dra. Claudia Ramos',
+    correo: 'rrhh@sena.edu.co',
+    dependenciaSugerida: 'Recursos Humanos / Talento Humano',
+    etiqueta: 'Dra. Claudia Ramos (Talento Humano)',
+  },
+  {
+    id: 'usr_infra',
+    nombre: 'Ing. Fernando Ramírez',
+    correo: 'infraestructura@sena.edu.co',
+    dependenciaSugerida: 'Infraestructura y Servicios Generales',
+    etiqueta: 'Ing. Fernando Ramírez (Infraestructura y Servicios)',
+  },
+  {
+    id: 'usr_biblio',
+    nombre: 'Lic. Jorge Biblioteca',
+    correo: 'biblioteca@sena.edu.co',
+    dependenciaSugerida: 'Biblioteca y Archivo',
+    etiqueta: 'Lic. Jorge Biblioteca (Biblioteca y Archivo)',
+  },
+  {
+    id: 'usr_bienestar',
+    nombre: 'Dra. Patricia Valenzuela',
+    correo: 'bienestar@sena.edu.co',
+    dependenciaSugerida: 'Bienestar al Aprendiz y Comunidad',
+    etiqueta: 'Dra. Patricia Valenzuela (Bienestar al Aprendiz)',
+  },
+]
+
+const nombresDependenciasSugeridas = [
+  {
+    nombre: 'Gestión Tecnológica (TIC)',
+    descripcion: 'Equipos de cómputo, sistemas y accesos digitales',
+    icono: 'computer',
+    responsableSugerido: 'Ing. Roberto Gómez',
+    correoSugerido: 'area.tic@gccon.com',
+  },
+  {
+    nombre: 'Almacén e Inventarios',
+    descripcion: 'Herramientas, mobiliario y activos físicos',
+    icono: 'inventory_2',
+    responsableSugerido: 'Lic. Martha Almacén',
+    correoSugerido: 'area.almacen@gccon.com',
+  },
+  {
+    nombre: 'Recursos Humanos / Talento Humano',
+    descripcion: 'Carné institucional, aportes y paz y salvo laboral',
+    icono: 'badge',
+    responsableSugerido: 'Dra. Claudia Ramos',
+    correoSugerido: 'rrhh@sena.edu.co',
+  },
+  {
+    nombre: 'Infraestructura y Servicios Generales',
+    descripcion: 'Llaves, tarjetas de acceso y espacios físicos',
+    icono: 'domain',
+    responsableSugerido: 'Ing. Fernando Ramírez',
+    correoSugerido: 'infraestructura@sena.edu.co',
+  },
+  {
+    nombre: 'Biblioteca y Archivo',
+    descripcion: 'Préstamos bibliográficos y entrega de archivos',
+    icono: 'menu_book',
+    responsableSugerido: 'Lic. Jorge Biblioteca',
+    correoSugerido: 'biblioteca@sena.edu.co',
+  },
+  {
+    nombre: 'Bienestar al Aprendiz y Comunidad',
+    descripcion: 'Comunidad educativa y apoyos institucionales',
+    icono: 'volunteer_activism',
+    responsableSugerido: 'Dra. Patricia Valenzuela',
+    correoSugerido: 'bienestar@sena.edu.co',
+  },
+  {
+    nombre: 'Coordinación Académica y Formación',
+    descripcion: 'Calificaciones, fichas y reportes formativos',
+    icono: 'school',
+    responsableSugerido: 'Lic. Martha Almacén',
+    correoSugerido: 'area.almacen@gccon.com',
+  },
+]
+
+const filtroNombresDependencias = ref([...nombresDependenciasSugeridas])
+
+function filtrarNombresDependencias(val, update) {
+  if (val === '') {
+    update(() => {
+      filtroNombresDependencias.value = nombresDependenciasSugeridas
+    })
+    return
+  }
+
+  update(() => {
+    const needle = val.toLowerCase()
+    filtroNombresDependencias.value = nombresDependenciasSugeridas.filter(
+      (v) =>
+        v.nombre.toLowerCase().includes(needle) ||
+        v.descripcion.toLowerCase().includes(needle),
+    )
+  })
+}
+
+function onSeleccionarNombreDependencia(val) {
+  if (!val) return
+  const nombreTexto = typeof val === 'object' ? val.nombre : val
+  dependencia.value.nombre = nombreTexto
+
+  // Autoseleccionar responsable correspondiente si existe
+  const sugerencia = nombresDependenciasSugeridas.find(
+    (s) => s.nombre.toLowerCase() === nombreTexto.toLowerCase(),
+  )
+
+  if (sugerencia) {
+    const respEncontrado = opcionesResponsables.value.find(
+      (r) =>
+        (r.nombre &&
+          sugerencia.responsableSugerido &&
+          r.nombre.toLowerCase().includes(sugerencia.responsableSugerido.toLowerCase())) ||
+        (r.correo &&
+          sugerencia.correoSugerido &&
+          r.correo.toLowerCase() === sugerencia.correoSugerido.toLowerCase()),
+    )
+    if (respEncontrado) {
+      responsableSeleccionado.value = respEncontrado
+      dependencia.value.responsable = respEncontrado.nombre
+      dependencia.value.correo = respEncontrado.correo
+      dependencia.value.responsable_id = respEncontrado.id || respEncontrado._id || null
+    }
+  }
+}
+
+const opcionesResponsables = ref([...responsablesPredefinidos])
+
+async function cargarResponsables() {
+  try {
+    const resp = await api.get('/usuarios?rol=ResponsableArea')
+    const lista = Array.isArray(resp.data) ? resp.data : resp.data?.usuarios || []
+    if (Array.isArray(lista) && lista.length > 0) {
+      const desdeAtlas = lista.map((u) => ({
+        id: u._id || u.id,
+        _id: u._id || u.id,
+        nombre: u.nombre_completo || u.nombre,
+        correo: u.correo_institucional || u.correo || '',
+        etiqueta: `${u.nombre_completo || u.nombre} (${u.correo_institucional || u.correo || 'Responsable de Área'})`,
+      }))
+      const mapa = new Map()
+      desdeAtlas.forEach((r) => mapa.set(r.correo.toLowerCase(), r))
+      responsablesPredefinidos.forEach((r) => {
+        if (!mapa.has(r.correo.toLowerCase())) {
+          mapa.set(r.correo.toLowerCase(), r)
+        }
+      })
+      opcionesResponsables.value = Array.from(mapa.values())
+    } else {
+      opcionesResponsables.value = [...responsablesPredefinidos]
+    }
+  } catch {
+    opcionesResponsables.value = [...responsablesPredefinidos]
+  }
+}
+
+onMounted(() => {
+  cargarResponsables()
+})
+
+function onSeleccionarResponsable(val) {
+  if (!val) return
+  if (typeof val === 'object') {
+    dependencia.value.responsable = val.nombre || val.etiqueta || ''
+    if (val.correo) {
+      dependencia.value.correo = val.correo
+    }
+    dependencia.value.responsable_id = val.id || val._id || null
+
+    if (val.dependenciaSugerida && !dependencia.value.nombre) {
+      dependencia.value.nombre = val.dependenciaSugerida
+    }
+  } else if (typeof val === 'string') {
+    dependencia.value.responsable = val
+  }
+}
 
 const esInactivaSeleccionada = computed(() => {
   const d = store.dependencias.find((item) => item.codigo === codigoEliminar.value)
@@ -220,6 +501,7 @@ const dependencia = ref({
   codigo: '',
   nombre: '',
   responsable: '',
+  responsable_id: null,
   correo: '',
   estado: 'Activa',
 })
@@ -241,14 +523,14 @@ const columns = [
   },
   {
     name: 'responsable',
-    label: 'Responsable',
+    label: 'Responsable de Área',
     field: 'responsable',
     align: 'left',
     sortable: true,
   },
   {
     name: 'correo',
-    label: 'Correo',
+    label: 'Correo Responsable',
     field: 'correo',
     align: 'left',
     sortable: true,
@@ -285,13 +567,13 @@ function guardarDependencia() {
     store.editar(indiceEditar.value, { ...dependencia.value })
     $q.notify({
       type: 'positive',
-      message: 'Dependencia actualizada correctamente.',
+      message: 'Dependencia y responsable asignados correctamente.',
     })
   } else {
     store.agregar({ ...dependencia.value })
     $q.notify({
       type: 'positive',
-      message: 'Dependencia registrada correctamente.',
+      message: 'Dependencia registrada con su responsable de área exitosamente.',
     })
   }
 
@@ -300,11 +582,33 @@ function guardarDependencia() {
 
 function nuevaDependencia() {
   limpiarFormulario()
+  const siguienteNum = (store.dependencias.length + 1).toString().padStart(2, '0')
+  dependencia.value.codigo = `DEP-${siguienteNum}`
+
+  // Ya aparece la Dependencia y el Responsable de Área asignado de inmediato
+  if (nombresDependenciasSugeridas.length > 0) {
+    const primeraSugerencia = nombresDependenciasSugeridas[0]
+    dependencia.value.nombre = primeraSugerencia.nombre
+    onSeleccionarNombreDependencia(primeraSugerencia.nombre)
+  } else if (opcionesResponsables.value.length > 0) {
+    const seleccionado = opcionesResponsables.value[0]
+    responsableSeleccionado.value = seleccionado
+    dependencia.value.responsable = seleccionado.nombre
+    dependencia.value.correo = seleccionado.correo
+    dependencia.value.responsable_id = seleccionado.id
+  }
   dialogo.value = true
 }
 
 function editarDependencia(fila) {
   dependencia.value = { ...fila }
+  responsableSeleccionado.value =
+    opcionesResponsables.value.find(
+      (r) =>
+        r.nombre === fila.responsable ||
+        r.id === fila.responsable_id ||
+        r._id === fila.responsable_id,
+    ) || fila.responsable
   indiceEditar.value = store.dependencias.findIndex((item) => item.codigo === fila.codigo)
   editando.value = true
   dialogo.value = true
@@ -337,9 +641,11 @@ function limpiarFormulario() {
     codigo: '',
     nombre: '',
     responsable: '',
+    responsable_id: null,
     correo: '',
     estado: 'Activa',
   }
+  responsableSeleccionado.value = null
   dialogo.value = false
   editando.value = false
   indiceEditar.value = null

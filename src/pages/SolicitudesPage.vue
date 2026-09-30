@@ -132,46 +132,98 @@
 
         <q-form ref="formRef" @submit.prevent="guardarSolicitud">
           <q-card-section class="q-gutter-y-sm">
+            <!-- Número de Solicitud (Consecutivo automático institucional) -->
             <q-input
               outlined
               dense
               v-model="solicitud.numeroSolicitud"
-              label="Número de Solicitud *"
-              :disable="editando"
+              label="Número de Radicado / Solicitud *"
+              readonly
+              hint="Radicado oficial generado automáticamente por el sistema"
               :rules="[(val) => !!val || 'El número de solicitud es obligatorio']"
-            />
+            >
+              <template #prepend>
+                <q-icon name="tag" color="grey-7" />
+              </template>
+            </q-input>
 
+            <!-- Contratista (Selección del catálogo de contratistas supervisados) -->
+            <q-select
+              outlined
+              dense
+              v-model="solicitud.contratista"
+              label="Contratista *"
+              :options="opcionesContratistas"
+              option-label="etiqueta"
+              option-value="nombre"
+              emit-value
+              map-options
+              use-input
+              fill-input
+              hide-selected
+              input-debounce="0"
+              new-value-mode="add-unique"
+              @update:model-value="onSeleccionarContratista"
+              :rules="[(val) => !!val || 'El nombre del contratista es obligatorio']"
+              hint="Seleccione un contratista registrado o ingrese uno nuevo"
+            >
+              <template #prepend>
+                <q-icon name="person" color="primary" />
+              </template>
+            </q-select>
+
+            <!-- Número de Contrato (Vinculado al contratista seleccionado) -->
             <q-input
               outlined
               dense
               v-model="solicitud.numeroContrato"
               label="Número de Contrato *"
               :rules="[(val) => !!val || 'El número de contrato es obligatorio']"
-            />
+              hint="Contrato oficial asignado al contratista por la supervisión"
+            >
+              <template #prepend>
+                <q-icon name="description" color="primary" />
+              </template>
+            </q-input>
 
-            <q-input
-              outlined
-              dense
-              v-model="solicitud.contratista"
-              label="Contratista *"
-              :rules="[(val) => !!val || 'El nombre del contratista es obligatorio']"
-            />
-
-            <q-input
+            <!-- Dependencia -->
+            <q-select
               outlined
               dense
               v-model="solicitud.dependencia"
               label="Dependencia *"
+              :options="opcionesDependencias"
+              option-label="nombre"
+              option-value="nombre"
+              emit-value
+              map-options
+              use-input
+              fill-input
+              hide-selected
+              input-debounce="0"
+              new-value-mode="add-unique"
+              @update:model-value="onSeleccionarDependencia"
               :rules="[(val) => !!val || 'La dependencia es obligatoria']"
-            />
+              hint="Área institucional que validará bienes y paz y salvo"
+            >
+              <template #prepend>
+                <q-icon name="business" color="primary" />
+              </template>
+            </q-select>
 
+            <!-- Responsable de Área -->
             <q-input
               outlined
               dense
               v-model="solicitud.responsable"
-              label="Responsable de Área *"
+              label="Responsable de Área Asignado *"
               :rules="[(val) => !!val || 'El responsable es obligatorio']"
-            />
+              hint="Funcionario al que va dirigida la solicitud para firma"
+            >
+              <template #prepend>
+                <q-icon name="badge" color="primary" />
+              </template>
+            </q-input>
 
             <q-input
               outlined
@@ -278,21 +330,85 @@ import { ref, computed, onMounted } from 'vue'
 import { useQuasar } from 'quasar'
 import { useRouter } from 'vue-router'
 import { useSolicitudesStore } from '../stores/useSolicitudesStore.js'
+import { useContratistasStore } from '../stores/useContratistasStore.js'
+import { useDependenciasStore } from '../stores/useDependenciasStore.js'
 import { useAuthStore } from '../stores/authStore.js'
 
 const $q = useQuasar()
 const router = useRouter()
 const store = useSolicitudesStore()
+const contratistasStore = useContratistasStore()
+const dependenciasStore = useDependenciasStore()
 const auth = useAuthStore()
 
-onMounted(() => {
+onMounted(async () => {
   if (store.cargarSolicitudes) {
     store.cargarSolicitudes()
   }
+  if (contratistasStore.cargarContratistas) {
+    await contratistasStore.cargarContratistas()
+  }
+  if (dependenciasStore.cargarDependencias) {
+    await dependenciasStore.cargarDependencias()
+  }
 })
 
+const opcionesContratistas = computed(() => {
+  return (contratistasStore.contratistas || []).map((c) => ({
+    nombre: c.nombre,
+    numeroContrato: c.numeroContrato || '',
+    etiqueta: `${c.nombre} (${c.numeroContrato || 'Sin contrato'})`,
+  }))
+})
+
+function onSeleccionarContratista(val) {
+  if (!val) return
+  if (typeof val === 'object') {
+    solicitud.value.contratista = val.nombre
+    if (val.numeroContrato) {
+      solicitud.value.numeroContrato = val.numeroContrato
+    }
+  } else if (typeof val === 'string') {
+    solicitud.value.contratista = val
+    const encontrado = contratistasStore.contratistas.find(
+      (c) => c.nombre.toLowerCase().trim() === val.toLowerCase().trim(),
+    )
+    if (encontrado?.numeroContrato) {
+      solicitud.value.numeroContrato = encontrado.numeroContrato
+    }
+  }
+}
+
+const opcionesDependencias = computed(() => {
+  return (dependenciasStore.dependencias || [])
+    .filter((d) => d.estado !== 'Inactiva')
+    .map((d) => ({
+      nombre: d.nombre,
+      responsable: d.responsable,
+      correo: d.correo,
+    }))
+})
+
+function onSeleccionarDependencia(val) {
+  if (!val) return
+  if (typeof val === 'object') {
+    solicitud.value.dependencia = val.nombre
+    if (val.responsable) {
+      solicitud.value.responsable = val.responsable
+    }
+  } else if (typeof val === 'string') {
+    solicitud.value.dependencia = val
+    const encontrada = dependenciasStore.dependencias.find(
+      (d) => d.nombre.toLowerCase().trim() === val.toLowerCase().trim(),
+    )
+    if (encontrada?.responsable) {
+      solicitud.value.responsable = encontrada.responsable
+    }
+  }
+}
+
 const puedeFirmar = computed(() =>
-  auth.tienePermiso(['RESPONSABLE_AREA', 'CONTRATISTA', 'SUPERVISOR', 'ADMINISTRADOR']),
+  auth.tienePermiso(['RESPONSABLE_AREA']),
 )
 
 const OPCIONES_ESTADO = ['En revisión', 'Firmado', 'Rechazado', 'Finalizado']
@@ -575,8 +691,36 @@ function nuevaSolicitud() {
   limpiarFormulario()
   const randomSuffix = Math.floor(100 + Math.random() * 900)
   solicitud.value.numeroSolicitud = `SOL-2026-${randomSuffix}`
-  solicitud.value.numeroContrato = `CNT-2026-${randomSuffix}`
-  solicitud.value.contratista = auth.usuario?.nombre || ''
+
+  // Si el usuario autenticado es Contratista, autoasignar sus datos y contrato
+  if (auth.rolUsuario === 'CONTRATISTA' && auth.usuario?.nombre) {
+    const miNombre = auth.usuario.nombre
+    solicitud.value.contratista = miNombre
+    const encontrado = contratistasStore.contratistas.find(
+      (c) =>
+        c.nombre.toLowerCase().includes(miNombre.toLowerCase()) ||
+        miNombre.toLowerCase().includes(c.nombre.toLowerCase()),
+    )
+    solicitud.value.numeroContrato =
+      encontrado?.numeroContrato || auth.usuario?.numero_contrato || `CNT-2026-${randomSuffix}`
+  } else if (contratistasStore.contratistas.length > 0) {
+    // Si es Administrador o Supervisor creando, vincular al primer contratista del catálogo
+    const primerContratista = contratistasStore.contratistas[0]
+    solicitud.value.contratista = primerContratista.nombre
+    solicitud.value.numeroContrato = primerContratista.numeroContrato || `CNT-2026-${randomSuffix}`
+  } else {
+    solicitud.value.numeroContrato = `CNT-2026-${randomSuffix}`
+  }
+
+  // Preseleccionar primera dependencia activa y su responsable oficial
+  if (dependenciasStore.dependencias.length > 0) {
+    const primeraDep =
+      dependenciasStore.dependencias.find((d) => d.estado !== 'Inactiva') ||
+      dependenciasStore.dependencias[0]
+    solicitud.value.dependencia = primeraDep.nombre
+    solicitud.value.responsable = primeraDep.responsable
+  }
+
   solicitud.value.estado = 'En revisión'
   dialogo.value = true
 }

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="recuperar-wrap">
     <div class="recuperar-card">
       <h4 class="brand">GCCON-F-088</h4>
@@ -38,8 +38,10 @@
           @click="enviar"
         />
 
-        <div class="volver">
+        <div class="volver row justify-around items-center">
           <a @click.prevent="volver">Volver a inicio de sesión</a>
+          <span class="text-grey-4">|</span>
+          <a @click.prevent="router.push('/restablecer')">¿Ya tienes un token?</a>
         </div>
       </template>
 
@@ -55,6 +57,14 @@
           <p class="descripcion">
             Si el correo está registrado, recibirá instrucciones para restablecer su contraseña.
           </p>
+
+          <q-btn
+            outline
+            color="primary"
+            label="Ingresar token de recuperación"
+            class="full-width q-mb-md"
+            @click="router.push('/restablecer')"
+          />
 
           <div class="volver">
             <a @click.prevent="volver">Volver a inicio de sesión</a>

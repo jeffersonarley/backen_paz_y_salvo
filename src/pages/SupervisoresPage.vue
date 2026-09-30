@@ -122,17 +122,54 @@
 
             <q-input
               v-model="supervisor.password"
-              label="Contraseña *"
-              type="password"
+              :label="editando ? 'Nueva Contraseña (Opcional)' : 'Contraseña *'"
+              :type="mostrarPassword ? 'text' : 'password'"
               outlined
               dense
-              :rules="[(val) => editando || !!val || 'La contraseña es obligatoria']"
-            />
+              hint="Mínimo 8 caracteres, con mayúscula, minúscula y número"
+              @focus="avisarRequisitosPassword"
+              :rules="editando ? [
+                (val) => !val || val.length >= 8 || 'Mínimo 8 caracteres',
+                (val) => !val || /[A-Z]/.test(val) || 'Debe incluir al menos una mayúscula',
+                (val) => !val || /[a-z]/.test(val) || 'Debe incluir al menos una minúscula',
+                (val) => !val || /[0-9]/.test(val) || 'Debe incluir al menos un número',
+              ] : [
+                (val) => !!val || 'La contraseña es obligatoria',
+                (val) => (val && val.length >= 8) || 'Mínimo 8 caracteres',
+                (val) => /[A-Z]/.test(val) || 'Debe incluir al menos una mayúscula',
+                (val) => /[a-z]/.test(val) || 'Debe incluir al menos una minúscula',
+                (val) => /[0-9]/.test(val) || 'Debe incluir al menos un número',
+              ]"
+            >
+              <template #append>
+                <q-icon
+                  :name="mostrarPassword ? 'visibility_off' : 'visibility'"
+                  class="cursor-pointer"
+                  @click="mostrarPassword = !mostrarPassword"
+                />
+              </template>
+            </q-input>
+
+            <!-- Banner de error si falla la validación en backend (sin cerrar planilla) -->
+            <div v-if="errorFormulario" class="q-mt-sm">
+              <q-banner rounded dense class="bg-red-1 text-negative text-caption">
+                <template #avatar>
+                  <q-icon name="error_outline" color="negative" />
+                </template>
+                {{ errorFormulario }}
+              </q-banner>
+            </div>
           </q-card-section>
 
           <q-card-actions align="right" class="q-pa-md">
-            <q-btn flat label="Cancelar" color="grey-8" @click="cancelar" />
-            <q-btn unelevated type="submit" color="positive" label="Guardar" />
+            <q-btn flat label="Cancelar" color="grey-8" @click="cancelar" :disable="guardando" />
+            <q-btn
+              unelevated
+              type="submit"
+              color="positive"
+              label="Guardar"
+              :loading="guardando"
+            />
           </q-card-actions>
         </q-form>
       </q-card>
@@ -175,6 +212,9 @@ const dialogoEliminar = ref(false)
 const documentoEliminar = ref('')
 const editando = ref(false)
 const indiceEditar = ref(null)
+const mostrarPassword = ref(false)
+const guardando = ref(false)
+const errorFormulario = ref('')
 
 const supervisor = ref({
   documento: '',
@@ -183,6 +223,17 @@ const supervisor = ref({
   telefono: '',
   password: '',
 })
+
+function avisarRequisitosPassword() {
+  $q.notify({
+    type: 'info',
+    icon: 'lock',
+    message:
+      'Requisitos de la contraseña: mínimo 8 caracteres, al menos una mayúscula, una minúscula y un número.',
+    position: 'top',
+    timeout: 4000,
+  })
+}
 
 const columns = [
   {
@@ -222,35 +273,89 @@ const columns = [
 ]
 
 async function guardarSupervisor() {
+  errorFormulario.value = ''
+
   if (!editando.value) {
     const existeDocumento = store.supervisores.some(
       (item) => item.documento === supervisor.value.documento,
     )
 
     if (existeDocumento) {
+      errorFormulario.value = 'Ya existe un supervisor registrado con ese documento.'
       $q.notify({
         type: 'negative',
         message: 'Ya existe un supervisor registrado con ese documento.',
+        position: 'top',
       })
+      return
+    }
+
+    if (!supervisor.value.password) {
+      const msg = 'La contraseña es obligatoria.'
+      errorFormulario.value = msg
+      $q.notify({ type: 'warning', message: msg, position: 'top', timeout: 4000 })
+      return
+    }
+
+    if (supervisor.value.password.length < 8) {
+      const msg = 'La contraseña debe tener mínimo 8 caracteres.'
+      errorFormulario.value = msg
+      $q.notify({ type: 'warning', message: msg, position: 'top', timeout: 4000 })
+      return
+    }
+
+    if (!/[A-Z]/.test(supervisor.value.password)) {
+      const msg = 'La contraseña debe incluir al menos una letra mayúscula.'
+      errorFormulario.value = msg
+      $q.notify({ type: 'warning', message: msg, position: 'top', timeout: 4000 })
+      return
+    }
+
+    if (!/[a-z]/.test(supervisor.value.password)) {
+      const msg = 'La contraseña debe incluir al menos una letra minúscula.'
+      errorFormulario.value = msg
+      $q.notify({ type: 'warning', message: msg, position: 'top', timeout: 4000 })
+      return
+    }
+
+    if (!/[0-9]/.test(supervisor.value.password)) {
+      const msg = 'La contraseña debe incluir al menos un número.'
+      errorFormulario.value = msg
+      $q.notify({ type: 'warning', message: msg, position: 'top', timeout: 4000 })
       return
     }
   }
 
-  if (editando.value) {
-    store.editar(indiceEditar.value, { ...supervisor.value })
+  guardando.value = true
+  try {
+    if (editando.value) {
+      store.editar(indiceEditar.value, { ...supervisor.value })
+      $q.notify({
+        type: 'positive',
+        message: 'Supervisor actualizado correctamente.',
+      })
+    } else {
+      await store.agregar({ ...supervisor.value })
+      $q.notify({
+        type: 'positive',
+        message: 'Supervisor registrado correctamente.',
+      })
+    }
+    // Solo cerramos la planilla cuando la operación tiene éxito
+    limpiarFormulario()
+  } catch (err) {
+    const mensajeError =
+      err.response?.data?.mensaje || err.mensaje || 'Error al guardar supervisor en la base de datos.'
+    errorFormulario.value = mensajeError
     $q.notify({
-      type: 'positive',
-      message: 'Supervisor actualizado correctamente.',
+      type: 'negative',
+      message: mensajeError,
+      position: 'top',
     })
-  } else {
-    await store.agregar({ ...supervisor.value })
-    $q.notify({
-      type: 'positive',
-      message: 'Supervisor registrado correctamente.',
-    })
+    // No se llama a limpiarFormulario() para que la ventana permanezca abierta con los datos
+  } finally {
+    guardando.value = false
   }
-
-  limpiarFormulario()
 }
 
 function nuevoSupervisor() {
@@ -267,6 +372,7 @@ function editarSupervisor(fila) {
   indiceEditar.value = store.supervisores.findIndex((item) => item.documento === fila.documento)
 
   editando.value = true
+  errorFormulario.value = ''
   dialogo.value = true
 }
 
@@ -297,8 +403,10 @@ function limpiarFormulario() {
     telefono: '',
     password: '',
   }
+  errorFormulario.value = ''
   dialogo.value = false
   editando.value = false
   indiceEditar.value = null
+  mostrarPassword.value = false
 }
 </script>

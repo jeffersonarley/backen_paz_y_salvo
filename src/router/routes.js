@@ -23,6 +23,14 @@ const routes = [
     path: '/solicitudes',
     redirect: '/app/solicitudes',
   },
+  {
+    path: '/solicitudes/certificado',
+    redirect: (to) => ({ path: '/app/solicitudes/certificado', query: to.query }),
+  },
+  {
+    path: '/certificado',
+    redirect: (to) => ({ path: '/app/solicitudes/certificado', query: to.query }),
+  },
 
   // Rutas del aplicativo con MainLayout
   {
@@ -129,6 +137,15 @@ const routes = [
           roles: ['ADMINISTRADOR', 'SUPERVISOR', 'CONTRATISTA', 'RESPONSABLE_AREA'],
         },
       },
+      // Redirecciones seguras para evitar 404 si el navegador tenía la URL anterior
+      {
+        path: 'auditoria',
+        redirect: { name: 'dashboard' },
+      },
+      {
+        path: 'plantilla',
+        redirect: { name: 'dashboard' },
+      },
     ],
   },
 
@@ -138,6 +155,14 @@ const routes = [
     name: 'recuperar',
     component: () => import('@/pages/RecuperarPage.vue'),
     meta: { titulo: 'Recuperar Contraseña', publica: true },
+  },
+
+  // Ruta pública para restablecer contraseña con token
+  {
+    path: '/restablecer',
+    name: 'restablecer',
+    component: () => import('@/pages/RestablecerPage.vue'),
+    meta: { titulo: 'Restablecer Contraseña', publica: true },
   },
 
   // Captura de rutas no encontradas

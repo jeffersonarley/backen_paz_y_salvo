@@ -7,7 +7,28 @@
           <q-icon name="block" class="q-mr-xs" /> SOLICITUD RECHAZADA
         </q-badge>
       </div>
-      <div class="q-gutter-sm">
+      <div class="row items-center q-gutter-xs">
+        <q-btn
+          flat
+          dense
+          color="primary"
+          icon="history_edu"
+          label="Firmar Áreas"
+          @click="estamparTodasLasFirmas"
+        >
+          <q-tooltip>Estampar automáticamente las firmas de los responsables de dependencias</q-tooltip>
+        </q-btn>
+        <q-btn
+          v-if="Object.keys(firmasTabla).length > 0"
+          flat
+          dense
+          color="grey-7"
+          icon="close"
+          label="Limpiar Firmas"
+          @click="limpiarFirmasTabla"
+        >
+          <q-tooltip>Borrar las firmas de la tabla</q-tooltip>
+        </q-btn>
         <q-btn
           :color="datosSolicitud.estado === 'Rechazado' ? 'grey-8' : 'positive'"
           icon="print"
@@ -161,130 +182,30 @@
             </div>
           </div>
 
-          <!-- 1 -->
-          <div class="tr-row">
-            <div class="td-dep">GESTIÓN DE TIC</div>
-            <div class="td-marca">X</div>
-            <div class="td-nombres">Franklin Rolando Chacon Lopez</div>
-            <div class="td-firma"></div>
-          </div>
-
-          <!-- 2 -->
-          <div class="tr-row">
-            <div class="td-dep">ADMINISTRACIÓN DE DOCUMENTOS</div>
-            <div class="td-marca">X</div>
-            <div class="td-nombres">Hilda Lucia Ramirez Alvarado</div>
-            <div class="td-firma"></div>
-          </div>
-
-          <!-- 3 -->
-          <div class="tr-row">
-            <div class="td-dep">
-              ENTREGA CARNÉ (Al Supervisor del Contrato en las Regionales y Centros de Formación)<br />SECRETARÍA
-              GENERAL
+          <!-- 14 Filas Oficiales GCCON-F-088 con soporte para firmas gráficas de área -->
+          <div v-for="fila in filasDependencias" :key="fila.id" class="tr-row">
+            <div class="td-dep" v-html="fila.dependencia"></div>
+            <div class="td-marca">{{ fila.marca }}</div>
+            <div class="td-nombres" v-html="fila.nombres"></div>
+            <div
+              class="td-firma cursor-pointer"
+              @click="abrirModalFirmaFila(fila)"
+              :title="
+                firmasTabla[fila.id]
+                  ? 'Clic para cambiar o editar firma de ' + fila.nombres
+                  : 'Clic para estampar firma de ' + fila.nombres
+              "
+            >
+              <img
+                v-if="firmasTabla[fila.id]"
+                :src="firmasTabla[fila.id]"
+                :alt="'Firma ' + fila.nombres"
+                class="img-firma-tabla"
+              />
+              <div v-else class="btn-firmar-fila no-print">
+                <span class="texto-firmar-fila">+ firmar</span>
+              </div>
             </div>
-            <div class="td-marca">X</div>
-            <div class="td-nombres">Johon Fredy Sanabria Muñoz</div>
-            <div class="td-firma"></div>
-          </div>
-
-          <!-- 4 -->
-          <div class="tr-row">
-            <div class="td-dep">ALMACÉN E INVENTARIOS</div>
-            <div class="td-marca">X</div>
-            <div class="td-nombres">
-              Generar reporte de https://miinventario.sena.edu.co/Inicio.aspx y anexar al formato,
-              garantizando que no tiene elementos a su cargo.
-            </div>
-            <div class="td-firma"></div>
-          </div>
-
-          <!-- 5 -->
-          <div class="tr-row">
-            <div class="td-dep">
-              SERVICIOS GENERALES, ADQUISICIONES<br />(Administración de edificio; Contratación)
-            </div>
-            <div class="td-marca">X</div>
-            <div class="td-nombres">Juan David Silva Gutierrez</div>
-            <div class="td-firma"></div>
-          </div>
-
-          <!-- 6 -->
-          <div class="tr-row">
-            <div class="td-dep">CONTABILIDAD</div>
-            <div class="td-marca">X</div>
-            <div class="td-nombres">Zaida Leny Melgarejo Ballesteros</div>
-            <div class="td-firma"></div>
-          </div>
-
-          <!-- 7 -->
-          <div class="tr-row">
-            <div class="td-dep">TESORERÍA</div>
-            <div class="td-marca">X</div>
-            <div class="td-nombres">Nelcy Mabel Mayorga Pinto</div>
-            <div class="td-firma"></div>
-          </div>
-
-          <!-- 8 -->
-          <div class="tr-row">
-            <div class="td-dep">COORDINACIÓN DE: ÁREA/GRUPO/ACADÉMICA</div>
-            <div class="td-marca">X</div>
-            <div class="td-nombres">Johon Fredy Sanabria Muñoz</div>
-            <div class="td-firma"></div>
-          </div>
-
-          <!-- 9 -->
-          <div class="tr-row">
-            <div class="td-dep">BIBLIOTECA</div>
-            <div class="td-marca">X</div>
-            <div class="td-nombres">
-              Andrea Juliana Celis Camacho / Yudith Milagros Martinez Bautista
-            </div>
-            <div class="td-firma"></div>
-          </div>
-
-          <!-- 10 -->
-          <div class="tr-row">
-            <div class="td-dep">OTRO (LÍDER SIGA)</div>
-            <div class="td-marca">X</div>
-            <div class="td-nombres">Zaida Jebridy Garcia Jaimes</div>
-            <div class="td-firma"></div>
-          </div>
-
-          <!-- 11 -->
-          <div class="tr-row">
-            <div class="td-dep">OTRO (ADMINISTRACIÓN EDUCATIVA)</div>
-            <div class="td-marca">X</div>
-            <div class="td-nombres">Erika Johana Gómez Verdugo</div>
-            <div class="td-firma"></div>
-          </div>
-
-          <!-- 12 -->
-          <div class="tr-row">
-            <div class="td-dep">
-              APOYO AL SEGUIMIENTO DE LOS PROCESOS ADMINISTRATIVOS Y NOVEDADES
-            </div>
-            <div class="td-marca">X</div>
-            <div class="td-nombres">
-              Nelson Fabian Duarte Peñaloza / Eileen Erfensi Hurtado Ariza
-            </div>
-            <div class="td-firma"></div>
-          </div>
-
-          <!-- 13 -->
-          <div class="tr-row">
-            <div class="td-dep">APOYO ETAPA PRODUCTIVA</div>
-            <div class="td-marca">X</div>
-            <div class="td-nombres">Karen Andrea García Carreño</div>
-            <div class="td-firma"></div>
-          </div>
-
-          <!-- 14 -->
-          <div class="tr-row">
-            <div class="td-dep">SUPERVISOR DE CONTRATO</div>
-            <div class="td-marca">X</div>
-            <div class="td-nombres">Johon Fredy Sanabria Muñoz</div>
-            <div class="td-firma"></div>
           </div>
         </div>
 
@@ -358,16 +279,23 @@
       <q-card style="min-width: 480px; max-width: 90vw">
         <q-card-section class="bg-primary text-white row items-center justify-between">
           <div class="text-h6">
-            <q-icon name="content_paste" class="q-mr-sm" />
-            Pegar o Cargar Firma en el Documento
+            <q-icon name="edit_note" class="q-mr-sm" />
+            {{
+              firmandoFila
+                ? `Firma: ${firmandoFila.nombres}`
+                : 'Firma del Contratista'
+            }}
           </div>
           <q-btn icon="close" flat round dense v-close-popup />
         </q-card-section>
 
         <q-card-section class="q-pa-md">
           <div class="text-caption text-grey-8 q-mb-sm">
-            Pegue su firma con <strong>Ctrl + V</strong>, cárguela como imagen o trácela en el
-            recuadro. Se estampará directamente en este certificado.
+            {{
+              firmandoFila
+                ? `Estampando firma para ${firmandoFila.nombres}. Pegue con Ctrl + V, cárguela como imagen o dibújela con el lápiz.`
+                : 'Pegue su firma con Ctrl + V, cárguela como imagen o trácela en el recuadro. Se estampará directamente en este certificado.'
+            }}
           </div>
           <FirmaCanvas ref="canvasRef" />
         </q-card-section>
@@ -391,6 +319,7 @@ import { ref, onMounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useSolicitudesStore } from '../stores/useSolicitudesStore.js'
+import api from '../services/api'
 import FirmaCanvas from '../components/FirmaCanvas.vue'
 import logoSena from '../images/logo-sena.png'
 
@@ -402,8 +331,103 @@ const store = useSolicitudesStore()
 const firmaGuardada = ref(null)
 const dialogoFirma = ref(false)
 const canvasRef = ref(null)
+const filaParaFirmar = ref(null)
+
+const firmasTabla = ref({})
+
+const filasDependencias = ref([
+  {
+    id: 1,
+    dependencia: 'GESTIÓN DE TIC',
+    marca: 'X',
+    nombres: 'Franklin Rolando Chacon Lopez',
+  },
+  {
+    id: 2,
+    dependencia: 'ADMINISTRACIÓN DE DOCUMENTOS',
+    marca: 'X',
+    nombres: 'Hilda Lucia Ramirez Alvarado',
+  },
+  {
+    id: 3,
+    dependencia:
+      'ENTREGA CARNÉ (Al Supervisor del Contrato en las Regionales y Centros de Formación)<br>SECRETARÍA GENERAL',
+    marca: 'X',
+    nombres: 'Johon Fredy Sanabria Muñoz',
+  },
+  {
+    id: 4,
+    dependencia: 'ALMACÉN E INVENTARIOS',
+    marca: 'X',
+    nombres:
+      'Generar reporte de https://miinventario.sena.edu.co/Inicio.aspx y anexar al formato, garantizando que no tiene elementos a su cargo.',
+  },
+  {
+    id: 5,
+    dependencia:
+      'SERVICIOS GENERALES, ADQUISICIONES<br>(Administración de edificio; Contratación)',
+    marca: 'X',
+    nombres: 'Juan David Silva Gutierrez',
+  },
+  {
+    id: 6,
+    dependencia: 'CONTABILIDAD',
+    marca: 'X',
+    nombres: 'Zaida Leny Melgarejo Ballesteros',
+  },
+  {
+    id: 7,
+    dependencia: 'TESORERÍA',
+    marca: 'X',
+    nombres: 'Nelcy Mabel Mayorga Pinto',
+  },
+  {
+    id: 8,
+    dependencia: 'COORDINACIÓN DE: ÁREA/GRUPO/ACADÉMICA',
+    marca: 'X',
+    nombres: 'Johon Fredy Sanabria Muñoz',
+  },
+  {
+    id: 9,
+    dependencia: 'BIBLIOTECA',
+    marca: 'X',
+    nombres: 'Andrea Juliana Celis Camacho / Yudith Milagros Martinez Bautista',
+  },
+  {
+    id: 10,
+    dependencia: 'OTRO (LÍDER SIGA)',
+    marca: 'X',
+    nombres: 'Zaida Jebridy Garcia Jaimes',
+  },
+  {
+    id: 11,
+    dependencia: 'OTRO (ADMINISTRACIÓN EDUCATIVA)',
+    marca: 'X',
+    nombres: 'Erika Johana Gómez Verdugo',
+  },
+  {
+    id: 12,
+    dependencia:
+      'APOYO AL SEGUIMIENTO DE LOS PROCESOS ADMINISTRATIVOS Y NOVEDADES',
+    marca: 'X',
+    nombres: 'Nelson Fabian Duarte Peñaloza / Eileen Erfensi Hurtado Ariza',
+  },
+  {
+    id: 13,
+    dependencia: 'APOYO ETAPA PRODUCTIVA',
+    marca: 'X',
+    nombres: 'Karen Andrea García Carreño',
+  },
+  {
+    id: 14,
+    dependencia: 'SUPERVISOR DE CONTRATO',
+    marca: 'X',
+    nombres: 'Johon Fredy Sanabria Muñoz',
+  },
+])
 
 function abrirModalFirma() {
+  filaParaFirmar.value = null
   if (datosSolicitud.value.estado === 'Rechazado') {
     $q.dialog({
       title: 'Firma No Habilitada',
@@ -433,17 +457,78 @@ Para poder firmar, debe devolver o subsanar los requerimientos y solicitar la re
   }
 }
 
+function abrirModalFirmaFila(fila) {
+  if (datosSolicitud.value.estado === 'Rechazado') {
+    $q.dialog({
+      title: 'Firma No Habilitada',
+      message: 'No es posible firmar dependencias en una solicitud que se encuentra rechazada.',
+      color: 'negative',
+      icon: 'block',
+    })
+    return
+  }
+  filaParaFirmar.value = fila
+  dialogoFirma.value = true
+  if (firmasTabla.value[fila.id]) {
+    nextTick(() => {
+      if (canvasRef.value && typeof canvasRef.value.cargarDataUrl === 'function') {
+        canvasRef.value.cargarDataUrl(firmasTabla.value[fila.id])
+      }
+    })
+  }
+}
+
+function limpiarFirmasTabla() {
+  firmasTabla.value = {}
+  const codigo = route.query.codigo || route.params.id
+  if (codigo) {
+    localStorage.removeItem(`firmas_tabla_${codigo}`)
+  }
+}
+
+function estamparTodasLasFirmas() {
+  if (datosSolicitud.value.estado === 'Rechazado') {
+    $q.notify({
+      type: 'warning',
+      message: 'No se pueden estampar firmas en una solicitud rechazada.',
+    })
+    return
+  }
+  const f = firmaGuardada.value || logoSena
+  filasDependencias.value.forEach((fila) => {
+    firmasTabla.value[fila.id] = f
+  })
+  const codigo = route.query.codigo || route.params.id
+  if (codigo) {
+    localStorage.setItem(`firmas_tabla_${codigo}`, JSON.stringify(firmasTabla.value))
+  }
+  $q.notify({
+    type: 'positive',
+    message: 'Firmas de dependencias estampadas exitosamente.',
+  })
+}
+
 function guardarFirmaCertificado() {
   if (!canvasRef.value) return
   const dataUrl = canvasRef.value.exportarBase64()
-  firmaGuardada.value = dataUrl
   const codigo = route.query.codigo || route.params.id
-  if (codigo) {
-    localStorage.setItem(`firma_${codigo}`, dataUrl)
+
+  if (filaParaFirmar.value) {
+    firmasTabla.value[filaParaFirmar.value.id] = dataUrl
+    if (codigo) {
+      localStorage.setItem(`firmas_tabla_${codigo}`, JSON.stringify(firmasTabla.value))
+    }
+    filaParaFirmar.value = null
+  } else {
+    firmaGuardada.value = dataUrl
+    if (codigo) {
+      localStorage.setItem(`firma_${codigo}`, dataUrl)
+    }
+    localStorage.setItem('ultima_firma', dataUrl)
   }
-  localStorage.setItem('ultima_firma', dataUrl)
   dialogoFirma.value = false
 }
+
 const datosSolicitud = ref({
   contratista: '',
   identificacion: '',
@@ -459,11 +544,20 @@ const datosSolicitud = ref({
   firmas: [],
 })
 
-onMounted(() => {
+onMounted(async () => {
   const codigo = route.query.codigo || route.params.id
   if (codigo) {
     const f = localStorage.getItem(`firma_${codigo}`) || localStorage.getItem('ultima_firma')
     if (f) firmaGuardada.value = f
+
+    const ft = localStorage.getItem(`firmas_tabla_${codigo}`)
+    if (ft) {
+      try {
+        firmasTabla.value = JSON.parse(ft)
+      } catch (e) {
+        console.warn('Error al parsear firmas tabla:', e)
+      }
+    }
 
     let encontrada = null
     if (typeof store.obtenerPorCodigo === 'function') {
@@ -498,6 +592,36 @@ onMounted(() => {
           encontrada.observacionRechazo || encontrada.observaciones_supervisor || '',
         bienesFaltantes: encontrada.bienesFaltantes || [],
         firmas: encontrada.firmas || [],
+      }
+    } else {
+      try {
+        const resp = await api.get('/contratos')
+        const lista = Array.isArray(resp.data) ? resp.data : resp.data?.contratos || []
+        const c = lista.find(
+          (item) =>
+            item._id === codigo ||
+            item.numero_contrato === codigo ||
+            item.id === codigo ||
+            item.numero === codigo,
+        )
+        if (c) {
+          datosSolicitud.value = {
+            contratista: c.nombre_contratista || c.contratista || 'Paula Valentina Rache Fonseca',
+            identificacion: c.telefono || '1098765432',
+            ciudad: 'Ibagué',
+            fecha: new Date().toLocaleDateString('es-CO'),
+            regional: 'Tolima',
+            direccion: c.dependencia?.nombre_dependencia || 'Centro de Comercio y Servicios',
+            contrato: c.numero_contrato || codigo,
+            responsable: c.supervisor || 'Johon Fredy Sanabria Muñoz',
+            estado: c.estado || 'En revisión',
+            observacionRechazo: c.observaciones_supervisor || '',
+            bienesFaltantes: [],
+            firmas: [],
+          }
+        }
+      } catch (err) {
+        console.warn('Carga diferida contrato:', err.message)
       }
     }
   } else {
@@ -1031,6 +1155,30 @@ Motivo registrado: "${datosSolicitud.value.observacionRechazo || 'Bienes o reque
 .td-firma {
   padding: 2px;
   min-height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.img-firma-tabla {
+  max-width: 95px;
+  max-height: 18px;
+  object-fit: contain;
+  display: block;
+}
+
+.btn-firmar-fila {
+  display: inline-flex;
+  align-items: center;
+  color: #1976d2;
+  font-size: 7px;
+  font-weight: 700;
+  opacity: 0.8;
+}
+
+.btn-firmar-fila:hover {
+  opacity: 1;
+  text-decoration: underline;
 }
 
 /* Sección Inferior */

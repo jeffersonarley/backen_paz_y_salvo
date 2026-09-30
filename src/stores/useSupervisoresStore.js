@@ -73,8 +73,6 @@ export const useSupervisoresStore = defineStore('supervisores', () => {
   cargarSupervisores()
 
   async function agregar(nuevo) {
-    supervisores.value.unshift({ ...nuevo })
-
     try {
       await api.post('/usuarios', {
         nombre: nuevo.nombre,
@@ -84,12 +82,13 @@ export const useSupervisoresStore = defineStore('supervisores', () => {
         documento: nuevo.documento,
         telefono: nuevo.telefono,
         cargo: nuevo.cargo || 'Supervisor de Contratos',
-        password: nuevo.password || '12345678',
+        password: nuevo.password,
         rol: 'Supervisor',
       })
       await cargarSupervisores()
     } catch (err) {
       console.error('Error al guardar supervisor en Atlas:', err)
+      throw err
     }
   }
 

@@ -526,30 +526,23 @@
               />
             </div>
 
-            <!-- Acciones para SUPERVISOR Y ADMINISTRADOR -->
+            <!-- Acciones para SUPERVISOR Y ADMINISTRADOR (Solo consulta y auditoría) -->
             <div v-else-if="esSupervisorOAdmin" class="q-mt-lg column q-gutter-sm">
-              <q-btn
-                color="positive"
-                icon="draw"
-                :label="esFirmado ? 'Firmar / Estampar' : 'Firmar Paz y Salvo'"
-                unelevated
-                class="full-width text-weight-bold"
-                @click="abrirModalFirma"
-              />
-              <q-btn
-                outline
-                color="negative"
-                icon="report_problem"
-                label="Rechazar / Novedad de Bienes"
-                class="full-width text-weight-bold"
-                @click="abrirModalRechazo(solicitudActual)"
-              />
+              <q-banner dense rounded class="bg-blue-1 text-primary text-caption q-mb-xs">
+                <template #avatar>
+                  <q-icon name="verified_user" color="primary" />
+                </template>
+                <div>
+                  <strong>Vista de Supervisión y Control:</strong> La firma de paz y salvo corresponde exclusivamente al Responsable de Área asignado.
+                </div>
+              </q-banner>
+
               <q-btn
                 outline
                 color="red-7"
                 icon="picture_as_pdf"
-                label="Ver Certificado PDF"
-                class="full-width"
+                label="Ver / Descargar Certificado PDF"
+                class="full-width text-weight-bold"
                 @click="imprimirCertificado"
               />
             </div>

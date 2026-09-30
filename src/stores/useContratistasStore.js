@@ -10,6 +10,7 @@ export const useContratistasStore = defineStore('contratistas', () => {
     {
       documento: '1098765432',
       nombre: 'Juan Carlos Pérez Gómez',
+      numeroContrato: 'CNT-2026-001',
       correo: 'juan.perez@correo.com',
       telefono: '3101234567',
       cargo: 'Desarrollador Full-Stack Senior',
@@ -18,6 +19,7 @@ export const useContratistasStore = defineStore('contratistas', () => {
     {
       documento: '1095432189',
       nombre: 'Laura Andrea Contratista',
+      numeroContrato: 'CNT-2026-002',
       correo: 'contratista@gccon.com',
       telefono: '3157654321',
       cargo: 'Especialista en Soporte Informático',
@@ -26,6 +28,7 @@ export const useContratistasStore = defineStore('contratistas', () => {
     {
       documento: '1094321765',
       nombre: 'María Fernanda Gómez Ruiz',
+      numeroContrato: 'CNT-2026-003',
       correo: 'maria.gomez@correo.com',
       telefono: '3207654321',
       cargo: 'Instructora Contratista en Telemática',
@@ -34,6 +37,7 @@ export const useContratistasStore = defineStore('contratistas', () => {
     {
       documento: '1097890123',
       nombre: 'Carlos Eduardo Mendoza',
+      numeroContrato: 'CNT-2026-004',
       correo: 'carlos.mendoza@email.com',
       telefono: '3119876543',
       cargo: 'Consultor en Redes y Telecomunicaciones',
@@ -42,6 +46,7 @@ export const useContratistasStore = defineStore('contratistas', () => {
     {
       documento: '1096543210',
       nombre: 'Diego Morales Castro',
+      numeroContrato: 'CNT-2026-005',
       correo: 'diego.morales@correo.com',
       telefono: '3171234567',
       cargo: 'Técnico de Mantenimiento de Hardware',
@@ -62,6 +67,7 @@ export const useContratistasStore = defineStore('contratistas', () => {
           id: (u._id || u.id || `con_${idx}`).toString(),
           documento: u.documento || u.telefono || `DOC-C${idx + 1}`,
           nombre: u.nombre_completo || u.nombre,
+          numeroContrato: u.numero_contrato || u.contrato || `CNT-2026-0${idx + 1}`,
           correo: u.correo_institucional || u.correo,
           telefono: u.telefono || '3100000000',
           cargo: u.cargo || 'Contratista',
@@ -89,10 +95,6 @@ export const useContratistasStore = defineStore('contratistas', () => {
   cargarContratistas()
 
   async function agregar(nuevoContratista) {
-    // 1. Agregar a la lista reactiva inmediatamente arriba
-    contratistas.value.unshift({ ...nuevoContratista })
-
-    // 2. Guardar en MongoDB Atlas
     try {
       await api.post('/usuarios', {
         nombre: nuevoContratista.nombre,
@@ -101,19 +103,36 @@ export const useContratistasStore = defineStore('contratistas', () => {
         correo_institucional: nuevoContratista.correo,
         documento: nuevoContratista.documento,
         telefono: nuevoContratista.telefono,
+        numero_contrato: nuevoContratista.numeroContrato,
+        contrato: nuevoContratista.numeroContrato,
         cargo: nuevoContratista.cargo || 'Contratista',
-        password: nuevoContratista.password || '12345678',
+        password: nuevoContratista.password,
         rol: 'Contratista',
       })
       await cargarContratistas()
     } catch (err) {
       console.error('Error al guardar contratista en Atlas:', err)
+      throw err
     }
   }
 
-  function editar(indice, datosActualizados) {
+  async function editar(indice, datosActualizados) {
     if (indice !== -1 && indice < contratistas.value.length) {
       contratistas.value[indice] = datosActualizados
+      try {
+        const idParaApi = datosActualizados._id || datosActualizados.id
+        if (idParaApi) {
+          await api.put(`/usuarios/${idParaApi}`, {
+            nombre_completo: datosActualizados.nombre,
+            telefono: datosActualizados.telefono,
+            numero_contrato: datosActualizados.numeroContrato,
+            contrato: datosActualizados.numeroContrato,
+            cargo: datosActualizados.cargo,
+          })
+        }
+      } catch (err) {
+        console.warn('Actualización de contratista en Atlas falló, guardado local:', err.message)
+      }
     }
   }
 

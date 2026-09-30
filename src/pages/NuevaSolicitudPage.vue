@@ -55,8 +55,28 @@
                   label="Dependencia / Centro *"
                   :options="opcionesDependencias"
                   :rules="[(val) => !!val || 'Seleccione la dependencia']"
-                />
+                >
+                  <template #prepend>
+                    <q-icon name="apartment" color="primary" />
+                  </template>
+                </q-select>
               </div>
+            </div>
+
+            <!-- Mostrar el Responsable de Área al que va dirigida la solicitud -->
+            <div v-if="responsableDependenciaActual" class="q-mt-xs q-mb-md">
+              <q-banner dense rounded class="bg-blue-1 text-primary text-caption">
+                <template #avatar>
+                  <q-icon name="supervised_user_circle" color="primary" />
+                </template>
+                <div>
+                  <strong>Responsable de Área:</strong> {{ responsableDependenciaActual.responsable }}
+                  <span v-if="responsableDependenciaActual.correo" class="text-grey-8"> ({{ responsableDependenciaActual.correo }})</span>
+                </div>
+                <div class="text-grey-7 q-mt-xs">
+                  Esta solicitud irá dirigida a este Responsable de Área para la validación de bienes y firma de paz y salvo.
+                </div>
+              </q-banner>
             </div>
 
             <q-input
@@ -152,15 +172,17 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Notify } from 'quasar'
 import { useSolicitudesStore } from '../stores/useSolicitudesStore.js'
+import { useDependenciasStore } from '../stores/useDependenciasStore.js'
 import { useAuthStore } from '../stores/authStore.js'
 import api from '../services/api'
 
 const router = useRouter()
 const store = useSolicitudesStore()
+const dependenciasStore = useDependenciasStore()
 const auth = useAuthStore()
 const cargando = ref(false)
 
@@ -190,35 +212,58 @@ const opcionesSupervisores = ref([
   { id: 'sup-3', nombre: 'Ing. Fernando Ramírez' },
 ])
 
+const responsableDependenciaActual = computed(() => {
+  if (!form.value.dependencia) return null
+  const depNombre =
+    typeof form.value.dependencia === 'object'
+      ? (form.value.dependencia.nombre || form.value.dependencia.label || '')
+      : form.value.dependencia
+
+  const encontrada = dependenciasStore.dependencias.find(
+    (d) =>
+      (d.nombre || d.nombre_dependencia || '').trim().toLowerCase() ===
+      depNombre.trim().toLowerCase(),
+  )
+  if (encontrada && (encontrada.responsable || encontrada.responsable_id)) {
+    const nom =
+      encontrada.responsable ||
+      encontrada.responsable_id?.nombre_completo ||
+      encontrada.responsable_id?.nombre ||
+      'Responsable Asignado'
+    const correo =
+      encontrada.correo ||
+      encontrada.responsable_id?.correo_institucional ||
+      encontrada.responsable_id?.correo ||
+      ''
+    return {
+      responsable: nom,
+      correo: correo,
+    }
+  }
+  return null
+})
+
 onMounted(async () => {
   if (!form.value.contratista && auth.usuario?.nombre) {
     form.value.contratista = auth.usuario.nombre
   }
   try {
-    const [depRes, supRes] = await Promise.allSettled([
-      api.get('/dependencias'),
-      api.get('/usuarios?rol=Supervisor'),
-    ])
-
-    if (depRes.status === 'fulfilled') {
-      const deps = Array.isArray(depRes.value.data)
-        ? depRes.value.data
-        : depRes.value.data?.dependencias || []
-      if (deps.length > 0) {
-        opcionesDependencias.value = deps.map((d) => d.nombre_dependencia || d.nombre)
-      }
+    await dependenciasStore.cargarDependencias()
+    if (dependenciasStore.dependencias.length > 0) {
+      opcionesDependencias.value = dependenciasStore.dependencias
+        .filter((d) => d.estado !== 'Inactiva')
+        .map((d) => d.nombre)
     }
 
-    if (supRes.status === 'fulfilled') {
-      const sups = Array.isArray(supRes.value.data)
-        ? supRes.value.data
-        : supRes.value.data?.usuarios || []
-      if (sups.length > 0) {
-        opcionesSupervisores.value = sups.map((s) => ({
-          id: s._id || s.id,
-          nombre: s.nombre_completo || s.nombre || 'Supervisor',
-        }))
-      }
+    const supRes = await api.get('/usuarios?rol=Supervisor')
+    const sups = Array.isArray(supRes.data)
+      ? supRes.data
+      : supRes.data?.usuarios || []
+    if (sups.length > 0) {
+      opcionesSupervisores.value = sups.map((s) => ({
+        id: s._id || s.id,
+        nombre: s.nombre_completo || s.nombre || 'Supervisor',
+      }))
     }
   } catch (err) {
     console.warn('Carga de listas para nueva solicitud:', err.message)
