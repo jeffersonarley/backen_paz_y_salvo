@@ -22,14 +22,14 @@ exports.actualizarFormato = asyncHandler(async (req, res) => {
     const formato = await FormatoConfig.findOneAndUpdate(
         { codigo_formato: 'GCCON-F-088' },
         { $set: datos },
-        { upsert: true, new: true }
+        { upsert: true, returnDocument: 'after' }
     );
 
     // Limpiar caché en memoria RAM para que los nuevos contratos hereden la versión
     invalidarCache();
 
     await registrar({
-        usuario_id: req.usuario?.id || req.usuario?._id || req.usuario?.uid,
+        usuario_id: req.usuario?.id,
         accion: 'ACTUALIZAR_FORMATO',
         entidad_afectada: 'formato_config',
         detalles: datos

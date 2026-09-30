@@ -46,8 +46,8 @@ Copia `.env.example` a `.env` y configura:
 
 ```
 PORT=3000
-MONGODB_URI=mongodb://127.0.0.1:27017/pazysalvo_sena
-JWT_SECRET=secreto_super_seguro_pazysalvo_2026
+MONGODB_URI=mongodb://127.0.0.1:27017/pazysalvo_sena   # OBLIGATORIO; no hay valor por defecto
+JWT_SECRET=                          # OBLIGATORIO (mín. 32 caracteres en producción); no hay valor por defecto
 EMAIL_USER=        # correo Gmail para Nodemailer
 EMAIL_PASS=        # contraseña de aplicación
 FRONTEND_URL=http://localhost:3000   # opcional, usado en el enlace de recuperación
@@ -75,9 +75,9 @@ npm install
 npm run dev               # http://localhost:5173 (proxy /api -> :3000)
 ```
 
-Accesos iniciales: el `seed:admin` crea `admin@institucion.edu.co` (contraseña por
-defecto `AdminSeguro123!`, configurable en `.env` con `SEED_ADMIN_*`). Los usuarios
-migrados a Atlas conservan sus contraseñas originales.
+Accesos iniciales: el `seed:admin` crea el administrador con el correo y la contraseña que
+definas en `.env` (`SEED_ADMIN_EMAIL` y `SEED_ADMIN_PASSWORD`; **no hay contraseña por
+defecto**). Los usuarios migrados a Atlas conservan sus contraseñas originales.
 
 > **Problemas de conexión o error 500 en el login (Atlas):**
 > - Si el backend imprime `❌ Error al conectar a MongoDB` o el navegador responde
@@ -88,7 +88,7 @@ migrados a Atlas conservan sus contraseñas originales.
 >   validación del `login` con error 400/500. El modelo ya los normaliza; para
 >   corregir los datos guardados ejecuta: `npm run normalizar-roles`
 >   (o `DB_URI=mongodb+srv://... npm run normalizar-roles` para otra BD).
-> - Credenciales documentadas: `admin@institucion.edu.co` / `AdminSeguro123!`.
+> - Las contraseñas iniciales ya no están documentadas: se definen en `SEED_*_PASSWORD`.
 
 > **Nota sobre transacciones:** las transacciones atómicas de MongoDB requieren un
 > *replica set*. Si `mongod` corre en modo standalone, el backend usa automáticamente un
@@ -477,3 +477,20 @@ curl -X POST http://localhost:3000/api/firmas/procesar \
   -H "Content-Type: application/json" -H "Authorization: Bearer TOKEN" \
   -d '{"contratoId":"<id>","accion":"Aprobar"}'
 ```
+
+
+## Cambios de seguridad y robustez (revisión)
+
+- **Sin secretos en el código:** `MONGODB_URI` y `JWT_SECRET` son obligatorias (la app no arranca sin ellas).
+  Si alguna vez estuvieron en Git (`.env.example`, `db.js`), **rota la contraseña de Atlas y el secreto JWT**.
+- **Eliminado** el endpoint público `/api/test-db` (devolvía todos los usuarios con su hash).
+- **Anti inyección NoSQL** en login, recuperación y restablecimiento (los campos deben ser texto); el token de
+  recuperación se guarda hasheado (SHA-256).
+- **Firmas:** un rechazo de cualquier área pasa el contrato a `Rechazado` y ya no puede finalizarse; el cambio de
+  estado de cada firma y la finalización son atómicos (sin PDF/correo duplicados con firmas simultáneas).
+- **Hash de verificación** HMAC-SHA256 (con `HASH_SECRET`) y endpoint público `GET /api/firmas/verificar/:hash`.
+- **Sesión:** `req.usuario` se carga de la BD en cada petición (los cambios de rol/área aplican al instante),
+  el JWT se fija a HS256 y cambiar/restablecer la contraseña invalida los tokens anteriores.
+- **PDF en memoria** (sin archivos temporales; compatible con Vercel). Firma: solo PNG/JPEG de hasta 512 KB.
+- `GET /health`, `trust proxy` configurable (`TRUST_PROXY`), CORS cerrado por defecto en producción y
+  `/api-docs` desactivado en producción salvo `ENABLE_DOCS=true`.

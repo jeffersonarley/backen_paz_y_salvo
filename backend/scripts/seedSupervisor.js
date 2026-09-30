@@ -1,7 +1,8 @@
 require('dotenv').config();
 const conectarDB = require('../src/config/db');
 const Usuario = require('../src/models/Usuario');
-const bcrypt = require('bcrypt');
+const { hashPassword } = require('../src/utils/password');
+const validarPassword = require('../src/utils/validarPassword');
 
 async function crearSupervisor() {
   try {
@@ -10,10 +11,15 @@ async function crearSupervisor() {
     const datos = {
       nombre_completo: 'Supervisor Prueba',
       correo_institucional: process.env.SEED_SUPERVISOR_EMAIL || 'supervisor.prueba@institucion.edu',
-      password: process.env.SEED_SUPERVISOR_PASSWORD || 'ClaveSegura123!',
+      password: process.env.SEED_SUPERVISOR_PASSWORD,
       rol: 'Supervisor',
       telefono: '3001112222'
     };
+
+    const politica = validarPassword(datos.password);
+    if (!politica.valida) {
+      throw new Error(`Defina SEED_SUPERVISOR_PASSWORD en el .env. ${politica.mensaje}`);
+    }
 
     const existente = await Usuario.findOne({ correo_institucional: datos.correo_institucional });
     if (existente) {
@@ -21,8 +27,7 @@ async function crearSupervisor() {
       process.exit(0);
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const password_hash = await bcrypt.hash(datos.password, salt);
+    const password_hash = await hashPassword(datos.password);
 
     const nuevo = new Usuario({
       nombre_completo: datos.nombre_completo,
@@ -35,7 +40,6 @@ async function crearSupervisor() {
 
     await nuevo.save();
     console.log('Supervisor creado:', datos.correo_institucional);
-    console.log('Contraseña temporal:', datos.password);
     process.exit(0);
   } catch (error) {
     console.error('Error creando supervisor:', error.message);

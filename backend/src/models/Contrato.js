@@ -73,4 +73,7 @@ const contratoSchema = new mongoose.Schema({
     collection: 'contratos_gccon_f088'
 });
 
+contratoSchema.index({ usuario: 1, createdAt: -1 });
+contratoSchema.index({ supervisor: 1, estado: 1 });
+
 module.exports = mongoose.model('Contrato', contratoSchema);

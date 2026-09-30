@@ -1,12 +1,13 @@
 const Usuario = require('../models/Usuario');
-const bcrypt = require('bcrypt');
+const { hashPassword } = require('../utils/password');
+const normalizarRol = require('../utils/normalizarRol');
 const { registrar } = require('../services/auditoriaService');
 const { ROLES_CREABLES_POR_ROL } = require('../middlewares/authMiddleware');
 const validarPassword = require('../utils/validarPassword');
 const asyncHandler = require('../utils/asyncHandler');
 const AppError = require('../utils/AppError');
 
-const usuarioIdActual = (req) => req.usuario?.id || req.usuario?._id || req.usuario?.uid;
+const usuarioIdActual = (req) => req.usuario?.id;
 
 // Crear un usuario respetando la cadena jerárquica (RF-009, RF-011, RF-012)
 exports.crearUsuario = asyncHandler(async (req, res) => {
@@ -26,8 +27,7 @@ exports.crearUsuario = asyncHandler(async (req, res) => {
         throw new AppError('El correo institucional ya está registrado.', 400);
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const password_hash = await bcrypt.hash(password, salt);
+    const password_hash = await hashPassword(password);
 
     const creadorId = usuarioIdActual(req);
     const supervisor_id = req.usuario.rol === 'Supervisor' ? creadorId : null;
@@ -71,8 +71,9 @@ exports.obtenerUsuarios = asyncHandler(async (req, res) => {
         filtro.supervisor_id = usuarioIdActual(req);
     }
 
-    if (req.query.rol) {
-        filtro.rol = { $regex: `^${req.query.rol}$`, $options: 'i' };
+    // Comparación exacta con el rol normalizado (antes se armaba una regex con texto del usuario: ReDoS/inyección)
+    if (typeof req.query.rol === 'string' && req.query.rol.trim()) {
+        filtro.rol = normalizarRol(req.query.rol);
     }
 
     const usuarios = await Usuario.find(filtro, '-password_hash -token_recuperacion -token_expiracion');

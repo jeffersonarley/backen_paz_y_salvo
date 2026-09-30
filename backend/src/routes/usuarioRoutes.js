@@ -8,9 +8,9 @@ const validarCampos = require('../middlewares/validarCampos');
 
 // Validación de entrada para la creación de usuarios
 const validarUsuario = [
-  body('nombre_completo').trim().notEmpty().withMessage('El nombre completo es obligatorio.'),
-  body('correo_institucional').isEmail().withMessage('Correo institucional inválido.'),
-  body('password').notEmpty().withMessage('La contraseña es obligatoria.'),
+  body('nombre_completo').isString().withMessage('El nombre completo debe ser texto.').bail().trim().notEmpty().withMessage('El nombre completo es obligatorio.'),
+  body('correo_institucional').isString().withMessage('Correo institucional inválido.').bail().isEmail().withMessage('Correo institucional inválido.'),
+  body('password').isString().withMessage('La contraseña debe ser texto.').bail().isLength({ min: 1, max: 128 }).withMessage('La contraseña es obligatoria (máx. 128 caracteres).').bail().notEmpty().withMessage('La contraseña es obligatoria.'),
   body('rol').isIn(['Administrador', 'Supervisor', 'ResponsableArea', 'Contratista']).withMessage('Rol inválido.'),
   validarCampos
 ];
