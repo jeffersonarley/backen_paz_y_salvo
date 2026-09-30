@@ -9,6 +9,7 @@
       </div>
       <div class="row items-center q-gutter-xs">
         <q-btn
+          v-if="esResponsableArea"
           flat
           dense
           color="primary"
@@ -19,7 +20,7 @@
           <q-tooltip>Estampar automáticamente las firmas de los responsables de dependencias</q-tooltip>
         </q-btn>
         <q-btn
-          v-if="Object.keys(firmasTabla).length > 0"
+          v-if="esResponsableArea && Object.keys(firmasTabla).length > 0"
           flat
           dense
           color="grey-7"
@@ -188,12 +189,18 @@
             <div class="td-marca">{{ fila.marca }}</div>
             <div class="td-nombres" v-html="fila.nombres"></div>
             <div
-              class="td-firma cursor-pointer"
-              @click="abrirModalFirmaFila(fila)"
+              class="td-firma"
+              :class="{
+                'cursor-pointer': esResponsableArea,
+                'cursor-default': !esResponsableArea,
+              }"
+              @click="esResponsableArea ? abrirModalFirmaFila(fila) : null"
               :title="
                 firmasTabla[fila.id]
-                  ? 'Clic para cambiar o editar firma de ' + fila.nombres
-                  : 'Clic para estampar firma de ' + fila.nombres
+                  ? 'Firma registrada de ' + fila.nombres
+                  : esResponsableArea
+                    ? 'Clic para estampar firma de ' + fila.nombres
+                    : 'Firma reservada para el Responsable del Área'
               "
             >
               <img
@@ -202,8 +209,11 @@
                 :alt="'Firma ' + fila.nombres"
                 class="img-firma-tabla"
               />
-              <div v-else class="btn-firmar-fila no-print">
+              <div v-else-if="esResponsableArea" class="btn-firmar-fila no-print">
                 <span class="texto-firmar-fila">+ firmar</span>
+              </div>
+              <div v-else class="texto-pendiente-fila no-print">
+                <span>Pendiente</span>
               </div>
             </div>
           </div>
@@ -261,7 +271,7 @@
                   size="xs"
                   color="primary"
                   icon="draw"
-                  label="Clic para firmar"
+                  :label="esContratista ? 'Clic para firmar (Contratista)' : 'Clic para firmar'"
                 />
               </div>
               <div class="linea-firma-sola"></div>
@@ -315,10 +325,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useSolicitudesStore } from '../stores/useSolicitudesStore.js'
+import { useAuthStore } from '../stores/authStore.js'
 import api from '../services/api'
 import FirmaCanvas from '../components/FirmaCanvas.vue'
 import logoSena from '../images/logo-sena.png'
@@ -327,6 +338,10 @@ const $q = useQuasar()
 const router = useRouter()
 const route = useRoute()
 const store = useSolicitudesStore()
+const auth = useAuthStore()
+
+const esContratista = computed(() => auth.rolUsuario === 'CONTRATISTA')
+const esResponsableArea = computed(() => auth.rolUsuario === 'RESPONSABLE_AREA')
 
 const firmaGuardada = ref(null)
 const dialogoFirma = ref(false)
@@ -458,6 +473,13 @@ Para poder firmar, debe devolver o subsanar los requerimientos y solicitar la re
 }
 
 function abrirModalFirmaFila(fila) {
+  if (!esResponsableArea.value) {
+    $q.notify({
+      type: 'warning',
+      message: 'Las firmas de dependencias corresponden exclusivamente al Responsable de Área.',
+    })
+    return
+  }
   if (datosSolicitud.value.estado === 'Rechazado') {
     $q.dialog({
       title: 'Firma No Habilitada',
@@ -479,6 +501,13 @@ function abrirModalFirmaFila(fila) {
 }
 
 function limpiarFirmasTabla() {
+  if (!esResponsableArea.value) {
+    $q.notify({
+      type: 'warning',
+      message: 'Esta acción está reservada exclusivamente para los Responsables de Área.',
+    })
+    return
+  }
   firmasTabla.value = {}
   const codigo = route.query.codigo || route.params.id
   if (codigo) {
@@ -487,6 +516,13 @@ function limpiarFirmasTabla() {
 }
 
 function estamparTodasLasFirmas() {
+  if (!esResponsableArea.value) {
+    $q.notify({
+      type: 'warning',
+      message: 'Esta acción está reservada exclusivamente para los Responsables de Área.',
+    })
+    return
+  }
   if (datosSolicitud.value.estado === 'Rechazado') {
     $q.notify({
       type: 'warning',
@@ -1179,6 +1215,15 @@ Motivo registrado: "${datosSolicitud.value.observacionRechazo || 'Bienes o reque
 .btn-firmar-fila:hover {
   opacity: 1;
   text-decoration: underline;
+}
+
+.texto-pendiente-fila {
+  display: inline-flex;
+  align-items: center;
+  color: #9e9e9e;
+  font-size: 7px;
+  font-weight: 500;
+  font-style: italic;
 }
 
 /* Sección Inferior */
