@@ -48,27 +48,27 @@
       <!-- Lado Derecho: Acciones principales con estilo homogéneo en una sola fila -->
       <div class="toolbar-right row items-center q-gutter-sm no-wrap">
         <q-btn
-          v-if="esResponsableArea && datosSolicitud.estado !== 'Rechazado'"
+          v-if="miFilaParaFirmar && datosSolicitud.estado !== 'Rechazado' && !firmasTabla[miFilaParaFirmar.id]"
           outline
           dense
           color="primary"
           icon="history_edu"
-          label="Firmar Áreas"
+          :label="'Firmar ' + (miFilaParaFirmar.id === 14 ? 'Supervisión' : 'Mi Área')"
           class="q-px-sm"
-          @click="estamparTodasLasFirmas"
+          @click="abrirModalFirmaFila(miFilaParaFirmar)"
         >
-          <q-tooltip>Estampar automáticamente las firmas de dependencias</q-tooltip>
+          <q-tooltip>Estampar tu firma oficial en {{ miFilaParaFirmar.dependencia.replace(/<[^>]*>/g, ' ') }}</q-tooltip>
         </q-btn>
         <q-btn
-          v-if="esResponsableArea && datosSolicitud.estado !== 'Rechazado' && Object.keys(firmasTabla).length > 0"
+          v-if="miFilaParaFirmar && datosSolicitud.estado !== 'Rechazado' && firmasTabla[miFilaParaFirmar.id]"
           flat
           dense
           color="grey-7"
           icon="close"
           class="q-px-xs"
-          @click="limpiarFirmasTabla"
+          @click="limpiarMiFirma"
         >
-          <q-tooltip>Borrar firmas de la tabla</q-tooltip>
+          <q-tooltip>Borrar firma de mi área</q-tooltip>
         </q-btn>
         <q-btn
           outline
@@ -259,16 +259,16 @@
             <div
               class="td-firma"
               :class="{
-                'cursor-pointer': esResponsableArea,
-                'cursor-default': !esResponsableArea,
+                'cursor-pointer': puedeFirmarFila(fila),
+                'cursor-default': !puedeFirmarFila(fila),
               }"
-              @click="esResponsableArea ? abrirModalFirmaFila(fila) : null"
+              @click="puedeFirmarFila(fila) ? abrirModalFirmaFila(fila) : null"
               :title="
                 firmasTabla[fila.id]
                   ? 'Firma registrada de ' + fila.nombres
-                  : esResponsableArea
-                    ? 'Clic para estampar firma de ' + fila.nombres
-                    : 'Firma reservada para el Responsable del Área'
+                  : puedeFirmarFila(fila)
+                    ? 'Clic para estampar tu firma como responsable de esta dependencia'
+                    : 'Firma reservada exclusivamente para ' + fila.nombres
               "
             >
               <img
@@ -277,7 +277,7 @@
                 :alt="'Firma ' + fila.nombres"
                 class="img-firma-tabla"
               />
-              <div v-else-if="esResponsableArea" class="btn-firmar-fila no-print">
+              <div v-else-if="puedeFirmarFila(fila)" class="btn-firmar-fila no-print">
                 <span class="texto-firmar-fila">+ firmar</span>
               </div>
               <div v-else class="texto-pendiente-fila no-print">
@@ -782,11 +782,138 @@ Para poder firmar, debe devolver o subsanar los requerimientos y solicitar la re
   }
 }
 
+function normalizarTexto(txt) {
+  return (txt || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+}
+
+function puedeFirmarFila(fila) {
+  if (!fila) return false
+  if (datosSolicitud.value.estado === 'Rechazado') return false
+
+  const u = auth.usuario
+  if (!u) return false
+
+  const rol = (auth.rolUsuario || '').toUpperCase()
+
+  // 1. Fila 14 (SUPERVISOR DE CONTRATO): la firma el Supervisor
+  if (fila.id === 14) {
+    if (rol === 'SUPERVISOR') return true
+  }
+
+  // 2. Solo RESPONSABLE_AREA (o Supervisor en fila 14) puede firmar dependencias
+  if (!esResponsableArea.value && (fila.id !== 14 || rol !== 'SUPERVISOR')) {
+    return false
+  }
+
+  const nombreUsuario = normalizarTexto(u.nombre || u.nombre_completo)
+  const correoUsuario = normalizarTexto(u.correo || u.correo_institucional)
+  const depUsuario = normalizarTexto(u.dependencia)
+  const cargoUsuario = normalizarTexto(u.cargo)
+  const nombresFila = normalizarTexto(fila.nombres)
+
+  // Coincidencia directa por correo institucional
+  if (correoUsuario) {
+    if (fila.id === 1 && (correoUsuario.includes('tic') || correoUsuario.includes('chacon'))) return true
+    if (fila.id === 2 && (correoUsuario.includes('document') || correoUsuario.includes('ramirez'))) return true
+    if (fila.id === 3 && (correoUsuario.includes('secretaria') || correoUsuario.includes('carne') || correoUsuario.includes('sanabria'))) return true
+    if (fila.id === 4 && (correoUsuario.includes('almacen') || correoUsuario.includes('inventario'))) return true
+    if (fila.id === 5 && (correoUsuario.includes('servicios') || correoUsuario.includes('silva'))) return true
+    if (fila.id === 6 && (correoUsuario.includes('contab') || correoUsuario.includes('melgarejo'))) return true
+    if (fila.id === 7 && (correoUsuario.includes('tesor') || correoUsuario.includes('mayorga'))) return true
+    if (fila.id === 8 && (correoUsuario.includes('coordinac') || correoUsuario.includes('sanabria'))) return true
+    if (fila.id === 9 && (correoUsuario.includes('biblio') || correoUsuario.includes('celis') || correoUsuario.includes('martinez'))) return true
+    if (fila.id === 10 && (correoUsuario.includes('siga') || correoUsuario.includes('garcia') || correoUsuario.includes('jaimes'))) return true
+    if (fila.id === 11 && (correoUsuario.includes('educat') || correoUsuario.includes('gomez'))) return true
+    if (fila.id === 12 && (correoUsuario.includes('duarte') || correoUsuario.includes('hurtado') || correoUsuario.includes('novedad'))) return true
+    if (fila.id === 13 && (correoUsuario.includes('productiv') || correoUsuario.includes('carreno'))) return true
+    if (fila.id === 14 && (correoUsuario.includes('supervisor') || correoUsuario.includes('sanabria'))) return true
+  }
+
+  // Coincidencia por nombre del usuario contra los nombres de la fila
+  if (nombreUsuario && nombresFila) {
+    if (nombresFila.includes(nombreUsuario) || nombreUsuario.includes(nombresFila)) {
+      return true
+    }
+
+    if (fila.id === 1 && (nombreUsuario.includes('franklin') || nombreUsuario.includes('chacon'))) return true
+    if (fila.id === 2 && (nombreUsuario.includes('hilda') || (nombreUsuario.includes('lucia') && nombreUsuario.includes('ramirez')))) return true
+    if (fila.id === 3 && (nombreUsuario.includes('johon') || nombreUsuario.includes('sanabria'))) return true
+    if (fila.id === 4 && (nombreUsuario.includes('martha') || depUsuario.includes('almacen'))) return true
+    if (fila.id === 5 && (nombreUsuario.includes('juan david') || (nombreUsuario.includes('silva') && (nombreUsuario.includes('guierrez') || nombreUsuario.includes('gutierrez'))))) return true
+    if (fila.id === 6 && (nombreUsuario.includes('zaida leny') || (nombreUsuario.includes('zaida') && nombreUsuario.includes('melgarejo')))) return true
+    if (fila.id === 7 && (nombreUsuario.includes('nelcy') || nombreUsuario.includes('mayorga'))) return true
+    if (fila.id === 8 && (nombreUsuario.includes('johon') || nombreUsuario.includes('sanabria'))) return true
+    if (fila.id === 9 && (nombreUsuario.includes('andrea') || nombreUsuario.includes('juliana') || nombreUsuario.includes('celis') || nombreUsuario.includes('yudith') || nombreUsuario.includes('martinez') || nombreUsuario.includes('biblioteca'))) return true
+    if (fila.id === 10 && (nombreUsuario.includes('zaida jeleidy') || (nombreUsuario.includes('jeleidy') && nombreUsuario.includes('garcia')) || (nombreUsuario.includes('zaida') && nombreUsuario.includes('jaimes')))) return true
+    if (fila.id === 11 && (nombreUsuario.includes('erika') || (nombreUsuario.includes('johana') && nombreUsuario.includes('gomez')))) return true
+    if (fila.id === 12 && (nombreUsuario.includes('nelson') || nombreUsuario.includes('duarte') || nombreUsuario.includes('eileen') || nombreUsuario.includes('erlensi') || nombreUsuario.includes('hurtado'))) return true
+    if (fila.id === 13 && (nombreUsuario.includes('karen') || (nombreUsuario.includes('andrea') && nombreUsuario.includes('carreno')))) return true
+    if (fila.id === 14 && (nombreUsuario.includes('johon') || nombreUsuario.includes('sanabria'))) return true
+  }
+
+  // Coincidencia por dependencia configurada en el perfil
+  if (depUsuario) {
+    if (fila.id === 1 && (depUsuario.includes('tic') || depUsuario.includes('tecnol') || depUsuario.includes('sistema'))) return true
+    if (fila.id === 2 && (depUsuario.includes('document') || depUsuario.includes('archivo'))) return true
+    if (fila.id === 3 && (depUsuario.includes('secretaria') || depUsuario.includes('carne'))) return true
+    if (fila.id === 4 && (depUsuario.includes('almacen') || depUsuario.includes('inventario'))) return true
+    if (fila.id === 5 && (depUsuario.includes('servicios') || depUsuario.includes('adquisic') || depUsuario.includes('edificio'))) return true
+    if (fila.id === 6 && (depUsuario.includes('contab'))) return true
+    if (fila.id === 7 && (depUsuario.includes('tesor'))) return true
+    if (fila.id === 8 && (depUsuario.includes('coordinac') || depUsuario.includes('academ'))) return true
+    if (fila.id === 9 && (depUsuario.includes('biblio'))) return true
+    if (fila.id === 10 && (depUsuario.includes('siga') || depUsuario.includes('calidad'))) return true
+    if (fila.id === 11 && (depUsuario.includes('educat') || depUsuario.includes('admin educ'))) return true
+    if (fila.id === 12 && (depUsuario.includes('novedad') || depUsuario.includes('proceso admin'))) return true
+    if (fila.id === 13 && (depUsuario.includes('etapa') || depUsuario.includes('productiv'))) return true
+  }
+
+  // Coincidencia por cargo
+  if (cargoUsuario) {
+    if (fila.id === 1 && (cargoUsuario.includes('tic') || cargoUsuario.includes('tecnol'))) return true
+    if (fila.id === 4 && (cargoUsuario.includes('almacen') || cargoUsuario.includes('inventario'))) return true
+    if (fila.id === 6 && cargoUsuario.includes('contab')) return true
+    if (fila.id === 7 && cargoUsuario.includes('tesor')) return true
+    if (fila.id === 9 && cargoUsuario.includes('biblio')) return true
+    if (fila.id === 10 && cargoUsuario.includes('siga')) return true
+  }
+
+  // Caso especial: Usuario demo
+  if (nombreUsuario.includes('demo') && rol === 'RESPONSABLE_AREA' && !depUsuario) {
+    return fila.id === 1
+  }
+
+  return false
+}
+
+const miFilaParaFirmar = computed(() => {
+  return filasDependencias.value.find((f) => puedeFirmarFila(f)) || null
+})
+
+function limpiarMiFirma() {
+  if (miFilaParaFirmar.value) {
+    delete firmasTabla.value[miFilaParaFirmar.value.id]
+    const codigo = route.query.codigo || route.params.id
+    if (codigo) {
+      localStorage.setItem(`firmas_tabla_${codigo}`, JSON.stringify(firmasTabla.value))
+    }
+    $q.notify({
+      type: 'info',
+      message: 'Firma de tu área removida.',
+    })
+  }
+}
+
 function abrirModalFirmaFila(fila) {
-  if (!esResponsableArea.value) {
+  if (!puedeFirmarFila(fila)) {
     $q.notify({
       type: 'warning',
-      message: 'Las firmas de dependencias corresponden exclusivamente al Responsable de Área.',
+      message: `Esta firma corresponde exclusivamente a ${fila.nombres} (${fila.dependencia.replace(/<[^>]*>/g, ' ')}).`,
+      icon: 'lock',
     })
     return
   }
@@ -810,49 +937,6 @@ function abrirModalFirmaFila(fila) {
   }
 }
 
-function limpiarFirmasTabla() {
-  if (!esResponsableArea.value) {
-    $q.notify({
-      type: 'warning',
-      message: 'Esta acción está reservada exclusivamente para los Responsables de Área.',
-    })
-    return
-  }
-  firmasTabla.value = {}
-  const codigo = route.query.codigo || route.params.id
-  if (codigo) {
-    localStorage.removeItem(`firmas_tabla_${codigo}`)
-  }
-}
-
-function estamparTodasLasFirmas() {
-  if (!esResponsableArea.value) {
-    $q.notify({
-      type: 'warning',
-      message: 'Esta acción está reservada exclusivamente para los Responsables de Área.',
-    })
-    return
-  }
-  if (datosSolicitud.value.estado === 'Rechazado') {
-    $q.notify({
-      type: 'warning',
-      message: 'No se pueden estampar firmas en una solicitud rechazada.',
-    })
-    return
-  }
-  const f = firmaGuardada.value || logoSena
-  filasDependencias.value.forEach((fila) => {
-    firmasTabla.value[fila.id] = f
-  })
-  const codigo = route.query.codigo || route.params.id
-  if (codigo) {
-    localStorage.setItem(`firmas_tabla_${codigo}`, JSON.stringify(firmasTabla.value))
-  }
-  $q.notify({
-    type: 'positive',
-    message: 'Firmas de dependencias estampadas exitosamente.',
-  })
-}
 
 function guardarFirmaCertificado() {
   if (!canvasRef.value) return
