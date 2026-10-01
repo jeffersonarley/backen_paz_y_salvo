@@ -757,6 +757,47 @@ function verCertificado(fila) {
   const codigo =
     fila.numeroSolicitud || fila.solicitud || fila.codigo || fila.numeroContrato || fila.contrato
 
+  if (codigo) {
+    const numCon =
+      fila.numeroContrato ||
+      (fila.contrato && !fila.contrato.includes('/') ? fila.contrato : 'CNT-2026-001')
+    const fchCon =
+      fila.fechaContrato ||
+      (fila.contrato && fila.contrato.includes('/') ? fila.contrato : '18/09/2026')
+    const datosParaPdf = {
+      contratista: fila.contratista || fila.nombreContratista || '',
+      identificacion: fila.identificacion || fila.documentoContratista || fila.documento || '',
+      ciudad: fila.ciudad || 'Ibagué',
+      regional: fila.regional || 'Tolima',
+      fecha: fila.fecha || new Date().toLocaleDateString('es-CO'),
+      direccion: (fila.direccion || fila.dependencia || 'Bienestar al Aprendiz').replace(
+        /\s*\/\s*Contratista/i,
+        '',
+      ),
+      numeroContrato: numCon,
+      fechaContrato: fchCon,
+      contrato: `${numCon} — ${fchCon}`,
+      causalTerminacion: fila.causalTerminacion || 'LIQUIDACION_MUTUO_ACUERDO',
+      clasificacion: fila.clasificacion || 'Publica',
+      responsable: fila.responsable || fila.supervisor || 'Ing. Carlos Supervisor',
+      estado: fila.estado || 'En revisión',
+      observacionRechazo: fila.observacionRechazo || fila.observaciones_supervisor || '',
+    }
+    localStorage.setItem(`certificado_datos_${codigo}`, JSON.stringify(datosParaPdf))
+    if (fila.contratista) {
+      localStorage.setItem(
+        `certificado_datos_${fila.contratista.toLowerCase().trim()}`,
+        JSON.stringify(datosParaPdf),
+      )
+    }
+    if (datosParaPdf.identificacion) {
+      localStorage.setItem(
+        `certificado_datos_${datosParaPdf.identificacion.trim()}`,
+        JSON.stringify(datosParaPdf),
+      )
+    }
+  }
+
   router.push({
     name: 'certificado-pdf',
     query: { codigo: codigo },
@@ -836,6 +877,18 @@ function editarSolicitud(fila) {
     numeroSolicitud: fila.numeroSolicitud || fila.solicitud || fila.codigo || codigoExistente,
     numeroContrato: fila.numeroContrato || fila.contrato || '',
     contratista: fila.contratista || fila.nombreContratista || '',
+    identificacion: fila.identificacion || fila.documentoContratista || fila.documento || '',
+    ciudad: fila.ciudad || 'Ibagué',
+    regional: fila.regional || 'Tolima',
+    direccion: (fila.direccion || fila.dependencia || fila.nombreDependencia || '').replace(
+      /\s*\/\s*Contratista/i,
+      '',
+    ),
+    fechaContrato:
+      fila.fechaContrato ||
+      (fila.contrato && fila.contrato.includes('/') ? fila.contrato : '18/09/2026'),
+    causalTerminacion: fila.causalTerminacion || 'LIQUIDACION_MUTUO_ACUERDO',
+    clasificacion: fila.clasificacion || 'Publica',
     dependencia: fila.dependencia || fila.nombreDependencia || '',
     responsable: fila.responsable || fila.supervisor || '',
     fecha: fila.fecha || new Date().toISOString().substring(0, 10),

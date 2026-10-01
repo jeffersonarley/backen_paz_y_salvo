@@ -31,6 +31,16 @@
           <q-tooltip>Borrar las firmas de la tabla</q-tooltip>
         </q-btn>
         <q-btn
+          flat
+          dense
+          color="primary"
+          icon="edit_note"
+          label="Editar Datos Formato"
+          @click="abrirModalEditarDatos"
+        >
+          <q-tooltip>Modificar o completar datos del contratista, contrato, regional y causal de terminación</q-tooltip>
+        </q-btn>
+        <q-btn
           :color="datosSolicitud.estado === 'Rechazado' ? 'grey-8' : 'positive'"
           icon="print"
           :label="datosSolicitud.estado === 'Rechazado' ? 'Imprimir (Borrador)' : 'Imprimir'"
@@ -97,17 +107,18 @@
         <div class="barra-negra">CLASIFICACIÓN DE LA INFORMACIÓN</div>
 
         <!-- Tabla de Clasificación de la Información (6 celdas exactas) -->
-        <div class="clasificacion-tabla">
+        <!-- Tabla de Clasificación de la Información (6 celdas exactas) -->
+        <div class="clasificacion-tabla cursor-pointer" @click="abrirModalEditarDatos" title="Clic para cambiar clasificación de la información">
           <div class="clasif-col">Pública</div>
-          <div class="clasif-check">X</div>
+          <div class="clasif-check">{{ datosSolicitud.clasificacion === 'Publica' || !datosSolicitud.clasificacion ? 'X' : '' }}</div>
           <div class="clasif-col">Pública Clasificada</div>
-          <div class="clasif-check"></div>
+          <div class="clasif-check">{{ datosSolicitud.clasificacion === 'Publica Clasificada' ? 'X' : '' }}</div>
           <div class="clasif-col">Pública Reservada</div>
-          <div class="clasif-check"></div>
+          <div class="clasif-check">{{ datosSolicitud.clasificacion === 'Publica Reservada' ? 'X' : '' }}</div>
         </div>
 
         <!-- Datos del Contratista - Cuadrícula Oficial GCCON-F-088 -->
-        <div class="seccion-datos">
+        <div class="seccion-datos cursor-pointer" @click="abrirModalEditarDatos" title="Clic para editar o corregir datos del contratista, fechas o contrato">
           <!-- Fila 1: Nombres y Apellidos del Contratista | Identificación -->
           <div class="fila-contratista-1">
             <div class="celda-nombre-contratista">
@@ -143,29 +154,41 @@
           <!-- Fila 4: Número y Fecha de Contrato -->
           <div class="fila-contratista-4">
             <div class="celda-etiqueta celda-contrato-lbl">NÚMERO Y FECHA DE CONTRATO:</div>
-            <div class="celda-valor celda-contrato-val">{{ datosSolicitud.contrato }}</div>
+            <div class="celda-valor celda-contrato-val">
+              <template v-if="datosSolicitud.numeroContrato && datosSolicitud.fechaContrato">
+                <span class="text-weight-bold">{{ datosSolicitud.numeroContrato }}</span>
+                <span class="q-mx-sm">—</span>
+                <span>{{ datosSolicitud.fechaContrato }}</span>
+              </template>
+              <template v-else-if="datosSolicitud.numeroContrato">
+                <span class="text-weight-bold">{{ datosSolicitud.numeroContrato }}</span>
+              </template>
+              <template v-else>
+                <span>{{ datosSolicitud.contrato }}</span>
+              </template>
+            </div>
           </div>
         </div>
 
         <!-- Causal de Terminación del Contrato -->
         <div class="titulo-causal">CAUSAL DE TERMINACIÓN DEL CONTRATO</div>
 
-        <div class="fila-causales">
+        <div class="fila-causales cursor-pointer" @click="abrirModalEditarDatos" title="Clic para seleccionar causal de terminación">
           <div class="causal-item">
             <span class="causal-nombre">LIQUIDACIÓN POR MUTUO<br />ACUERDO</span>
-            <div class="causal-caja-cuadrada"></div>
+            <div class="causal-caja-cuadrada">{{ datosSolicitud.causalTerminacion === 'LIQUIDACION_MUTUO_ACUERDO' || !datosSolicitud.causalTerminacion ? 'X' : '' }}</div>
           </div>
           <div class="causal-item">
             <span class="causal-nombre">CESIÓN</span>
-            <div class="causal-caja-rect"></div>
+            <div class="causal-caja-rect">{{ datosSolicitud.causalTerminacion === 'CESION' ? 'X' : '' }}</div>
           </div>
           <div class="causal-item">
             <span class="causal-nombre">LIQUIDACIÓN ANTICIPADA<br />POR MUTUO ACUERDO</span>
-            <div class="causal-caja-cuadrada"></div>
+            <div class="causal-caja-cuadrada">{{ datosSolicitud.causalTerminacion === 'LIQUIDACION_ANTICIPADA' ? 'X' : '' }}</div>
           </div>
           <div class="causal-item">
             <span class="causal-nombre">TERMINACIÓN<br />UNILATERAL</span>
-            <div class="causal-caja-cuadrada"></div>
+            <div class="causal-caja-cuadrada">{{ datosSolicitud.causalTerminacion === 'TERMINACION_UNILATERAL' ? 'X' : '' }}</div>
           </div>
         </div>
 
@@ -327,6 +350,208 @@
             icon="verified"
             label="Estampar en Certificado"
             @click="guardarFirmaCertificado"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <!-- Diálogo para Editar y Guardar los Datos del Certificado GCCON-F-088 -->
+    <q-dialog v-model="dialogoEditarDatos" persistent>
+      <q-card style="min-width: 580px; max-width: 95vw">
+        <q-card-section class="bg-primary text-white row items-center justify-between">
+          <div class="text-h6 text-weight-bold">
+            <q-icon name="edit_document" class="q-mr-sm" />
+            Editar Información del Certificado GCCON-F-088
+          </div>
+          <q-btn icon="close" flat round dense v-close-popup />
+        </q-card-section>
+
+        <q-separator />
+
+        <q-card-section class="q-pa-md q-gutter-y-sm scroll" style="max-height: 70vh">
+          <div class="text-caption text-grey-8 q-mb-xs">
+            Esta información se guardará permanentemente para este usuario y se reflejará de forma exacta en el certificado impreso.
+          </div>
+
+          <!-- Clasificación de la Información -->
+          <div class="q-mb-xs">
+            <div class="text-subtitle2 text-weight-bold text-dark q-mb-xs">Clasificación de la Información:</div>
+            <q-btn-toggle
+              v-model="formularioEdicion.clasificacion"
+              spread
+              no-caps
+              rounded
+              unelevated
+              toggle-color="primary"
+              color="grey-3"
+              text-color="dark"
+              :options="[
+                { label: 'Pública', value: 'Publica' },
+                { label: 'Pública Clasificada', value: 'Publica Clasificada' },
+                { label: 'Pública Reservada', value: 'Publica Reservada' }
+              ]"
+            />
+          </div>
+
+          <q-separator class="q-my-sm" />
+
+          <!-- Datos del Contratista -->
+          <div class="row q-col-gutter-sm">
+            <div class="col-12 col-md-7">
+              <q-input
+                v-model="formularioEdicion.contratista"
+                label="Nombres y Apellidos del Contratista *"
+                outlined
+                dense
+              >
+                <template #prepend>
+                  <q-icon name="person" color="primary" />
+                </template>
+              </q-input>
+            </div>
+            <div class="col-12 col-md-5">
+              <q-input
+                v-model="formularioEdicion.identificacion"
+                label="Identificación / Cédula *"
+                outlined
+                dense
+              >
+                <template #prepend>
+                  <q-icon name="badge" color="primary" />
+                </template>
+              </q-input>
+            </div>
+          </div>
+
+          <!-- Ciudad, Regional y Fecha -->
+          <div class="row q-col-gutter-sm">
+            <div class="col-12 col-md-4">
+              <q-input
+                v-model="formularioEdicion.ciudad"
+                label="Ciudad *"
+                outlined
+                dense
+              >
+                <template #prepend>
+                  <q-icon name="location_city" color="primary" />
+                </template>
+              </q-input>
+            </div>
+            <div class="col-12 col-md-4">
+              <q-input
+                v-model="formularioEdicion.regional"
+                label="Regional *"
+                outlined
+                dense
+              >
+                <template #prepend>
+                  <q-icon name="map" color="primary" />
+                </template>
+              </q-input>
+            </div>
+            <div class="col-12 col-md-4">
+              <q-input
+                v-model="formularioEdicion.fecha"
+                label="Fecha de Expedición *"
+                outlined
+                dense
+              >
+                <template #prepend>
+                  <q-icon name="event" color="primary" />
+                </template>
+              </q-input>
+            </div>
+          </div>
+
+          <!-- Dirección u Oficina donde se ejecutó el contrato -->
+          <q-input
+            v-model="formularioEdicion.direccion"
+            label="Dirección u Oficina donde se ejecutó el contrato *"
+            outlined
+            dense
+            hint="Ej. Gestión Tecnológica (TIC), Bienestar al Aprendiz, etc."
+          >
+            <template #prepend>
+              <q-icon name="apartment" color="primary" />
+            </template>
+          </q-input>
+
+          <!-- Número y Fecha de Contrato -->
+          <div class="row q-col-gutter-sm">
+            <div class="col-12 col-md-6">
+              <q-input
+                v-model="formularioEdicion.numeroContrato"
+                label="Número de Contrato *"
+                placeholder="Ej. CNT-2026-001"
+                outlined
+                dense
+              >
+                <template #prepend>
+                  <q-icon name="description" color="primary" />
+                </template>
+              </q-input>
+            </div>
+            <div class="col-12 col-md-6">
+              <q-input
+                v-model="formularioEdicion.fechaContrato"
+                label="Fecha de Inicio / Firma de Contrato"
+                placeholder="Ej. 18/09/2026"
+                outlined
+                dense
+              >
+                <template #prepend>
+                  <q-icon name="calendar_today" color="primary" />
+                </template>
+              </q-input>
+            </div>
+          </div>
+
+          <q-separator class="q-my-sm" />
+
+          <!-- Causal de Terminación del Contrato -->
+          <div>
+            <div class="text-subtitle2 text-weight-bold text-dark q-mb-xs">
+              Causal de Terminación del Contrato:
+            </div>
+            <div class="q-gutter-sm">
+              <q-radio
+                v-model="formularioEdicion.causalTerminacion"
+                val="LIQUIDACION_MUTUO_ACUERDO"
+                label="Liquidación por Mutuo Acuerdo"
+                dense
+              />
+              <q-radio
+                v-model="formularioEdicion.causalTerminacion"
+                val="CESION"
+                label="Cesión"
+                dense
+              />
+              <q-radio
+                v-model="formularioEdicion.causalTerminacion"
+                val="LIQUIDACION_ANTICIPADA"
+                label="Liquidación Anticipada por Mutuo Acuerdo"
+                dense
+              />
+              <q-radio
+                v-model="formularioEdicion.causalTerminacion"
+                val="TERMINACION_UNILATERAL"
+                label="Terminación Unilateral"
+                dense
+              />
+            </div>
+          </div>
+        </q-card-section>
+
+        <q-separator />
+
+        <q-card-actions align="right" class="q-pa-md bg-grey-1">
+          <q-btn flat label="Cancelar" color="grey-8" v-close-popup />
+          <q-btn
+            unelevated
+            icon="save"
+            label="Guardar y Actualizar Formato"
+            color="positive"
+            @click="guardarDatosFormato"
           />
         </q-card-actions>
       </q-card>
@@ -581,8 +806,12 @@ const datosSolicitud = ref({
   ciudad: 'Ibagué',
   fecha: new Date().toLocaleDateString('es-CO'),
   regional: 'Tolima',
-  direccion: 'Centro de Comercio y Servicios',
+  direccion: 'Gestión Tecnológica (TIC)',
   contrato: '',
+  numeroContrato: '',
+  fechaContrato: '',
+  causalTerminacion: 'LIQUIDACION_MUTUO_ACUERDO',
+  clasificacion: 'Publica',
   responsable: '',
   estado: 'En revisión',
   observacionRechazo: '',
@@ -591,6 +820,106 @@ const datosSolicitud = ref({
   bienesFaltantes: [],
   firmas: [],
 })
+
+const dialogoEditarDatos = ref(false)
+const formularioEdicion = ref({
+  contratista: '',
+  identificacion: '',
+  ciudad: 'Ibagué',
+  fecha: '',
+  regional: 'Tolima',
+  direccion: '',
+  numeroContrato: '',
+  fechaContrato: '',
+  causalTerminacion: 'LIQUIDACION_MUTUO_ACUERDO',
+  clasificacion: 'Publica',
+})
+
+function abrirModalEditarDatos() {
+  formularioEdicion.value = {
+    contratista: datosSolicitud.value.contratista || '',
+    identificacion: datosSolicitud.value.identificacion || '',
+    ciudad: datosSolicitud.value.ciudad || 'Ibagué',
+    fecha: datosSolicitud.value.fecha || new Date().toISOString().slice(0, 10),
+    regional: datosSolicitud.value.regional || 'Tolima',
+    direccion: datosSolicitud.value.direccion || '',
+    numeroContrato: datosSolicitud.value.numeroContrato || datosSolicitud.value.contrato || '',
+    fechaContrato: datosSolicitud.value.fechaContrato || '',
+    causalTerminacion: datosSolicitud.value.causalTerminacion || 'LIQUIDACION_MUTUO_ACUERDO',
+    clasificacion: datosSolicitud.value.clasificacion || 'Publica',
+  }
+  dialogoEditarDatos.value = true
+}
+
+function guardarDatosFormato() {
+  datosSolicitud.value = {
+    ...datosSolicitud.value,
+    ...formularioEdicion.value,
+    contrato: formularioEdicion.value.numeroContrato
+      ? `${formularioEdicion.value.numeroContrato} — ${formularioEdicion.value.fechaContrato || datosSolicitud.value.fecha}`
+      : datosSolicitud.value.contrato,
+  }
+
+  const codigo = route.query.codigo || route.params.id || datosSolicitud.value.contratista
+
+  // 1. Guardar en localStorage para este usuario / contrato
+  localStorage.setItem(`certificado_datos_${codigo}`, JSON.stringify(datosSolicitud.value))
+  if (datosSolicitud.value.contratista) {
+    localStorage.setItem(
+      `certificado_datos_${datosSolicitud.value.contratista.toLowerCase().trim()}`,
+      JSON.stringify(datosSolicitud.value),
+    )
+  }
+  if (datosSolicitud.value.identificacion) {
+    localStorage.setItem(
+      `certificado_datos_${datosSolicitud.value.identificacion.trim()}`,
+      JSON.stringify(datosSolicitud.value),
+    )
+  }
+  if (datosSolicitud.value.numeroContrato) {
+    localStorage.setItem(
+      `certificado_datos_${datosSolicitud.value.numeroContrato.toLowerCase().trim()}`,
+      JSON.stringify(datosSolicitud.value),
+    )
+  }
+
+  // 2. Sincronizar con el store de solicitudes
+  if (Array.isArray(store.solicitudes)) {
+    const item = store.solicitudes.find(
+      (s) =>
+        s._id === codigo ||
+        s.id === codigo ||
+        s.numeroSolicitud === codigo ||
+        s.numeroContrato === codigo ||
+        s.contrato === codigo ||
+        (s.contratista &&
+          s.contratista.toLowerCase().trim() ===
+            datosSolicitud.value.contratista.toLowerCase().trim()),
+    )
+    if (item) {
+      item.contratista = datosSolicitud.value.contratista
+      item.nombreContratista = datosSolicitud.value.contratista
+      item.identificacion = datosSolicitud.value.identificacion
+      item.documentoContratista = datosSolicitud.value.identificacion
+      item.ciudad = datosSolicitud.value.ciudad
+      item.fecha = datosSolicitud.value.fecha
+      item.regional = datosSolicitud.value.regional
+      item.direccion = datosSolicitud.value.direccion
+      item.dependencia = datosSolicitud.value.direccion
+      item.numeroContrato = datosSolicitud.value.numeroContrato
+      item.fechaContrato = datosSolicitud.value.fechaContrato
+      item.causalTerminacion = datosSolicitud.value.causalTerminacion
+      item.clasificacion = datosSolicitud.value.clasificacion
+    }
+  }
+
+  dialogoEditarDatos.value = false
+  $q.notify({
+    type: 'positive',
+    message: 'Información del formato guardada exitosamente para este usuario.',
+    icon: 'save',
+  })
+}
 
 const listaNovedadesCertificado = computed(() => {
   if (Array.isArray(datosSolicitud.value.novedades) && datosSolicitud.value.novedades.length > 0) {
@@ -634,6 +963,22 @@ onMounted(async () => {
       }
     }
 
+    // 1. Verificar si hay datos guardados previamente para este código o contratista
+    const claveStorage = `certificado_datos_${String(codigo).toLowerCase().trim()}`
+    const datosGuardados =
+      localStorage.getItem(`certificado_datos_${codigo}`) || localStorage.getItem(claveStorage)
+    if (datosGuardados) {
+      try {
+        const parsed = JSON.parse(datosGuardados)
+        datosSolicitud.value = {
+          ...datosSolicitud.value,
+          ...parsed,
+        }
+      } catch (e) {
+        console.warn('Error al parsear datos guardados del certificado:', e)
+      }
+    }
+
     let encontrada = null
     if (typeof store.obtenerPorCodigo === 'function') {
       encontrada = store.obtenerPorCodigo(codigo)
@@ -646,22 +991,46 @@ onMounted(async () => {
     }
 
     if (encontrada) {
+      const numContrato = encontrada.numeroContrato || encontrada.contrato || codigo
+      let fchContrato = encontrada.fechaContrato || ''
+      if (!fchContrato && /^\d{2}[/-]\d{2}[/-]\d{2,4}$/.test(String(numContrato).trim())) {
+        fchContrato = numContrato
+      }
+
       datosSolicitud.value = {
         contratista:
-          encontrada.contratista || encontrada.nombreContratista || 'Paula Valentina Rache Fonseca',
+          datosSolicitud.value.contratista ||
+          encontrada.contratista ||
+          encontrada.nombreContratista ||
+          'Paula Valentina Rache Fonseca',
         identificacion:
+          datosSolicitud.value.identificacion ||
           encontrada.identificacion ||
           encontrada.documento ||
           encontrada.documentoContratista ||
           '1098765432',
-        ciudad: encontrada.ciudad || 'Ibagué',
-        fecha: encontrada.fecha || new Date().toLocaleDateString('es-CO'),
-        regional: encontrada.regional || 'Tolima',
-        direccion:
-          encontrada.direccion || encontrada.dependencia || 'Centro de Comercio y Servicios',
-        contrato: encontrada.numeroContrato || encontrada.contrato || codigo,
+        ciudad: datosSolicitud.value.ciudad || encontrada.ciudad || 'Ibagué',
+        fecha: datosSolicitud.value.fecha || encontrada.fecha || new Date().toLocaleDateString('es-CO'),
+        regional: datosSolicitud.value.regional || encontrada.regional || 'Tolima',
+        direccion: (
+          datosSolicitud.value.direccion ||
+          encontrada.direccion ||
+          encontrada.dependencia ||
+          'Gestión Tecnológica (TIC)'
+        ).replace(/\s*\/\s*Contratista/i, ''),
+        numeroContrato:
+          datosSolicitud.value.numeroContrato ||
+          (numContrato && !numContrato.includes('/') ? numContrato : 'CNT-2026-001'),
+        fechaContrato: datosSolicitud.value.fechaContrato || fchContrato || '18/09/2026',
+        contrato: numContrato,
+        causalTerminacion:
+          datosSolicitud.value.causalTerminacion ||
+          encontrada.causalTerminacion ||
+          'LIQUIDACION_MUTUO_ACUERDO',
+        clasificacion:
+          datosSolicitud.value.clasificacion || encontrada.clasificacion || 'Publica',
         responsable:
-          encontrada.responsable || encontrada.supervisor || 'Johon Fredy Sanabria Muñoz',
+          encontrada.responsable || encontrada.supervisor || 'Ing. Carlos Supervisor',
         estado: encontrada.estado || 'En revisión',
         observacionRechazo:
           encontrada.observacionRechazo || encontrada.observaciones_supervisor || '',
@@ -683,14 +1052,26 @@ onMounted(async () => {
         )
         if (c) {
           datosSolicitud.value = {
-            contratista: c.nombre_contratista || c.contratista || 'Paula Valentina Rache Fonseca',
-            identificacion: c.telefono || '1098765432',
-            ciudad: 'Ibagué',
-            fecha: new Date().toLocaleDateString('es-CO'),
-            regional: 'Tolima',
-            direccion: c.dependencia?.nombre_dependencia || 'Centro de Comercio y Servicios',
+            ...datosSolicitud.value,
+            contratista:
+              datosSolicitud.value.contratista ||
+              c.nombre_contratista ||
+              c.contratista ||
+              'Paula Valentina Rache Fonseca',
+            identificacion: datosSolicitud.value.identificacion || c.telefono || '1098765432',
+            ciudad: datosSolicitud.value.ciudad || c.ciudad || 'Ibagué',
+            fecha: datosSolicitud.value.fecha || new Date().toLocaleDateString('es-CO'),
+            regional: datosSolicitud.value.regional || c.regional || 'Tolima',
+            direccion: (
+              datosSolicitud.value.direccion ||
+              c.dependencia?.nombre_dependencia ||
+              'Gestión Tecnológica (TIC)'
+            ).replace(/\s*\/\s*Contratista/i, ''),
+            numeroContrato:
+              datosSolicitud.value.numeroContrato || c.numero_contrato || codigo,
+            fechaContrato: datosSolicitud.value.fechaContrato || '18/09/2026',
             contrato: c.numero_contrato || codigo,
-            responsable: c.supervisor || 'Johon Fredy Sanabria Muñoz',
+            responsable: c.supervisor || 'Ing. Carlos Supervisor',
             estado: c.estado || 'En revisión',
             observacionRechazo: c.observaciones_supervisor || '',
             bienesFaltantes: [],
@@ -699,6 +1080,50 @@ onMounted(async () => {
         }
       } catch (err) {
         console.warn('Carga diferida contrato:', err.message)
+      }
+
+      // Si aún faltan datos de contratista, buscar por usuario (e.g. 'stiven')
+      try {
+        const respUsuarios = await api.get('/usuarios?rol=Contratista')
+        const listaUsuarios = Array.isArray(respUsuarios.data)
+          ? respUsuarios.data
+          : respUsuarios.data?.usuarios || []
+        const u = listaUsuarios.find(
+          (item) =>
+            item._id === codigo ||
+            item.id === codigo ||
+            (item.nombre_completo &&
+              item.nombre_completo.toLowerCase().trim() === String(codigo).toLowerCase().trim()) ||
+            item.documento === codigo ||
+            item.telefono === codigo,
+        )
+        if (u) {
+          const nomLimpio = u.nombre_completo || u.nombre || codigo
+          const docLimpio = u.documento || u.telefono || '1234567899'
+          const depLimpia = (
+            u.dependencia ||
+            u.dependencia_id?.nombre_dependencia ||
+            'Bienestar al Aprendiz'
+          ).replace(/\s*\/\s*Contratista/i, '')
+          const numCon = u.numero_contrato || (codigo && !codigo.includes('/') ? codigo : 'CNT-2026-001')
+          const fchCon = u.createdAt
+            ? new Date(u.createdAt).toLocaleDateString('es-CO')
+            : codigo.includes('/')
+              ? codigo
+              : '18/09/2026'
+
+          datosSolicitud.value = {
+            ...datosSolicitud.value,
+            contratista: datosSolicitud.value.contratista || nomLimpio,
+            identificacion: datosSolicitud.value.identificacion || docLimpio,
+            direccion: datosSolicitud.value.direccion || depLimpia,
+            numeroContrato: datosSolicitud.value.numeroContrato || numCon,
+            fechaContrato: datosSolicitud.value.fechaContrato || fchCon,
+            contrato: `${numCon} — ${fchCon}`,
+          }
+        }
+      } catch (errU) {
+        console.warn('Búsqueda por contratista:', errU.message)
       }
     }
   } else {
@@ -1106,6 +1531,11 @@ Motivo registrado: "${datosSolicitud.value.observacionRechazo || 'Bienes o reque
   border: 1.5px solid #000000;
   background: #ffffff;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 14px;
 }
 
 .causal-caja-rect {
@@ -1114,6 +1544,11 @@ Motivo registrado: "${datosSolicitud.value.observacionRechazo || 'Bienes o reque
   border: 1.5px solid #000000;
   background: #ffffff;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 14px;
 }
 
 /* Tabla de Dependencias */
