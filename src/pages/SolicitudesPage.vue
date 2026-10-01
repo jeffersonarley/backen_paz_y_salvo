@@ -711,6 +711,14 @@ function obtenerColorEstado(estado) {
 }
 
 function irAFirmar(fila) {
+  if (!auth.tienePermiso(['RESPONSABLE_AREA'])) {
+    $q.notify({
+      type: 'warning',
+      message: 'La evaluación y firma de dependencias está reservada exclusivamente para los Responsables de Área.',
+      icon: 'lock',
+    })
+    return
+  }
   if (fila.estado === 'Rechazado') {
     $q.dialog({
       title: 'Firma No Habilitada',

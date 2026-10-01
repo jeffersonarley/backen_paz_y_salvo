@@ -270,14 +270,17 @@
             <div
               class="caja-firma-contratista"
               :class="{
-                'cursor-pointer': datosSolicitud.estado !== 'Rechazado',
-                'cursor-not-allowed': datosSolicitud.estado === 'Rechazado',
+                'cursor-pointer': esContratista && datosSolicitud.estado !== 'Rechazado',
+                'cursor-default': !esContratista,
+                'cursor-not-allowed': esContratista && datosSolicitud.estado === 'Rechazado',
               }"
-              @click="abrirModalFirma"
+              @click="esContratista ? abrirModalFirma() : null"
               :title="
                 datosSolicitud.estado === 'Rechazado'
                   ? 'Firma retenida: solicitud rechazada por novedades pendientes'
-                  : 'Clic para estampar, cambiar o ajustar la firma del contratista'
+                  : esContratista
+                    ? 'Clic para estampar, cambiar o ajustar la firma del contratista'
+                    : 'Firma reservada exclusivamente para el Contratista'
               "
             >
               <div
@@ -285,7 +288,7 @@
                 class="contenedor-firma-img"
               >
                 <img :src="firmaGuardada" alt="Firma del Contratista" class="img-firma-estampada" />
-                <q-tooltip>Clic para editar, agrandar o ajustar tu firma</q-tooltip>
+                <q-tooltip v-if="esContratista">Clic para editar, agrandar o ajustar tu firma</q-tooltip>
               </div>
               <div v-else class="contenedor-firma-placeholder no-print">
                 <q-btn
@@ -298,14 +301,17 @@
                   label="Firma bloqueada (Rechazado)"
                 />
                 <q-btn
-                  v-else
+                  v-else-if="esContratista"
                   flat
                   dense
                   size="xs"
                   color="primary"
                   icon="draw"
-                  :label="esContratista ? 'Clic para firmar (Contratista)' : 'Clic para firmar'"
+                  label="Clic para firmar (Contratista)"
                 />
+                <span v-else class="text-caption text-grey-6 text-italic">
+                  Pendiente de firma del contratista
+                </span>
               </div>
               <div class="linea-firma-sola"></div>
               <div class="texto-firma-sola">Firma del Contratista</div>
@@ -693,6 +699,14 @@ const filasDependencias = ref([
 ])
 
 function abrirModalFirma() {
+  if (!esContratista.value) {
+    $q.notify({
+      type: 'warning',
+      message: 'Esta firma corresponde exclusivamente al Contratista.',
+      icon: 'lock',
+    })
+    return
+  }
   filaParaFirmar.value = null
   if (datosSolicitud.value.estado === 'Rechazado') {
     $q.dialog({
