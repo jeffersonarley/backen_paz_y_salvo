@@ -767,8 +767,8 @@ function verCertificado(fila) {
     const datosParaPdf = {
       contratista: fila.contratista || fila.nombreContratista || '',
       identificacion: fila.identificacion || fila.documentoContratista || fila.documento || '',
-      ciudad: fila.ciudad || 'Ibagué',
-      regional: fila.regional || 'Tolima',
+      ciudad: (!fila.ciudad || fila.ciudad === 'Ibagué') ? 'San Gil' : fila.ciudad,
+      regional: (!fila.regional || fila.regional === 'Tolima') ? 'Santander' : fila.regional,
       fecha: fila.fecha || new Date().toLocaleDateString('es-CO'),
       direccion: (fila.direccion || fila.dependencia || 'Bienestar al Aprendiz').replace(
         /\s*\/\s*Contratista/i,
@@ -878,8 +878,8 @@ function editarSolicitud(fila) {
     numeroContrato: fila.numeroContrato || fila.contrato || '',
     contratista: fila.contratista || fila.nombreContratista || '',
     identificacion: fila.identificacion || fila.documentoContratista || fila.documento || '',
-    ciudad: fila.ciudad || 'Ibagué',
-    regional: fila.regional || 'Tolima',
+    ciudad: (!fila.ciudad || fila.ciudad === 'Ibagué') ? 'San Gil' : fila.ciudad,
+    regional: (!fila.regional || fila.regional === 'Tolima') ? 'Santander' : fila.regional,
     direccion: (fila.direccion || fila.dependencia || fila.nombreDependencia || '').replace(
       /\s*\/\s*Contratista/i,
       '',

@@ -357,8 +357,8 @@
 
     <!-- Diálogo para Editar y Guardar los Datos del Certificado GCCON-F-088 -->
     <q-dialog v-model="dialogoEditarDatos" persistent>
-      <q-card style="min-width: 580px; max-width: 95vw">
-        <q-card-section class="bg-primary text-white row items-center justify-between">
+      <q-card style="min-width: 650px; max-width: 95vw; border-radius: 12px">
+        <q-card-section class="bg-primary text-white row items-center justify-between q-py-md">
           <div class="text-h6 text-weight-bold">
             <q-icon name="edit_document" class="q-mr-sm" />
             Editar Información del Certificado GCCON-F-088
@@ -368,13 +368,13 @@
 
         <q-separator />
 
-        <q-card-section class="q-pa-md q-gutter-y-sm scroll" style="max-height: 70vh">
-          <div class="text-caption text-grey-8 q-mb-xs">
+        <q-card-section class="q-pa-lg scroll" style="max-height: 75vh">
+          <div class="text-caption text-grey-8 q-mb-md">
             Esta información se guardará permanentemente para este usuario y se reflejará de forma exacta en el certificado impreso.
           </div>
 
           <!-- Clasificación de la Información -->
-          <div class="q-mb-xs">
+          <div class="q-mb-md">
             <div class="text-subtitle2 text-weight-bold text-dark q-mb-xs">Clasificación de la Información:</div>
             <q-btn-toggle
               v-model="formularioEdicion.clasificacion"
@@ -393,10 +393,10 @@
             />
           </div>
 
-          <q-separator class="q-my-sm" />
+          <q-separator class="q-my-md" />
 
           <!-- Datos del Contratista -->
-          <div class="row q-col-gutter-sm">
+          <div class="row q-col-gutter-md q-mb-md">
             <div class="col-12 col-md-7">
               <q-input
                 v-model="formularioEdicion.contratista"
@@ -424,18 +424,24 @@
           </div>
 
           <!-- Ciudad, Regional y Fecha -->
-          <div class="row q-col-gutter-sm">
-            <div class="col-12 col-md-4">
-              <q-input
+          <div class="row q-col-gutter-md q-mb-md">
+            <div class="col-12 col-md-5">
+              <q-select
                 v-model="formularioEdicion.ciudad"
-                label="Ciudad *"
+                :options="ciudadesFiltradas"
+                use-input
+                fill-input
+                hide-selected
+                new-value-mode="add-unique"
+                @filter="filtrarCiudades"
+                label="Ciudad (Santander) *"
                 outlined
                 dense
               >
                 <template #prepend>
                   <q-icon name="location_city" color="primary" />
                 </template>
-              </q-input>
+              </q-select>
             </div>
             <div class="col-12 col-md-4">
               <q-input
@@ -449,7 +455,7 @@
                 </template>
               </q-input>
             </div>
-            <div class="col-12 col-md-4">
+            <div class="col-12 col-md-3">
               <q-input
                 v-model="formularioEdicion.fecha"
                 label="Fecha de Expedición *"
@@ -464,20 +470,22 @@
           </div>
 
           <!-- Dirección u Oficina donde se ejecutó el contrato -->
-          <q-input
-            v-model="formularioEdicion.direccion"
-            label="Dirección u Oficina donde se ejecutó el contrato *"
-            outlined
-            dense
-            hint="Ej. Gestión Tecnológica (TIC), Bienestar al Aprendiz, etc."
-          >
-            <template #prepend>
-              <q-icon name="apartment" color="primary" />
-            </template>
-          </q-input>
+          <div class="q-mb-md">
+            <q-input
+              v-model="formularioEdicion.direccion"
+              label="Dirección u Oficina donde se ejecutó el contrato *"
+              outlined
+              dense
+              hint="Ej. Gestión Tecnológica (TIC), Centro Agroturístico San Gil, Bienestar al Aprendiz, etc."
+            >
+              <template #prepend>
+                <q-icon name="apartment" color="primary" />
+              </template>
+            </q-input>
+          </div>
 
           <!-- Número y Fecha de Contrato -->
-          <div class="row q-col-gutter-sm">
+          <div class="row q-col-gutter-md q-mb-md">
             <div class="col-12 col-md-6">
               <q-input
                 v-model="formularioEdicion.numeroContrato"
@@ -506,38 +514,46 @@
             </div>
           </div>
 
-          <q-separator class="q-my-sm" />
+          <q-separator class="q-my-md" />
 
           <!-- Causal de Terminación del Contrato -->
-          <div>
-            <div class="text-subtitle2 text-weight-bold text-dark q-mb-xs">
+          <div class="q-mb-sm">
+            <div class="text-subtitle2 text-weight-bold text-dark q-mb-sm">
               Causal de Terminación del Contrato:
             </div>
-            <div class="q-gutter-sm">
-              <q-radio
-                v-model="formularioEdicion.causalTerminacion"
-                val="LIQUIDACION_MUTUO_ACUERDO"
-                label="Liquidación por Mutuo Acuerdo"
-                dense
-              />
-              <q-radio
-                v-model="formularioEdicion.causalTerminacion"
-                val="CESION"
-                label="Cesión"
-                dense
-              />
-              <q-radio
-                v-model="formularioEdicion.causalTerminacion"
-                val="LIQUIDACION_ANTICIPADA"
-                label="Liquidación Anticipada por Mutuo Acuerdo"
-                dense
-              />
-              <q-radio
-                v-model="formularioEdicion.causalTerminacion"
-                val="TERMINACION_UNILATERAL"
-                label="Terminación Unilateral"
-                dense
-              />
+            <div class="row q-col-gutter-sm">
+              <div class="col-12 col-sm-6">
+                <q-radio
+                  v-model="formularioEdicion.causalTerminacion"
+                  val="LIQUIDACION_MUTUO_ACUERDO"
+                  label="Liquidación por Mutuo Acuerdo"
+                  dense
+                />
+              </div>
+              <div class="col-12 col-sm-6">
+                <q-radio
+                  v-model="formularioEdicion.causalTerminacion"
+                  val="CESION"
+                  label="Cesión"
+                  dense
+                />
+              </div>
+              <div class="col-12 col-sm-6">
+                <q-radio
+                  v-model="formularioEdicion.causalTerminacion"
+                  val="LIQUIDACION_ANTICIPADA"
+                  label="Liquidación Anticipada por Mutuo Acuerdo"
+                  dense
+                />
+              </div>
+              <div class="col-12 col-sm-6">
+                <q-radio
+                  v-model="formularioEdicion.causalTerminacion"
+                  val="TERMINACION_UNILATERAL"
+                  label="Terminación Unilateral"
+                  dense
+                />
+              </div>
             </div>
           </div>
         </q-card-section>
@@ -800,12 +816,71 @@ function guardarFirmaCertificado() {
   dialogoFirma.value = false
 }
 
+const listaCiudadesSantander = [
+  'San Gil',
+  'Socorro',
+  'Bucaramanga',
+  'Floridablanca',
+  'Girón',
+  'Piedecuesta',
+  'Barrancabermeja',
+  'Barbosa',
+  'Vélez',
+  'Charalá',
+  'Málaga',
+  'Zapatoca',
+  'Oiba',
+  'Pinchote',
+  'Curití',
+  'Barichara',
+  'Aratoca',
+  'Valle de San José',
+  'Mogotes',
+  'San Joaquín',
+  'Onzaga',
+  'Simacota',
+  'Suaita',
+  'Palmas del Socorro',
+  'Villanueva',
+  'Cabrera',
+  'Guavatá',
+  'Puente Nacional',
+  'Cimitarra',
+  'Lebrija',
+  'Rionegro',
+  'Sabana de Torres',
+  'San Vicente de Chucurí',
+  'El Playón',
+  'Matanza',
+  'Suratá',
+  'California',
+  'Vetas',
+]
+
+const ciudadesFiltradas = ref([...listaCiudadesSantander])
+
+function filtrarCiudades(val, update) {
+  if (val === '') {
+    update(() => {
+      ciudadesFiltradas.value = listaCiudadesSantander
+    })
+    return
+  }
+
+  update(() => {
+    const aguja = val.toLowerCase()
+    ciudadesFiltradas.value = listaCiudadesSantander.filter(
+      (v) => v.toLowerCase().indexOf(aguja) > -1,
+    )
+  })
+}
+
 const datosSolicitud = ref({
   contratista: '',
   identificacion: '',
-  ciudad: 'Ibagué',
+  ciudad: 'San Gil',
   fecha: new Date().toLocaleDateString('es-CO'),
-  regional: 'Tolima',
+  regional: 'Santander',
   direccion: 'Gestión Tecnológica (TIC)',
   contrato: '',
   numeroContrato: '',
@@ -825,9 +900,9 @@ const dialogoEditarDatos = ref(false)
 const formularioEdicion = ref({
   contratista: '',
   identificacion: '',
-  ciudad: 'Ibagué',
+  ciudad: 'San Gil',
   fecha: '',
-  regional: 'Tolima',
+  regional: 'Santander',
   direccion: '',
   numeroContrato: '',
   fechaContrato: '',
@@ -836,18 +911,22 @@ const formularioEdicion = ref({
 })
 
 function abrirModalEditarDatos() {
+  const ciudadActual = datosSolicitud.value.ciudad
+  const regionalActual = datosSolicitud.value.regional
+
   formularioEdicion.value = {
     contratista: datosSolicitud.value.contratista || '',
     identificacion: datosSolicitud.value.identificacion || '',
-    ciudad: datosSolicitud.value.ciudad || 'Ibagué',
+    ciudad: (!ciudadActual || ciudadActual === 'Ibagué') ? 'San Gil' : ciudadActual,
     fecha: datosSolicitud.value.fecha || new Date().toISOString().slice(0, 10),
-    regional: datosSolicitud.value.regional || 'Tolima',
+    regional: (!regionalActual || regionalActual === 'Tolima') ? 'Santander' : regionalActual,
     direccion: datosSolicitud.value.direccion || '',
     numeroContrato: datosSolicitud.value.numeroContrato || datosSolicitud.value.contrato || '',
     fechaContrato: datosSolicitud.value.fechaContrato || '',
     causalTerminacion: datosSolicitud.value.causalTerminacion || 'LIQUIDACION_MUTUO_ACUERDO',
     clasificacion: datosSolicitud.value.clasificacion || 'Publica',
   }
+  ciudadesFiltradas.value = [...listaCiudadesSantander]
   dialogoEditarDatos.value = true
 }
 
@@ -1009,9 +1088,13 @@ onMounted(async () => {
           encontrada.documento ||
           encontrada.documentoContratista ||
           '1098765432',
-        ciudad: datosSolicitud.value.ciudad || encontrada.ciudad || 'Ibagué',
+        ciudad: (!datosSolicitud.value.ciudad || datosSolicitud.value.ciudad === 'Ibagué')
+          ? ((encontrada.ciudad && encontrada.ciudad !== 'Ibagué') ? encontrada.ciudad : 'San Gil')
+          : datosSolicitud.value.ciudad,
         fecha: datosSolicitud.value.fecha || encontrada.fecha || new Date().toLocaleDateString('es-CO'),
-        regional: datosSolicitud.value.regional || encontrada.regional || 'Tolima',
+        regional: (!datosSolicitud.value.regional || datosSolicitud.value.regional === 'Tolima')
+          ? ((encontrada.regional && encontrada.regional !== 'Tolima') ? encontrada.regional : 'Santander')
+          : datosSolicitud.value.regional,
         direccion: (
           datosSolicitud.value.direccion ||
           encontrada.direccion ||
@@ -1059,9 +1142,13 @@ onMounted(async () => {
               c.contratista ||
               'Paula Valentina Rache Fonseca',
             identificacion: datosSolicitud.value.identificacion || c.telefono || '1098765432',
-            ciudad: datosSolicitud.value.ciudad || c.ciudad || 'Ibagué',
+            ciudad: (!datosSolicitud.value.ciudad || datosSolicitud.value.ciudad === 'Ibagué')
+              ? ((c.ciudad && c.ciudad !== 'Ibagué') ? c.ciudad : 'San Gil')
+              : datosSolicitud.value.ciudad,
             fecha: datosSolicitud.value.fecha || new Date().toLocaleDateString('es-CO'),
-            regional: datosSolicitud.value.regional || c.regional || 'Tolima',
+            regional: (!datosSolicitud.value.regional || datosSolicitud.value.regional === 'Tolima')
+              ? ((c.regional && c.regional !== 'Tolima') ? c.regional : 'Santander')
+              : datosSolicitud.value.regional,
             direccion: (
               datosSolicitud.value.direccion ||
               c.dependencia?.nombre_dependencia ||
