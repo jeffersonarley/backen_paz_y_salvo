@@ -287,6 +287,24 @@
               :options="OPCIONES_ESTADO"
               label="Estado"
             />
+
+            <!-- Buzón de Observaciones de Rechazo si el estado es Rechazado -->
+            <q-input
+              v-if="solicitud.estado === 'Rechazado'"
+              v-model="solicitud.observacionRechazo"
+              outlined
+              dense
+              type="textarea"
+              rows="3"
+              label="Buzón de Observaciones de Rechazo / Novedades pendientes *"
+              placeholder="Escriba con exactitud los motivos del rechazo, bienes faltantes o requisitos pendientes por subsanar..."
+              class="q-mt-sm"
+              :rules="[(val) => !!val || 'El motivo de rechazo es obligatorio']"
+            >
+              <template #prepend>
+                <q-icon name="comment" color="negative" />
+              </template>
+            </q-input>
           </q-card-section>
 
           <q-card-actions align="right" class="q-pa-md">
@@ -595,6 +613,7 @@ const solicitud = ref({
   responsable: '',
   fecha: new Date().toISOString().substring(0, 10),
   estado: 'En revisión',
+  observacionRechazo: '',
 })
 
 const columns = [
@@ -813,6 +832,7 @@ function editarSolicitud(fila) {
     responsable: fila.responsable || fila.supervisor || '',
     fecha: fila.fecha || new Date().toISOString().substring(0, 10),
     estado: fila.estado || 'En revisión',
+    observacionRechazo: fila.observacionRechazo || fila.observaciones_supervisor || '',
   }
 
   codigoEditar.value = codigoExistente
@@ -899,6 +919,7 @@ function limpiarFormulario() {
     responsable: '',
     fecha: new Date().toISOString().substring(0, 10),
     estado: 'En revisión',
+    observacionRechazo: '',
   }
   dialogo.value = false
   editando.value = false
