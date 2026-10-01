@@ -13,7 +13,6 @@
           dense
           label="Seleccionar Tipo de Usuario / Rol *"
           class="q-mb-md"
-          @update:model-value="alCambiarRol"
         >
           <template #prepend>
             <q-icon
@@ -117,43 +116,28 @@ const opcionesRoles = [
   {
     label: 'Administrador',
     value: 'ADMINISTRADOR',
-    correo: 'admin@gccon.com',
-    pass: 'admin',
     icon: 'admin_panel_settings',
     descripcion: 'Gestión global y supervisores',
   },
   {
     label: 'Supervisor',
     value: 'SUPERVISOR',
-    correo: 'supervisor@gccon.com',
-    pass: 'super',
     icon: 'supervisor_account',
     descripcion: 'Gestión de contratistas y dependencias',
   },
   {
     label: 'Contratista',
     value: 'CONTRATISTA',
-    correo: 'carlos.mendoza@email.com',
-    pass: '123',
     icon: 'person',
     descripcion: 'Registro de contrato y solicitud',
   },
   {
     label: 'Responsable de Área',
     value: 'RESPONSABLE_AREA',
-    correo: 'responsable@gccon.com',
-    pass: '123',
     icon: 'draw',
     descripcion: 'Aprobación y firma electrónica',
   },
 ]
-
-function alCambiarRol(opcion) {
-  if (opcion) {
-    credencial.value = opcion.correo
-    password.value = opcion.pass
-  }
-}
 
 const normalizarRol = (valor) => {
   const v = String(valor || '')

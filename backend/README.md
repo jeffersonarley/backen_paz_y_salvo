@@ -8,6 +8,39 @@ del supervisor, ronda de firmas por dependencia con criptografía (SHA-256), mot
 
 ---
 
+## 0. Puesta en marcha local (para el equipo que clona)
+
+El proyecto usa una **BD de desarrollo compartida en MongoDB Atlas** (la URI viene en
+`.env.example`). Con estos pasos cualquiera del equipo puede clonar, levantar y entrar:
+
+```bash
+# 1) Backend
+cd backend
+npm install
+cp .env.example .env   # ya apunta a la BD Atlas compartida
+node scripts/seedDev.js  # crea/verifica 4 usuarios demo y desbloquea cuentas (una vez basta)
+node server.js
+
+# 2) Frontend (otra terminal)
+cd frontend
+npm install
+npm run dev            # abre http://localhost:9000 (el proxy /api -> :3000 ya está configurado)
+```
+
+**Cuentas de desarrollo** (también puedes iniciar sesión con cualquier usuario creado):
+
+| Rol              | Correo                     | Contraseña        |
+|------------------|----------------------------|-------------------|
+| Administrador    | `admin@institucion.edu.co` | `AdminSeguro123!` |
+| Supervisor       | `supervisor.demo@sena.edu.co` | `Supervisor123!`  |
+| Contratista      | `contratista.demo@sena.edu.co` | `Contratista123!` |
+| Responsable Área | `responsable.demo@sena.edu.co` | `Responsable123!` |
+
+> Notas: la política exige contraseñas de 8+ caracteres (mayúscula, minúscula y número).
+> Tras **3** intentos fallidos la cuenta se bloquea 15 min; `seedDev.js` también la desbloquea.
+
+---
+
 ## 1. Requisitos previos
 
 - **Node.js** >= 18 (probado con v22)
