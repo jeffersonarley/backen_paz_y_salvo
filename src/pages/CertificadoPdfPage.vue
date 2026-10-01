@@ -48,7 +48,7 @@
       <!-- Lado Derecho: Acciones principales con estilo homogéneo en una sola fila -->
       <div class="toolbar-right row items-center q-gutter-sm no-wrap">
         <q-btn
-          v-if="esResponsableArea"
+          v-if="esResponsableArea && datosSolicitud.estado !== 'Rechazado'"
           outline
           dense
           color="primary"
@@ -60,7 +60,7 @@
           <q-tooltip>Estampar automáticamente las firmas de dependencias</q-tooltip>
         </q-btn>
         <q-btn
-          v-if="esResponsableArea && Object.keys(firmasTabla).length > 0"
+          v-if="esResponsableArea && datosSolicitud.estado !== 'Rechazado' && Object.keys(firmasTabla).length > 0"
           flat
           dense
           color="grey-7"
