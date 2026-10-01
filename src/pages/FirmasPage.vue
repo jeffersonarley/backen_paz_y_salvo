@@ -131,8 +131,8 @@
                   </q-btn>
                 </template>
 
-                <!-- Para RESPONSABLE DE ÁREA: Dictamen y firma oficial -->
-                <template v-else-if="esResponsableArea">
+                <!-- Para Dictamen y firma oficial (Responsable de Área, Supervisor, Administrador) -->
+                <template v-else-if="!esContratista">
                   <!-- Botón Firmar / Dictamen Positivo -->
                   <q-btn
                     flat
@@ -162,7 +162,7 @@
                     flat
                     round
                     dense
-                    color="primary"
+                    color="positive"
                     icon="inventory_2"
                     @click="irADetalle(props.row)"
                   >

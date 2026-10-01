@@ -249,7 +249,7 @@ const menuBase = [
     to: { name: 'firmas' },
     icon: 'draw',
     exact: false,
-    roles: ['RESPONSABLE_AREA'],
+    roles: ['ADMINISTRADOR', 'SUPERVISOR', 'RESPONSABLE_AREA'],
   },
   {
     name: 'reportes',
