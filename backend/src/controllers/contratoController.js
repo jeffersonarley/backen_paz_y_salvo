@@ -191,7 +191,25 @@ exports.listarContratos = asyncHandler(async (req, res) => {
         .populate('supervisor', 'nombre_completo correo_institucional')
         .sort({ createdAt: -1 });
 
-    res.status(200).json(contratos);
+    const trazas = await TrazabilidadFirma.find({
+        contrato_id: { $in: contratos.map(contrato => contrato._id) }
+    })
+        .populate('area_id', 'nombre_dependencia')
+        .populate('usuario_id', 'nombre_completo')
+        .sort({ createdAt: 1, _id: 1 })
+        .lean();
+    const trazasPorContrato = new Map();
+    for (const traza of trazas) {
+        const contratoId = String(traza.contrato_id);
+        const cadena = trazasPorContrato.get(contratoId) || [];
+        cadena.push(traza);
+        trazasPorContrato.set(contratoId, cadena);
+    }
+
+    res.status(200).json(contratos.map(contrato => ({
+        ...contrato.toObject(),
+        firmas: trazasPorContrato.get(String(contrato._id)) || []
+    })));
 });
 
 // Obtener detalle de un contrato (según permisos por rol)

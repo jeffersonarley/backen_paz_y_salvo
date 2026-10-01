@@ -15,6 +15,18 @@
           </div>
         </div>
 
+        <q-banner dense rounded class="bg-blue-1 text-primary q-mb-md">
+          <template #avatar>
+            <q-icon name="account_tree" />
+          </template>
+          <div class="text-weight-bold">
+            Una sola solicitud recorrerá secuencialmente todas las áreas activas del sistema.
+          </div>
+          <div class="text-caption">
+            No es necesario registrar una solicitud distinta para cada área.
+          </div>
+        </q-banner>
+
         <!-- Formulario Principal -->
         <q-card flat bordered class="q-pa-lg rounded-borders bg-white">
           <q-form @submit.prevent="guardarSolicitud" class="q-gutter-y-md">

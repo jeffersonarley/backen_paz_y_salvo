@@ -31,6 +31,11 @@ export async function actualizarContrato(id, datos) {
   return data
 }
 
+export async function evaluarContrato(id, datos) {
+  const { data } = await api.put(`/contratos/evaluar/${id}`, datos)
+  return data
+}
+
 export async function cancelarContrato(id) {
   const { data } = await api.delete(`/contratos/${id}`)
   return data

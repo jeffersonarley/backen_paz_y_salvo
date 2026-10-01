@@ -15,7 +15,7 @@ const trazabilidadFirmaSchema = new mongoose.Schema({
     },
     estado: {
         type: String,
-        enum: ['Pendiente', 'Aprobado', 'Rechazado'],
+        enum: ['Pendiente', 'Aprobado', 'Rechazado', 'Cancelado'],
         default: 'Pendiente'
     },
     observacion_rechazo: {
