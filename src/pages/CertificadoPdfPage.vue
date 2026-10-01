@@ -684,7 +684,7 @@ const filasDependencias = ref([
     dependencia:
       'SERVICIOS GENERALES, ADQUISICIONES<br>(Administración de edificio; Contratación)',
     marca: 'X',
-    nombres: 'Juan David Silva Gutierrez',
+    nombres: 'Juan David Silva Guierrez',
   },
   {
     id: 6,
@@ -694,13 +694,13 @@ const filasDependencias = ref([
   },
   {
     id: 7,
-    dependencia: 'TESORERÍA',
+    dependencia: 'TESORERIA',
     marca: 'X',
     nombres: 'Nelcy Mabel Mayorga Pinto',
   },
   {
     id: 8,
-    dependencia: 'COORDINACIÓN DE: ÁREA/GRUPO/ACADÉMICA',
+    dependencia: 'COORDINACIÓN DE:<br>ÁREA/GRUPO/ ACADEMICA',
     marca: 'X',
     nombres: 'Johon Fredy Sanabria Muñoz',
   },
@@ -712,13 +712,13 @@ const filasDependencias = ref([
   },
   {
     id: 10,
-    dependencia: 'OTRO (LÍDER SIGA)',
+    dependencia: 'OTRO (LIDER SIGA)',
     marca: 'X',
-    nombres: 'Zaida Jebridy Garcia Jaimes',
+    nombres: 'Zaida Jeleidy Garcia Jaimes',
   },
   {
     id: 11,
-    dependencia: 'OTRO (ADMINISTRACIÓN EDUCATIVA)',
+    dependencia: 'OTRO (AMINISTRACION EDUCATIVA)',
     marca: 'X',
     nombres: 'Erika Johana Gómez Verdugo',
   },
@@ -727,13 +727,13 @@ const filasDependencias = ref([
     dependencia:
       'APOYO AL SEGUIMIENTO DE LOS PROCESOS ADMINISTRATIVOS Y NOVEDADES',
     marca: 'X',
-    nombres: 'Nelson Fabian Duarte Peñaloza / Eileen Erfensi Hurtado Ariza',
+    nombres: 'Nelson Fabian Duarte Peñaloza / Eileen Erlensi Hurtado Ariza',
   },
   {
     id: 13,
     dependencia: 'APOYO ETAPA PRODUCTIVA',
     marca: 'X',
-    nombres: 'Karen Andrea García Carreño',
+    nombres: 'Karen Andrea Garcia Carreño',
   },
   {
     id: 14,
