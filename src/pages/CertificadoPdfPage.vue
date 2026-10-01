@@ -1,23 +1,63 @@
 <template>
   <q-page class="page-formato">
     <div class="toolbar no-print">
-      <q-btn flat color="dark" icon="arrow_back" label="Volver" @click="volver" />
-      <div v-if="datosSolicitud.estado === 'Rechazado'" class="row items-center q-gutter-xs">
-        <q-badge color="negative" class="text-weight-bold q-px-sm q-py-xs">
-          <q-icon name="block" class="q-mr-xs" /> SOLICITUD RECHAZADA
-        </q-badge>
+      <!-- Lado Izquierdo: Volver + Estado de la Solicitud -->
+      <div class="toolbar-left row items-center q-gutter-sm no-wrap">
+        <q-btn
+          flat
+          dense
+          color="grey-9"
+          icon="arrow_back"
+          label="Volver"
+          class="text-weight-bold"
+          @click="volver"
+        />
+        <q-separator vertical inset class="q-mx-xs" />
+        <q-chip
+          v-if="datosSolicitud.estado === 'Rechazado'"
+          dense
+          color="red-1"
+          text-color="negative"
+          icon="cancel"
+          class="text-weight-bold q-px-sm"
+        >
+          Solicitud Rechazada
+        </q-chip>
+        <q-chip
+          v-else-if="datosSolicitud.estado === 'Firmado' || datosSolicitud.estado === 'Finalizado'"
+          dense
+          color="green-1"
+          text-color="positive"
+          icon="check_circle"
+          class="text-weight-bold q-px-sm"
+        >
+          Paz y Salvo Vigente
+        </q-chip>
+        <q-chip
+          v-else
+          dense
+          color="amber-1"
+          text-color="brown-9"
+          icon="schedule"
+          class="text-weight-bold q-px-sm"
+        >
+          En Revisión
+        </q-chip>
       </div>
-      <div class="row items-center q-gutter-xs">
+
+      <!-- Lado Derecho: Acciones principales con estilo homogéneo en una sola fila -->
+      <div class="toolbar-right row items-center q-gutter-sm no-wrap">
         <q-btn
           v-if="esResponsableArea"
-          flat
+          outline
           dense
           color="primary"
           icon="history_edu"
           label="Firmar Áreas"
+          class="q-px-sm"
           @click="estamparTodasLasFirmas"
         >
-          <q-tooltip>Estampar automáticamente las firmas de los responsables de dependencias</q-tooltip>
+          <q-tooltip>Estampar automáticamente las firmas de dependencias</q-tooltip>
         </q-btn>
         <q-btn
           v-if="esResponsableArea && Object.keys(firmasTabla).length > 0"
@@ -25,28 +65,33 @@
           dense
           color="grey-7"
           icon="close"
-          label="Limpiar Firmas"
+          class="q-px-xs"
           @click="limpiarFirmasTabla"
         >
-          <q-tooltip>Borrar las firmas de la tabla</q-tooltip>
+          <q-tooltip>Borrar firmas de la tabla</q-tooltip>
         </q-btn>
         <q-btn
-          flat
+          outline
           dense
           color="primary"
           icon="edit_note"
-          label="Editar Datos Formato"
+          label="Editar Formato"
+          class="q-px-sm"
           @click="abrirModalEditarDatos"
         >
-          <q-tooltip>Modificar o completar datos del contratista, contrato, regional y causal de terminación</q-tooltip>
+          <q-tooltip>Modificar o completar datos del contratista, contrato, regional y causal</q-tooltip>
         </q-btn>
         <q-btn
+          unelevated
+          dense
           :color="datosSolicitud.estado === 'Rechazado' ? 'grey-8' : 'positive'"
           icon="print"
-          :label="datosSolicitud.estado === 'Rechazado' ? 'Imprimir (Borrador)' : 'Imprimir'"
-          unelevated
+          :label="datosSolicitud.estado === 'Rechazado' ? 'Imprimir Borrador' : 'Imprimir'"
+          class="q-px-md text-weight-bold"
           @click="imprimir"
-        />
+        >
+          <q-tooltip>Imprimir o guardar como PDF oficial</q-tooltip>
+        </q-btn>
       </div>
     </div>
 
@@ -1280,14 +1325,24 @@ Motivo registrado: "${datosSolicitud.value.observacionRechazo || 'Bienes o reque
 
 .toolbar {
   max-width: 820px;
-  margin: 0 auto 12px;
+  width: 100%;
+  margin: 0 auto 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   background: #ffffff;
-  padding: 6px 14px;
-  border-radius: 6px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  padding: 8px 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e0e0;
+  box-sizing: border-box;
+}
+
+.toolbar-left,
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
 }
 
 .documento-wrapper {
