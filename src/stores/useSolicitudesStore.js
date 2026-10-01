@@ -216,7 +216,12 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
             fecha: fch,
             fechaSolicitud: fch,
             estado: est,
-            observacionRechazo: c.observaciones_supervisor || c.observacion_rechazo || '',
+            observacionRechazo:
+              c.observaciones_supervisor ||
+              c.observacion_rechazo ||
+              localStorage.getItem(`novedad_${c._id}`) ||
+              localStorage.getItem(`novedad_${num}`) ||
+              '',
             bienes:
               Array.isArray(c.bienes) && c.bienes.length > 0
                 ? c.bienes
@@ -333,6 +338,19 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
     )
     if (item) {
       Object.assign(item, datosActualizados)
+      const motivo =
+        datosActualizados.observacionRechazo ||
+        datosActualizados.observaciones_supervisor ||
+        item.observacionRechazo ||
+        item.observaciones_supervisor ||
+        ''
+      if (motivo) {
+        item.observacionRechazo = motivo
+        item.observaciones_supervisor = motivo
+        if (item._id) localStorage.setItem(`novedad_${item._id}`, motivo)
+        if (item.numeroContrato) localStorage.setItem(`novedad_${item.numeroContrato}`, motivo)
+        if (item.numeroSolicitud) localStorage.setItem(`novedad_${item.numeroSolicitud}`, motivo)
+      }
       const idParaApi = item._id || item.numeroContrato || item.id
       try {
         await api.put(`/contratos/${idParaApi}`, {
@@ -340,7 +358,10 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
           contratista: item.contratista || item.nombreContratista,
           dependencia: item.dependencia,
           estado: item.estado,
-          observaciones_supervisor: item.observacionRechazo || item.observaciones_supervisor,
+          observaciones_supervisor: motivo,
+          observacion_rechazo: motivo,
+          observacionRechazo: motivo,
+          motivo: motivo,
         })
       } catch (err) {
         console.warn('Sincronización con backend falló, mantenido localmente:', err.message)
@@ -362,12 +383,18 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
       if (motivo) {
         item.observacionRechazo = motivo
         item.observaciones_supervisor = motivo
+        if (item._id) localStorage.setItem(`novedad_${item._id}`, motivo)
+        if (item.numeroContrato) localStorage.setItem(`novedad_${item.numeroContrato}`, motivo)
+        if (item.numeroSolicitud) localStorage.setItem(`novedad_${item.numeroSolicitud}`, motivo)
       }
       const idParaApi = item._id || item.numeroContrato || item.id
       try {
         await api.put(`/contratos/${idParaApi}`, {
           estado: nuevoEstado,
           observaciones_supervisor: motivo,
+          observacion_rechazo: motivo,
+          observacionRechazo: motivo,
+          motivo: motivo,
         })
       } catch (err) {
         console.warn('Sincronización de estado falló en backend, aplicado localmente:', err.message)
