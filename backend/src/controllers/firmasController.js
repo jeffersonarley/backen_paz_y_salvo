@@ -246,7 +246,8 @@ exports.listarHistorial = asyncHandler(async (req, res) => {
 
     const historial = await TrazabilidadFirma.find(filtro)
         .populate({ path: 'contrato_id', model: 'Contrato' })
-        .populate({ path: 'area_id', model: 'DependenciaArea' });
+        .populate({ path: 'area_id', model: 'DependenciaArea' })
+        .populate({ path: 'usuario_id', model: 'Usuario', select: 'nombre_completo' });
 
     res.status(200).json(historial);
 });

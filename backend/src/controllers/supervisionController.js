@@ -9,14 +9,16 @@ const AppError = require('../utils/AppError');
 // Estados en los que el supervisor puede evaluar (o re-evaluar tras una corrección / rechazo de área).
 // Un contrato ya en firma o finalizado NO se puede evaluar de nuevo.
 const ESTADOS_EVALUABLES = ['Borrador', 'EnProceso', 'Rechazado'];
+const ESTADOS_RECHAZABLES = [...ESTADOS_EVALUABLES, 'Pendiente de Firmas'];
 
 // Diagrama 3: Validación del Supervisor y apertura de firmas
 exports.evaluarContrato = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { aprobado, observaciones_supervisor } = req.body;
 
-    if (req.usuario.rol !== 'Supervisor') {
-        throw new AppError('Acceso denegado. Se requiere rol de Supervisor.', 403);
+    const esAdministrador = req.usuario.rol === 'Administrador';
+    if (!['Supervisor', 'Administrador'].includes(req.usuario.rol)) {
+        throw new AppError('Acceso denegado. Se requiere rol de Supervisor o Administrador.', 403);
     }
 
     if (typeof aprobado !== 'boolean') {
@@ -28,16 +30,17 @@ exports.evaluarContrato = asyncHandler(async (req, res) => {
         throw new AppError('Contrato no encontrado.', 404);
     }
 
-    if (!contrato.supervisor) {
+    if (!contrato.supervisor && !esAdministrador) {
         throw new AppError('Acceso denegado. Este contrato no tiene un supervisor asignado.', 403);
     }
 
     const usuarioId = req.usuario.id;
-    if (contrato.supervisor.toString() !== usuarioId) {
+    if (!esAdministrador && contrato.supervisor.toString() !== usuarioId) {
         throw new AppError('Acceso denegado. No estás asignado como supervisor de este contrato.', 403);
     }
 
-    if (!ESTADOS_EVALUABLES.includes(contrato.estado)) {
+    const estadosPermitidos = aprobado ? ESTADOS_EVALUABLES : ESTADOS_RECHAZABLES;
+    if (!estadosPermitidos.includes(contrato.estado)) {
         throw new AppError(`El contrato no se puede evaluar en estado "${contrato.estado}".`, 409);
     }
 
@@ -51,12 +54,19 @@ exports.evaluarContrato = asyncHandler(async (req, res) => {
 
         // Transición atómica: solo si el contrato sigue en un estado evaluable
         const actualizado = await Contrato.findOneAndUpdate(
-            { _id: contrato._id, estado: { $in: ESTADOS_EVALUABLES } },
+            { _id: contrato._id, estado: { $in: ESTADOS_RECHAZABLES } },
             { $set: { estado: 'Borrador', observaciones_supervisor: observaciones } },
             { returnDocument: 'after' }
         );
         if (!actualizado) {
             throw new AppError('El contrato cambió de estado mientras se evaluaba. Recargue e intente de nuevo.', 409);
+        }
+
+        if (estadoPrevio === 'Pendiente de Firmas') {
+            await TrazabilidadFirma.updateMany(
+                { contrato_id: contrato._id, estado: 'Pendiente' },
+                { $set: { estado: 'Cancelado' } }
+            );
         }
 
         const correo = await enviarCorreo({

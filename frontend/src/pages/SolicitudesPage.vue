@@ -57,20 +57,59 @@
         </q-td>
       </template>
 
+      <template #body-cell-cadena="props">
+        <q-td :props="props">
+          <q-expansion-item
+            dense
+            dense-toggle
+            icon="account_tree"
+            label="Ver cadena"
+            header-class="text-primary"
+          >
+            <q-list v-if="props.row.firmas.length" dense separator>
+              <q-item v-for="firma in props.row.firmas" :key="firma._id">
+                <q-item-section avatar>
+                  <q-icon
+                    :name="iconoEstadoFirma(firma.estado)"
+                    :color="colorEstadoFirma(firma.estado)"
+                  />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label class="text-weight-medium">{{ firma.area }}</q-item-label>
+                  <q-item-label caption>
+                    <q-badge :color="colorEstadoFirma(firma.estado)" class="q-mr-xs">
+                      {{ firma.estado }}
+                    </q-badge>
+                    {{ formatoFecha(firma.fecha) }}
+                    <span v-if="firma.usuario"> · {{ firma.usuario }}</span>
+                  </q-item-label>
+                  <q-item-label v-if="firma.observacion" caption class="text-negative">
+                    Observación: {{ firma.observacion }}
+                  </q-item-label>
+                </q-item-section>
+              </q-item>
+            </q-list>
+            <div v-else class="q-pa-sm text-caption text-grey-7">
+              La cadena de firmas aún no ha sido iniciada.
+            </div>
+          </q-expansion-item>
+        </q-td>
+      </template>
+
       <!-- Columna de Acciones -->
       <template #body-cell-acciones="props">
         <q-td :props="props" class="q-gutter-xs text-center">
           <q-btn
-            v-if="puedeFirmar"
+            v-if="puedeFirmar && props.row.estadoBackend !== 'Borrador'"
             flat
             round
             dense
             :color="props.row.estado === 'Rechazado' ? 'grey-6' : 'positive'"
-            :icon="props.row.estado === 'Rechazado' ? 'block' : 'draw'"
+            :icon="props.row.estadoBackend === 'Rechazado' ? 'block' : 'draw'"
             @click="irAFirmar(props.row)"
           >
             <q-tooltip>{{
-              props.row.estado === 'Rechazado'
+              props.row.estadoBackend === 'Rechazado'
                 ? 'Firma bloqueada: Solicitud rechazada por novedades'
                 : 'Firmar / Pegar Firma'
             }}</q-tooltip>
@@ -87,13 +126,20 @@
             <q-tooltip>Ver Certificado PDF</q-tooltip>
           </q-btn>
 
-          <q-btn flat round dense color="primary" icon="edit" @click="editarSolicitud(props.row)">
-            <q-tooltip>Editar</q-tooltip>
+          <q-btn
+            v-if="puedeGestionarEstado"
+            flat
+            round
+            dense
+            color="primary"
+            icon="visibility"
+            @click="verObservaciones(props.row)"
+          >
+            <q-tooltip>Ver observaciones</q-tooltip>
           </q-btn>
 
-          <!-- Acción de Estado (Reactivar si está Rechazado, Desactivar / Rechazar si está en Revisión/Firmado) -->
           <q-btn
-            v-if="props.row.estado === 'Rechazado'"
+            v-if="puedeGestionarEstado && props.row.estadoBackend === 'Rechazado'"
             flat
             round
             dense
@@ -104,7 +150,10 @@
             <q-tooltip>Reactivar / Enviar a Revisión</q-tooltip>
           </q-btn>
           <q-btn
-            v-else
+            v-else-if="
+              puedeGestionarEstado &&
+              ['Borrador', 'EnProceso', 'Pendiente de Firmas'].includes(props.row.estadoBackend)
+            "
             flat
             round
             dense
@@ -112,100 +161,18 @@
             icon="block"
             @click="abrirDialogoEstado(props.row, 'Rechazado')"
           >
-            <q-tooltip>Desactivar / Rechazar</q-tooltip>
+            <q-tooltip>Rechazar y devolver a corrección</q-tooltip>
           </q-btn>
         </q-td>
       </template>
     </q-table>
-
-    <!-- Diálogo Formulario -->
-    <q-dialog v-model="dialogo" persistent>
-      <q-card style="min-width: 550px; max-width: 90vw">
-        <q-card-section class="row items-center justify-between">
-          <div class="text-h6 text-primary text-weight-bold">
-            {{ editando ? 'Editar Solicitud' : 'Nueva Solicitud' }}
-          </div>
-          <q-btn icon="close" flat round dense v-close-popup @click="cancelar" />
-        </q-card-section>
-
-        <q-separator />
-
-        <q-form ref="formRef" @submit.prevent="guardarSolicitud">
-          <q-card-section class="q-gutter-y-sm">
-            <q-input
-              outlined
-              dense
-              v-model="solicitud.numeroSolicitud"
-              label="Número de Solicitud *"
-              :disable="editando"
-              :rules="[(val) => !!val || 'El número de solicitud es obligatorio']"
-            />
-
-            <q-input
-              outlined
-              dense
-              v-model="solicitud.numeroContrato"
-              label="Número de Contrato *"
-              :rules="[(val) => !!val || 'El número de contrato es obligatorio']"
-            />
-
-            <q-input
-              outlined
-              dense
-              v-model="solicitud.contratista"
-              label="Contratista *"
-              :rules="[(val) => !!val || 'El nombre del contratista es obligatorio']"
-            />
-
-            <q-input
-              outlined
-              dense
-              v-model="solicitud.dependencia"
-              label="Dependencia *"
-              :rules="[(val) => !!val || 'La dependencia es obligatoria']"
-            />
-
-            <q-input
-              outlined
-              dense
-              v-model="solicitud.responsable"
-              label="Responsable de Área *"
-              :rules="[(val) => !!val || 'El responsable es obligatorio']"
-            />
-
-            <q-input
-              outlined
-              dense
-              type="date"
-              v-model="solicitud.fecha"
-              label="Fecha *"
-              stack-label
-              :rules="[(val) => !!val || 'La fecha es obligatoria']"
-            />
-
-            <q-select
-              outlined
-              dense
-              v-model="solicitud.estado"
-              :options="OPCIONES_ESTADO"
-              label="Estado"
-            />
-          </q-card-section>
-
-          <q-card-actions align="right" class="q-pa-md">
-            <q-btn flat label="Cancelar" color="grey-8" @click="cancelar" />
-            <q-btn unelevated type="submit" color="positive" label="Guardar" />
-          </q-card-actions>
-        </q-form>
-      </q-card>
-    </q-dialog>
 
     <!-- Diálogo Confirmar Cambio de Estado (Desactivar / Rechazar o Reactivar) -->
     <q-dialog v-model="dialogoEstado" persistent>
       <q-card style="min-width: 420px; max-width: 90vw">
         <q-card-section class="row items-center">
           <q-avatar
-            :icon="nuevoEstadoObjetivo === 'Rechazado' ? 'block' : 'replay'"
+            :icon="nuevoEstadoObjetivo === 'Rechazado' ? 'undo' : 'replay'"
             :color="nuevoEstadoObjetivo === 'Rechazado' ? 'negative' : 'positive'"
             text-color="white"
             class="q-mr-sm"
@@ -213,7 +180,7 @@
           <span class="text-h6 text-weight-bold">
             {{
               nuevoEstadoObjetivo === 'Rechazado'
-                ? 'Desactivar / Rechazar Solicitud'
+                ? 'Devolver solicitud a corrección'
                 : 'Reactivar Solicitud'
             }}
           </span>
@@ -222,12 +189,13 @@
         <q-card-section class="q-pt-none text-body2">
           <div v-if="nuevoEstadoObjetivo === 'Rechazado'">
             <p>
-              ¿Está seguro de desactivar o rechazar la solicitud
+              ¿Desea devolver a corrección la solicitud
               <strong>{{ solicitudSeleccionada?.numeroSolicitud || solicitudSeleccionada?.numeroContrato }}</strong>?
             </p>
             <p class="text-grey-8">
-              El estado de la solicitud cambiará inmediatamente a
-              <q-badge color="negative" class="text-weight-bold">Rechazado</q-badge>.
+              El contrato volverá a
+              <q-badge color="warning" class="text-weight-bold">Borrador</q-badge>
+              para que se corrija antes de una nueva evaluación.
             </p>
             <q-input
               v-model="motivoEstado"
@@ -246,9 +214,7 @@
               <strong>{{ solicitudSeleccionada?.numeroSolicitud || solicitudSeleccionada?.numeroContrato }}</strong>?
             </p>
             <p class="text-grey-8">
-              El estado volverá a
-              <q-badge color="primary" class="text-weight-bold">En revisión</q-badge>
-              para continuar con el proceso.
+              Se abrirá una nueva cadena de firmas para todas las áreas activas.
             </p>
           </div>
         </q-card-section>
@@ -258,7 +224,8 @@
           <q-btn
             unelevated
             :color="nuevoEstadoObjetivo === 'Rechazado' ? 'negative' : 'positive'"
-            :label="nuevoEstadoObjetivo === 'Rechazado' ? 'Desactivar / Rechazar' : 'Reactivar'"
+            :label="nuevoEstadoObjetivo === 'Rechazado' ? 'Devolver a corrección' : 'Reactivar'"
+            :loading="procesandoEstado"
             @click="confirmarCambioEstado"
           />
         </q-card-actions>
@@ -272,46 +239,28 @@ import { ref, computed, onMounted } from 'vue'
 import { useQuasar } from 'quasar'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore.js'
-import { listarContratos /*, actualizarContrato, cancelarContrato */ } from '../services/contratoService.js'
-// eslint-disable-next-line no-unused-vars
+import { evaluarContrato, listarContratos, obtenerObservaciones } from '../services/contratoService.js'
 import { getErrorMessage } from '../services/api.js'
 
-// eslint-disable-next-line no-unused-vars
 const $q = useQuasar()
-// eslint-disable-next-line no-unused-vars
 const router = useRouter()
 const auth = useAuthStore()
 
 const cargando = ref(false)
-const puedeFirmar = computed(() =>
-  auth.tienePermiso(['ResponsableArea', 'Contratista', 'Supervisor', 'Administrador']),
+const procesandoEstado = ref(false)
+const puedeFirmar = computed(() => auth.tienePermiso(['ResponsableArea', 'Administrador']))
+const puedeGestionarEstado = computed(() =>
+  auth.tienePermiso(['Supervisor', 'Administrador']),
 )
 
-const OPCIONES_ESTADO = ['En revisión', 'Firmado', 'Rechazado', 'Finalizado']
-
-const formRef = ref(null)
 const filtro = ref('')
-const dialogo = ref(false)
 const dialogoEstado = ref(false)
 
-const editando = ref(false)
-// eslint-disable-next-line no-unused-vars
-const codigoEditar = ref(null)
 const solicitudSeleccionada = ref(null)
 const nuevoEstadoObjetivo = ref('')
 const motivoEstado = ref('')
 
 const rows = ref([])
-
-const solicitud = ref({
-  numeroSolicitud: '',
-  numeroContrato: '',
-  contratista: '',
-  dependencia: '',
-  responsable: '',
-  fecha: new Date().toISOString().substring(0, 10),
-  estado: 'En revisión',
-})
 
 const columns = [
   {
@@ -349,6 +298,7 @@ const columns = [
     align: 'center',
     sortable: true,
   },
+  { name: 'cadena', label: 'Cadena de firmas', field: 'firmas', align: 'left' },
   {
     name: 'acciones',
     label: 'Acciones',
@@ -399,18 +349,103 @@ function obtenerColorEstado(estado) {
   }
 }
 
+function colorEstadoFirma(estado) {
+  if (estado === 'Aprobado') return 'positive'
+  if (estado === 'Rechazado') return 'negative'
+  if (estado === 'Cancelado') return 'grey-7'
+  return 'warning'
+}
+
+function iconoEstadoFirma(estado) {
+  if (estado === 'Aprobado') return 'check_circle'
+  if (estado === 'Rechazado') return 'cancel'
+  if (estado === 'Cancelado') return 'block'
+  return 'pending'
+}
+
+function formatoFecha(fecha) {
+  if (!fecha) return 'Pendiente'
+  return new Date(fecha).toLocaleDateString()
+}
+
+function nuevaSolicitud() {
+  router.push({ name: 'nueva-solicitud' })
+}
+
+function irAFirmar(row) {
+  router.push({ name: 'firmas', query: { codigo: row._id } })
+}
+
+function verCertificado(row) {
+  router.push({ name: 'certificado-pdf', query: { codigo: row.numeroContrato } })
+}
+
+async function verObservaciones(row) {
+  try {
+    const data = await obtenerObservaciones(row._id)
+    const observaciones = [
+      data.observaciones_supervisor
+        ? `Supervisor: ${data.observaciones_supervisor}`
+        : '',
+      ...(data.observaciones_areas || []).map(
+        (item) => `${item.area}: ${item.observacion}`,
+      ),
+    ].filter(Boolean)
+
+    $q.dialog({
+      title: `Observaciones · ${row.numeroContrato}`,
+      message: observaciones.length ? observaciones.join('\n\n') : 'No hay observaciones registradas.',
+      ok: { label: 'Cerrar', flat: true },
+    })
+  } catch (error) {
+    $q.notify({ type: 'negative', message: getErrorMessage(error) })
+  }
+}
+
+function abrirDialogoEstado(row, estadoObjetivo) {
+  solicitudSeleccionada.value = row
+  nuevoEstadoObjetivo.value = estadoObjetivo
+  motivoEstado.value = ''
+  dialogoEstado.value = true
+}
+
+async function confirmarCambioEstado() {
+  if (!puedeGestionarEstado.value || !solicitudSeleccionada.value?._id) return
+
+  procesandoEstado.value = true
+  try {
+    const aprobado = nuevoEstadoObjetivo.value !== 'Rechazado'
+    await evaluarContrato(solicitudSeleccionada.value._id, {
+      aprobado,
+      observaciones_supervisor: motivoEstado.value.trim(),
+    })
+    dialogoEstado.value = false
+    $q.notify({
+      type: aprobado ? 'positive' : 'warning',
+      message: aprobado
+        ? 'Solicitud reactivada y enviada a la cadena de firmas.'
+        : 'Solicitud devuelta a Borrador para corrección.',
+    })
+    await cargarSolicitudes()
+  } catch (error) {
+    $q.notify({ type: 'negative', message: getErrorMessage(error) })
+  } finally {
+    procesandoEstado.value = false
+  }
+}
+
 async function cargarSolicitudes() {
   cargando.value = true
   try {
     const data = await listarContratos()
     const lista = Array.isArray(data) ? data : data?.contratos || data?.data || []
     // Transformar datos del backend al formato de la tabla
-    rows.value = lista.map((c, idx) => {
-      const num = c.numero_contrato || `CNT-${idx + 1}`
-      const nom = c.nombre_contratista || c.usuario?.nombre_completo || 'Contratista'
-      const dep = c.dependencia?.nombre_dependencia || (typeof c.dependencia === 'string' ? c.dependencia : 'Gestión Tecnológica')
-      const sup = c.supervisor?.nombre_completo || 'Supervisor Asignado'
-      const fch = c.createdAt ? new Date(c.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+    rows.value = lista.map((c) => {
+      const num = c.numero_contrato || '—'
+      const nom = c.nombre_contratista || c.usuario?.nombre_completo || '—'
+      const dep = c.dependencia?.nombre_dependencia || (typeof c.dependencia === 'string' ? c.dependencia : '—')
+      const sup = c.supervisor?.nombre_completo || '—'
+      const fch = c.createdAt ? new Date(c.createdAt).toISOString().split('T')[0] : '—'
 
       let est = 'En revisión'
       if (c.estado === 'Firmado' || c.estado === 'Aprobado') {
@@ -419,14 +454,17 @@ async function cargarSolicitudes() {
         est = 'Finalizado'
       } else if (c.estado === 'Rechazado') {
         est = 'Rechazado'
-      } else {
+      } else if (c.estado === 'Pendiente de Firmas' || c.estado === 'EnProceso') {
         est = 'En revisión'
+      } else {
+        est = c.estado || '—'
       }
 
       return {
         _id: c._id,
         id: num,
-        numeroSolicitud: `SOL-${String(num).replace(/\D/g, '').slice(-4).padStart(4, '0') || '00' + (idx + 1)}`,
+        numeroSolicitud:
+          num === '—' ? '—' : `SOL-${String(num).replace(/\D/g, '').slice(-4).padStart(4, '0')}`,
         documentoContratista: c.telefono || '—',
         contratista: nom,
         nombreContratista: nom,
@@ -436,28 +474,19 @@ async function cargarSolicitudes() {
         fecha: fch,
         fechaSolicitud: fch,
         estado: est,
+        estadoBackend: c.estado,
         observacionRechazo: c.observaciones_supervisor || c.observacion_rechazo || '',
-        bienes:
-          Array.isArray(c.bienes) && c.bienes.length > 0
-            ? c.bienes
-            : [
-                {
-                  descripcion: 'Equipo de cómputo y periféricos institucionales',
-                  codigo_inventario: `INV-${String(num).replace(/\D/g, '').slice(-4).padStart(4, '0') || '1042'}`,
-                  estado_bien: 'Bueno',
-                  cantidad: 1,
-                  estado_entrega:
-                    est === 'Firmado' || est === 'Finalizado' ? 'Devuelto' : 'Pendiente',
-                },
-              ],
-        firmas: [
-          {
-            dependenciaCodigo: 'DEP-01',
-            dependenciaNombre: dep,
-            firmada: est === 'Firmado' || est === 'Finalizado',
-            fechaFirma: est === 'Firmado' || est === 'Finalizado' ? fch : null,
-          },
-        ],
+        bienes: Array.isArray(c.bienes) ? c.bienes : [],
+        firmas: Array.isArray(c.firmas)
+          ? c.firmas.map((firma) => ({
+              _id: firma._id,
+              area: firma.area_id?.nombre_dependencia || 'Área sin nombre',
+              estado: firma.estado || 'Pendiente',
+              fecha: firma.fecha_firma,
+              usuario: firma.usuario_id?.nombre_completo || '',
+              observacion: firma.observacion_rechazo || '',
+            }))
+          : [],
       }
     })
   } catch (err) {

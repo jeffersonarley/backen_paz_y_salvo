@@ -67,13 +67,27 @@
             }}
           </div>
 
+          <q-tabs
+            v-if="!esContratista"
+            v-model="pestanaBandeja"
+            dense
+            align="left"
+            active-color="primary"
+            indicator-color="primary"
+            class="q-mb-sm"
+          >
+            <q-tab name="pendientes" icon="pending_actions" :label="`Pendientes (${solicitudesPendientes.length})`" />
+            <q-tab name="historial" icon="history" :label="`Historial (${solicitudesHistorial.length})`" />
+          </q-tabs>
+
           <q-table
             flat
             bordered
             :rows="solicitudesParaBandeja"
             :columns="columnasBandeja"
             row-key="id"
-            no-data-label="No hay solicitudes registradas"
+            :loading="cargandoBandeja"
+            :no-data-label="pestanaBandeja === 'historial' ? 'No hay firmas en el historial' : 'No hay solicitudes pendientes para esta bandeja'"
           >
             <template #body-cell-estado="props">
               <q-td :props="props" class="text-center">
@@ -83,12 +97,20 @@
                       ? 'positive'
                       : props.row.estado === 'Rechazado'
                         ? 'negative'
+                        : props.row.estado === 'Cancelado'
+                          ? 'grey-7'
                         : 'warning'
                   "
                   class="text-weight-bold q-pa-xs"
                 >
                   {{ props.row.estado || 'Pendiente' }}
                 </q-badge>
+              </q-td>
+            </template>
+
+            <template #body-cell-observacion="props">
+              <q-td :props="props" class="text-caption" style="min-width: 220px; white-space: normal">
+                {{ props.row.observacionRechazo || '—' }}
               </q-td>
             </template>
 
@@ -132,7 +154,7 @@
                 </template>
 
                 <!-- Para RESPONSABLE DE ÁREA y SUPERVISOR: Dictámenes y gestión -->
-                <template v-else>
+                <template v-else-if="pestanaBandeja === 'pendientes'">
                   <!-- Botón Firmar / Dictamen Positivo -->
                   <q-btn
                     flat
@@ -169,6 +191,17 @@
                     <q-tooltip>Ver Detalle e Inventario de Bienes</q-tooltip>
                   </q-btn>
                 </template>
+                <q-btn
+                  v-else
+                  flat
+                  round
+                  dense
+                  color="primary"
+                  icon="visibility"
+                  @click="irADetalle(props.row)"
+                >
+                  <q-tooltip>Ver dictamen y observaciones</q-tooltip>
+                </q-btn>
 
                 <!-- Botón Ver Certificado PDF (Siempre disponible) -->
                 <q-btn
@@ -343,87 +376,23 @@
             <q-separator class="q-mb-md" />
 
             <q-list bordered separator class="rounded-borders">
-              <!-- Paso 1: Supervisor -->
               <q-item>
-                <q-item-section avatar>
-                  <q-icon name="check_circle" color="positive" />
-                </q-item-section>
-                <q-item-section>
-                  <q-item-label class="text-weight-bold">Supervisor de Contrato</q-item-label>
-                  <q-item-label caption>Aprobado para firmas (RF-006)</q-item-label>
+                <q-item-section v-if="historialDelContrato.length === 0" class="text-caption text-grey-7">
+                  No hay dictámenes de área registrados para esta solicitud.
                 </q-item-section>
               </q-item>
-
-              <!-- Paso 2: Responsable de Área -->
-              <q-item>
+              <q-item v-for="firma in historialDelContrato" :key="firma.id">
                 <q-item-section avatar>
-                  <q-icon
-                    :name="
-                      esFirmado
-                        ? 'check_circle'
-                        : solicitudActual.estado === 'Rechazado'
-                          ? 'cancel'
-                          : 'pending'
-                    "
-                    :color="
-                      esFirmado
-                        ? 'positive'
-                        : solicitudActual.estado === 'Rechazado'
-                          ? 'negative'
-                          : 'warning'
-                    "
-                  />
+                  <q-icon :name="iconoEstadoFirma(firma.estado)" :color="colorEstadoFirma(firma.estado)" />
                 </q-item-section>
                 <q-item-section>
-                  <q-item-label class="text-weight-bold">Responsable de Área</q-item-label>
+                  <q-item-label class="text-weight-bold">{{ firma.area }}</q-item-label>
                   <q-item-label caption>
-                    {{
-                      esFirmado
-                        ? 'Paz y Salvo de Bienes Aprobado (RF-008)'
-                        : solicitudActual.estado === 'Rechazado'
-                          ? 'Rechazado con Observaciones (RF-014)'
-                          : 'Pendiente de dictamen de bienes'
-                    }}
+                    {{ firma.estado }} · {{ firma.usuarioFirma || 'Sin firmante registrado' }}
+                    · {{ firma.fechaFirma ? new Date(firma.fechaFirma).toLocaleDateString() : 'Sin fecha' }}
                   </q-item-label>
-                </q-item-section>
-              </q-item>
-
-              <!-- Paso 3: Firma del Contratista -->
-              <q-item>
-                <q-item-section avatar>
-                  <q-icon
-                    :name="
-                      firmaActual
-                        ? 'check_circle'
-                        : solicitudActual.estado === 'Rechazado'
-                          ? 'block'
-                          : esFirmado
-                            ? 'edit_note'
-                            : 'lock'
-                    "
-                    :color="
-                      firmaActual
-                        ? 'positive'
-                        : solicitudActual.estado === 'Rechazado'
-                          ? 'negative'
-                          : esFirmado
-                            ? 'primary'
-                            : 'grey-6'
-                    "
-                  />
-                </q-item-section>
-                <q-item-section>
-                  <q-item-label class="text-weight-bold">Firma del Contratista</q-item-label>
-                  <q-item-label caption>
-                    {{
-                      firmaActual
-                        ? 'Firma de cierre estampada (RF-010)'
-                        : solicitudActual.estado === 'Rechazado'
-                          ? 'Firma bloqueada por novedades'
-                          : esFirmado
-                            ? 'Habilitada: Proceda a firmar'
-                            : 'Pendiente visto bueno de áreas'
-                    }}
+                  <q-item-label v-if="firma.observacionRechazo" caption class="text-negative">
+                    Observación: {{ firma.observacionRechazo }}
                   </q-item-label>
                 </q-item-section>
               </q-item>
@@ -626,7 +595,7 @@
               </div>
               <div class="col-12">
                 <strong>Dependencia:</strong>
-                {{ solicitudRechazar?.dependencia || 'Gestión Tecnológica' }}
+                {{ solicitudRechazar?.dependencia || '—' }}
               </div>
             </div>
           </q-card>
@@ -721,34 +690,31 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
-import { useSolicitudesStore } from '../stores/useSolicitudesStore.js'
 import { useAuthStore } from '../stores/authStore.js'
+import { listarPendientes, listarHistorial } from '../services/firmaService.js'
+import { misSolicitudes, obtenerContrato } from '../services/contratoService.js'
 import FirmaCanvas from '../components/FirmaCanvas.vue'
 import api from '../services/api'
 
 const route = useRoute()
 const router = useRouter()
 const $q = useQuasar()
-const store = useSolicitudesStore()
 const auth = useAuthStore()
 
-const esContratista = computed(() => auth.rolUsuario === 'CONTRATISTA')
-const esResponsableArea = computed(() => auth.rolUsuario === 'RESPONSABLE_AREA')
-const esSupervisorOAdmin = computed(
-  () => auth.rolUsuario === 'SUPERVISOR' || auth.rolUsuario === 'ADMINISTRADOR',
-)
+const esContratista = computed(() => auth.rolUsuario === 'Contratista')
+const esResponsableArea = computed(() => auth.rolUsuario === 'ResponsableArea')
+const esSupervisorOAdmin = computed(() => auth.tienePermiso(['Administrador']))
+const pestanaBandeja = ref('pendientes')
+const cargandoBandeja = ref(false)
+const solicitudesPendientes = ref([])
+const solicitudesHistorial = ref([])
+const solicitudesContratista = ref([])
 
 const solicitudesParaBandeja = computed(() => {
-  const lista = store.solicitudes || []
-  if (esContratista.value && auth.usuario?.nombre) {
-    const nombreUsuario = auth.usuario.nombre.toLowerCase().trim()
-    const filtradas = lista.filter((s) => {
-      const c = (s.contratista || s.nombreContratista || '').toLowerCase().trim()
-      return c.includes(nombreUsuario) || nombreUsuario.includes(c)
-    })
-    return filtradas.length > 0 ? filtradas : lista
-  }
-  return lista
+  if (esContratista.value) return solicitudesContratista.value
+  return pestanaBandeja.value === 'historial'
+    ? solicitudesHistorial.value
+    : solicitudesPendientes.value
 })
 
 const dialogoFirma = ref(false)
@@ -792,11 +758,17 @@ const columnasBandeja = [
   },
   {
     name: 'dependencia',
-    label: 'Dependencia',
+    label: 'Área',
     field: (row) => row.dependencia || row.nombreDependencia || '—',
     align: 'left',
   },
   { name: 'estado', label: 'Estado', field: 'estado', align: 'center' },
+  {
+    name: 'observacion',
+    label: 'Observaciones',
+    field: (row) => row.observacionRechazo || '—',
+    align: 'left',
+  },
   { name: 'acciones', label: 'Acciones', align: 'center' },
 ]
 
@@ -826,16 +798,27 @@ const columnasBienes = [
 // Obtener el código enviado por query params: /app/firmas?codigo=SOL-2026-001
 const codigoSolicitud = computed(() => route.query.codigo)
 
-// Buscar la solicitud en el store comprobando múltiples nombres de propiedad
 const solicitudActual = computed(() => {
   if (!codigoSolicitud.value) return null
-  return (
-    store.solicitudes.find(
-      (s) =>
-        (s.numeroSolicitud || s.solicitud || s.codigo || s.numeroContrato || s.contrato) ===
-        codigoSolicitud.value,
-    ) || null
-  )
+  const lista = [
+    ...solicitudesPendientes.value,
+    ...solicitudesHistorial.value,
+    ...solicitudesContratista.value,
+  ]
+  return lista.find((solicitud) =>
+    [solicitud._id, solicitud.numeroSolicitud, solicitud.numeroContrato].some(
+      (valor) => String(valor || '') === String(codigoSolicitud.value),
+    ),
+  ) || null
+})
+
+const historialDelContrato = computed(() => {
+  const contratoId = solicitudActual.value?._id
+  if (!contratoId) return []
+  const registros = [...solicitudesPendientes.value, ...solicitudesHistorial.value]
+    .filter((firma) => String(firma._id) === String(contratoId))
+    .sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0))
+  return registros
 })
 
 const esFirmado = computed(() => {
@@ -845,43 +828,122 @@ const esFirmado = computed(() => {
 
 const listaBienes = computed(() => {
   if (!solicitudActual.value) return []
-  if (Array.isArray(solicitudActual.value.bienes) && solicitudActual.value.bienes.length > 0) {
-    return solicitudActual.value.bienes
-  }
-  const cod =
-    solicitudActual.value.numeroContrato || solicitudActual.value.numeroSolicitud || '1042'
-  const sufijo = String(cod).replace(/\D/g, '').slice(-4).padStart(4, '0')
-  return [
-    {
-      descripcion: 'Equipo de cómputo portátil y cargador original',
-      codigo_inventario: `INV-TIC-${sufijo}`,
-      estado_bien: 'Bueno',
-      cantidad: 1,
-      estado_entrega: esFirmado.value
-        ? 'Devuelto'
-        : solicitudActual.value.estado === 'Rechazado'
-          ? 'Pendiente'
-          : 'En revisión',
-    },
-    {
-      descripcion: 'Carnet de identificación y tarjeta de proximidad',
-      codigo_inventario: `INV-SEC-${sufijo}`,
-      estado_bien: 'Bueno',
-      cantidad: 1,
-      estado_entrega: esFirmado.value
-        ? 'Devuelto'
-        : solicitudActual.value.estado === 'Rechazado'
-          ? 'Pendiente'
-          : 'En revisión',
-    },
-  ]
+  return Array.isArray(solicitudActual.value.bienes) ? solicitudActual.value.bienes : []
 })
 
-onMounted(() => {
-  if (store.cargarSolicitudes) {
-    store.cargarSolicitudes()
+function codigoSolicitudDeContrato(numeroContrato) {
+  const digitos = String(numeroContrato || '').replace(/\D/g, '').slice(-4)
+  return digitos ? `SOL-${digitos.padStart(4, '0')}` : '—'
+}
+
+function mapearTraza(registro) {
+  const contrato = registro.contrato_id || {}
+  const numeroContrato = contrato.numero_contrato || '—'
+  const area = registro.area_id?.nombre_dependencia || 'Área sin nombre'
+  return {
+    ...contrato,
+    id: registro._id,
+    numeroSolicitud: codigoSolicitudDeContrato(numeroContrato),
+    numeroContrato,
+    contratista: contrato.nombre_contratista || '—',
+    dependencia: area,
+    estado: registro.estado || 'Pendiente',
+    observacionRechazo: registro.observacion_rechazo || '',
+    fechaFirma: registro.fecha_firma,
+    usuarioFirma: registro.usuario_id?.nombre_completo || '',
+    area,
+    createdAt: registro.createdAt,
+    bienes: [],
   }
+}
+
+function mapearContratoContratista(contrato) {
+  const numeroContrato = contrato.numero_contrato || '—'
+  return {
+    ...contrato,
+    id: contrato._id,
+    numeroSolicitud: codigoSolicitudDeContrato(numeroContrato),
+    numeroContrato,
+    contratista: contrato.nombre_contratista || '—',
+    dependencia: contrato.dependencia?.nombre_dependencia || '—',
+    observacionRechazo: contrato.observaciones_supervisor || '',
+    bienes: [],
+  }
+}
+
+async function cargarBandeja() {
+  cargandoBandeja.value = true
+  try {
+    if (esContratista.value) {
+      const data = await misSolicitudes()
+      const lista = Array.isArray(data) ? data : data?.contratos || []
+      solicitudesContratista.value = lista.map(mapearContratoContratista)
+      solicitudesPendientes.value = []
+      solicitudesHistorial.value = []
+      return
+    }
+
+    const [pendientes, historial] = await Promise.all([
+      listarPendientes(),
+      listarHistorial(),
+    ])
+    solicitudesPendientes.value = (Array.isArray(pendientes) ? pendientes : []).map(mapearTraza)
+    solicitudesHistorial.value = (Array.isArray(historial) ? historial : []).map(mapearTraza)
+  } catch (error) {
+    solicitudesPendientes.value = []
+    solicitudesHistorial.value = []
+    solicitudesContratista.value = []
+    $q.notify({
+      type: 'negative',
+      message: 'No se pudo cargar la bandeja de firmas: ' + (error.response?.data?.mensaje || error.message),
+    })
+  } finally {
+    cargandoBandeja.value = false
+  }
+}
+
+async function cargarDetalleSeleccionado() {
+  const solicitud = solicitudActual.value
+  if (!solicitud?._id) return
+  try {
+    const data = await obtenerContrato(solicitud._id)
+    const contrato = data.contrato || data
+    Object.assign(solicitud, contrato, {
+      id: solicitud.id,
+      numeroSolicitud: solicitud.numeroSolicitud,
+      numeroContrato: contrato.numero_contrato || solicitud.numeroContrato,
+      contratista: contrato.nombre_contratista || solicitud.contratista,
+      dependencia: solicitud.dependencia,
+      estado: solicitud.estado,
+      observacionRechazo: solicitud.observacionRechazo,
+      fechaFirma: solicitud.fechaFirma,
+      usuarioFirma: solicitud.usuarioFirma,
+      area: solicitud.area,
+      bienes: Array.isArray(data.bienes) ? data.bienes : [],
+    })
+  } catch (error) {
+    console.warn('No se pudo cargar el detalle de la solicitud:', error.message)
+  }
+}
+
+function colorEstadoFirma(estado) {
+  if (estado === 'Aprobado' || estado === 'Finalizado') return 'positive'
+  if (estado === 'Rechazado') return 'negative'
+  if (estado === 'Cancelado') return 'grey-7'
+  return 'warning'
+}
+
+function iconoEstadoFirma(estado) {
+  if (estado === 'Aprobado' || estado === 'Finalizado') return 'check_circle'
+  if (estado === 'Rechazado') return 'cancel'
+  if (estado === 'Cancelado') return 'block'
+  return 'pending'
+}
+
+onMounted(async () => {
+  await cargarBandeja()
   cargarFirmaLocal()
+  await cargarDetalleSeleccionado()
 })
 
 function cargarFirmaLocal() {
@@ -920,40 +982,24 @@ function verPdfFila(fila) {
   router.push({ name: 'certificado-pdf', query: { codigo: cod } })
 }
 
-function abrirModalRechazo(fila) {
+async function abrirModalRechazo(fila) {
   solicitudRechazar.value = fila
   motivoSeleccionado.value = 'Bienes o inventario pendiente por entregar / devolver'
-
-  // Extraer bienes del contrato para selección
-  const bienesOrigen =
-    Array.isArray(fila.bienes) && fila.bienes.length > 0
-      ? fila.bienes
-      : [
-          {
-            descripcion: 'Equipo de cómputo portátil y accesorios',
-            codigo_inventario: `INV-${String(fila.numeroContrato || '1042')
-              .replace(/\D/g, '')
-              .slice(-4)
-              .padStart(4, '0')}`,
-            estado_bien: 'Bueno',
-          },
-          {
-            descripcion: 'Carnet de identificación institucional',
-            codigo_inventario: 'INV-CARNET-01',
-            estado_bien: 'Bueno',
-          },
-        ]
-
+  let bienesOrigen = Array.isArray(fila.bienes) ? fila.bienes : []
+  if (bienesOrigen.length === 0 && fila._id) {
+    try {
+      const data = await obtenerContrato(fila._id)
+      bienesOrigen = Array.isArray(data.bienes) ? data.bienes : []
+      fila.bienes = bienesOrigen
+    } catch (error) {
+      console.warn('No se pudo cargar el inventario del contrato:', error.message)
+    }
+  }
   bienesParaRechazo.value = bienesOrigen.map((b) => ({
     ...b,
     marcadoFaltante: true,
   }))
-
-  const faltantesIniciales = bienesParaRechazo.value
-    .filter((b) => b.marcadoFaltante)
-    .map((b) => b.descripcion)
-    .join(', ')
-  textoObservacionesRechazo.value = `El contratista no ha devuelto en el área los siguientes bienes a cargo: ${faltantesIniciales}. Trámite pendiente hasta su entrega física.`
+  textoObservacionesRechazo.value = ''
 
   dialogoRechazo.value = true
 }
@@ -1002,27 +1048,14 @@ async function confirmarDictamenRechazo() {
 
   guardandoRechazo.value = true
   try {
-    const idBusqueda =
-      solicitudRechazar.value?._id ||
-      solicitudRechazar.value?.numeroContrato ||
-      solicitudRechazar.value?.numeroSolicitud ||
-      solicitudRechazar.value?.id ||
-      solicitudRechazar.value?.codigo
-
-    const faltantes = bienesParaRechazo.value.filter((b) => b.marcadoFaltante)
-
-    await store.rechazarSolicitudConDictamen(idBusqueda, textoObservacionesRechazo.value, faltantes)
-
-    // Si estamos en la vista de detalle de esta misma solicitud, actualizar estado reactivo
-    if (
-      solicitudActual.value &&
-      (solicitudActual.value._id === idBusqueda ||
-        solicitudActual.value.numeroSolicitud === idBusqueda ||
-        solicitudActual.value.numeroContrato === idBusqueda)
-    ) {
-      solicitudActual.value.estado = 'Rechazado'
-      solicitudActual.value.observacionRechazo = textoObservacionesRechazo.value
-    }
+    const contratoId = solicitudRechazar.value?._id
+    if (!contratoId) throw new Error('No se encontró el contrato de la solicitud.')
+    await api.post('/firmas/procesar', {
+      contratoId,
+      accion: 'Rechazar',
+      observacion_rechazo: textoObservacionesRechazo.value.trim(),
+    })
+    await cargarBandeja()
 
     dialogoRechazo.value = false
     $q.notify({
@@ -1077,37 +1110,16 @@ async function confirmarFirma() {
     firmaActual.value = dataUrl
 
     // Si tiene contrato en backend, enviar a la API
-    const contratoId =
-      solicitudActual.value?.contratoId || solicitudActual.value?._id || solicitudActual.value?.id
-    if (contratoId) {
-      try {
-        const firmaBase64 = dataUrl.replace(/^data:image\/\w+;base64,/, '')
-        await api.post('/firmas/procesar', {
-          contratoId,
-          accion: 'Aprobar',
-          firma_base64: firmaBase64,
-        })
-      } catch (errApi) {
-        console.warn('Registro API de firma:', errApi.message)
-      }
-    }
-
-    if (typeof store.actualizarSolicitud === 'function' && idBusqueda) {
-      await store.actualizarSolicitud(idBusqueda, {
-        ...solicitudActual.value,
-        estado: 'Firmado',
+    if (!esContratista.value) {
+      const contratoId = solicitudActual.value?._id
+      if (!contratoId) throw new Error('No se encontró el contrato de la solicitud.')
+      const firmaBase64 = dataUrl.replace(/^data:image\/\w+;base64,/, '')
+      await api.post('/firmas/procesar', {
+        contratoId,
+        accion: 'Aprobar',
+        firma_base64: firmaBase64,
       })
-    }
-
-    if (Array.isArray(store.solicitudes)) {
-      const item = store.solicitudes.find(
-        (s) =>
-          (s.numeroSolicitud || s.solicitud || s.codigo || s.numeroContrato || s.contrato) ===
-          idBusqueda,
-      )
-      if (item) {
-        item.estado = 'Firmado'
-      }
+      await cargarBandeja()
     }
 
     dialogoFirma.value = false
