@@ -48,6 +48,15 @@
       no-data-label="No hay supervisores registrados"
       no-results-label="No se encontraron coincidencias"
     >
+      <template #body-cell-dependencia="props">
+        <q-td :props="props">
+          <q-badge color="blue-1" text-color="primary" class="text-weight-bold q-pa-xs">
+            <q-icon name="apartment" class="q-mr-xs" />
+            {{ props.row.dependencia || 'Gestión Tecnológica (TIC)' }}
+          </q-badge>
+        </q-td>
+      </template>
+
       <template #body-cell-acciones="props">
         <q-td :props="props">
           <q-btn flat round dense color="primary" icon="edit" @click="editarSupervisor(props.row)">
@@ -119,6 +128,22 @@
               dense
               :rules="[(val) => !!val || 'El teléfono es obligatorio']"
             />
+
+            <q-select
+              v-model="supervisor.dependencia"
+              :options="opcionesDependencias"
+              label="Dependencia por Defecto *"
+              outlined
+              dense
+              emit-value
+              map-options
+              :rules="[(val) => !!val || 'La dependencia es obligatoria']"
+              hint="Área técnica o administrativa a cargo del supervisor"
+            >
+              <template #prepend>
+                <q-icon name="apartment" color="primary" />
+              </template>
+            </q-select>
 
             <q-input
               v-model="supervisor.password"
@@ -199,12 +224,29 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useQuasar } from 'quasar'
 import { useSupervisoresStore } from '../stores/useSupervisoresStore.js'
+import { useDependenciasStore } from '../stores/useDependenciasStore.js'
 
 const store = useSupervisoresStore()
+const dependenciasStore = useDependenciasStore()
 const $q = useQuasar()
+
+onMounted(async () => {
+  if (dependenciasStore.cargarDependencias) {
+    await dependenciasStore.cargarDependencias()
+  }
+})
+
+const opcionesDependencias = computed(() => {
+  return (dependenciasStore.dependencias || [])
+    .filter((d) => d.estado !== 'Inactiva')
+    .map((d) => ({
+      label: d.nombre,
+      value: d.nombre,
+    }))
+})
 
 const filtro = ref('')
 const dialogo = ref(false)
@@ -221,6 +263,7 @@ const supervisor = ref({
   nombre: '',
   correo: '',
   telefono: '',
+  dependencia: '',
   password: '',
 })
 
@@ -247,6 +290,13 @@ const columns = [
     name: 'nombre',
     label: 'Nombre',
     field: 'nombre',
+    align: 'left',
+    sortable: true,
+  },
+  {
+    name: 'dependencia',
+    label: 'Dependencia Asignada',
+    field: (row) => row.dependencia || 'Gestión Tecnológica (TIC)',
     align: 'left',
     sortable: true,
   },
@@ -360,12 +410,15 @@ async function guardarSupervisor() {
 
 function nuevoSupervisor() {
   limpiarFormulario()
+  const primera = dependenciasStore.dependencias.find((d) => d.estado !== 'Inactiva')
+  supervisor.value.dependencia = primera ? primera.nombre : 'Gestión Tecnológica (TIC)'
   dialogo.value = true
 }
 
 function editarSupervisor(fila) {
   supervisor.value = {
     ...fila,
+    dependencia: fila.dependencia || 'Gestión Tecnológica (TIC)',
     password: fila.password || '',
   }
 
@@ -401,6 +454,7 @@ function limpiarFormulario() {
     nombre: '',
     correo: '',
     telefono: '',
+    dependencia: '',
     password: '',
   }
   errorFormulario.value = ''

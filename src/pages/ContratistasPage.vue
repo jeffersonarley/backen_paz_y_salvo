@@ -57,6 +57,24 @@
         </q-td>
       </template>
 
+      <template #body-cell-supervisor="props">
+        <q-td :props="props">
+          <q-badge color="teal-1" text-color="teal-9" class="text-weight-bold q-pa-xs">
+            <q-icon name="person" class="q-mr-xs" />
+            {{ props.row.supervisor || 'Ing. Carlos Supervisor' }}
+          </q-badge>
+        </q-td>
+      </template>
+
+      <template #body-cell-dependencia="props">
+        <q-td :props="props">
+          <q-badge color="purple-1" text-color="purple-9" class="text-weight-bold q-pa-xs">
+            <q-icon name="apartment" class="q-mr-xs" />
+            {{ props.row.dependencia || 'Gestión Tecnológica (TIC)' }}
+          </q-badge>
+        </q-td>
+      </template>
+
       <template #body-cell-acciones="props">
         <q-td :props="props">
           <q-btn flat round dense color="primary" icon="edit" @click="editarContratista(props.row)">
@@ -121,6 +139,52 @@
                 <q-icon name="description" color="primary" />
               </template>
             </q-input>
+
+            <!-- Asignación de Supervisor y Dependencia por Defecto -->
+            <div v-if="esSupervisor" class="q-py-xs">
+              <q-banner rounded dense class="bg-blue-1 text-primary border-blue q-mb-xs">
+                <template #avatar>
+                  <q-icon name="verified_user" color="primary" />
+                </template>
+                <div class="text-caption">
+                  <strong>Supervisor a cargo:</strong> {{ contratista.supervisor }}<br />
+                  <strong>Dependencia por defecto:</strong> {{ contratista.dependencia }}
+                </div>
+              </q-banner>
+            </div>
+            <div v-else class="row q-col-gutter-sm">
+              <div class="col-12 col-md-6">
+                <q-select
+                  v-model="contratista.supervisor"
+                  :options="opcionesSupervisores"
+                  label="Supervisor Asignado *"
+                  outlined
+                  dense
+                  emit-value
+                  map-options
+                  @update:model-value="onSeleccionarSupervisor"
+                  :rules="[(val) => !!val || 'El supervisor es obligatorio']"
+                >
+                  <template #prepend>
+                    <q-icon name="person" color="primary" />
+                  </template>
+                </q-select>
+              </div>
+              <div class="col-12 col-md-6">
+                <q-input
+                  v-model="contratista.dependencia"
+                  label="Dependencia por Defecto"
+                  outlined
+                  dense
+                  readonly
+                  hint="Asignada automáticamente por el supervisor"
+                >
+                  <template #prepend>
+                    <q-icon name="apartment" color="primary" />
+                  </template>
+                </q-input>
+              </div>
+            </div>
 
             <q-input
               v-model="contratista.correo"
@@ -222,13 +286,44 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useQuasar } from 'quasar'
 import { useContratistasStore } from '../stores/useContratistasStore.js'
+import { useSupervisoresStore } from '../stores/useSupervisoresStore.js'
+import { useAuthStore } from '../stores/authStore.js'
 
-// Instancia del Store de Pinia para Contratistas
+// Instancia de los Stores
 const store = useContratistasStore()
+const supervisoresStore = useSupervisoresStore()
+const auth = useAuthStore()
 const $q = useQuasar()
+
+const esSupervisor = computed(() => auth.rolUsuario === 'SUPERVISOR')
+
+onMounted(async () => {
+  if (supervisoresStore.cargarSupervisores) {
+    await supervisoresStore.cargarSupervisores()
+  }
+})
+
+const opcionesSupervisores = computed(() => {
+  return (supervisoresStore.supervisores || []).map((s) => ({
+    label: `${s.nombre} (${s.dependencia || 'Gestión Tecnológica (TIC)'})`,
+    value: s.nombre,
+    dependencia: s.dependencia || 'Gestión Tecnológica (TIC)',
+  }))
+})
+
+function onSeleccionarSupervisor(nombre) {
+  if (!nombre) return
+  const sup = (supervisoresStore.supervisores || []).find(
+    (s) => s.nombre.toLowerCase().trim() === String(nombre).toLowerCase().trim(),
+  )
+  if (sup) {
+    contratista.value.supervisor = sup.nombre
+    contratista.value.dependencia = sup.dependencia || 'Gestión Tecnológica (TIC)'
+  }
+}
 
 const dialogo = ref(false)
 const dialogoEliminar = ref(false)
@@ -244,6 +339,8 @@ const contratista = ref({
   documento: '',
   nombre: '',
   numeroContrato: '',
+  supervisor: '',
+  dependencia: '',
   correo: '',
   telefono: '',
   password: '',
@@ -279,6 +376,20 @@ const columns = [
     name: 'numeroContrato',
     label: 'Contrato Asignado',
     field: (row) => row.numeroContrato || '—',
+    align: 'left',
+    sortable: true,
+  },
+  {
+    name: 'supervisor',
+    label: 'Supervisor Asignado',
+    field: (row) => row.supervisor || 'Ing. Carlos Supervisor',
+    align: 'left',
+    sortable: true,
+  },
+  {
+    name: 'dependencia',
+    label: 'Dependencia',
+    field: (row) => row.dependencia || 'Gestión Tecnológica (TIC)',
     align: 'left',
     sortable: true,
   },
@@ -393,6 +504,27 @@ function nuevoContratista() {
   limpiarFormulario()
   const siguienteNum = (store.contratistas.length + 1).toString().padStart(3, '0')
   contratista.value.numeroContrato = `CNT-2026-${siguienteNum}`
+
+  if (esSupervisor.value) {
+    const miNombre = auth.usuario?.nombre || 'Ing. Carlos Supervisor'
+    contratista.value.supervisor = miNombre
+    const supEncontrado = (supervisoresStore.supervisores || []).find(
+      (s) => s.nombre.toLowerCase().trim() === miNombre.toLowerCase().trim(),
+    )
+    contratista.value.dependencia =
+      auth.usuario?.dependencia || supEncontrado?.dependencia || 'Gestión Tecnológica (TIC)'
+  } else {
+    // Si es Administrador, autoasigna por defecto el primer supervisor y su respectiva dependencia
+    const primerSup = (supervisoresStore.supervisores || [])[0]
+    if (primerSup) {
+      contratista.value.supervisor = primerSup.nombre
+      contratista.value.dependencia = primerSup.dependencia || 'Gestión Tecnológica (TIC)'
+    } else {
+      contratista.value.supervisor = 'Ing. Carlos Supervisor'
+      contratista.value.dependencia = 'Gestión Tecnológica (TIC)'
+    }
+  }
+
   dialogo.value = true
 }
 
@@ -402,6 +534,8 @@ function editarContratista(fila) {
   contratista.value = {
     ...fila,
     numeroContrato: fila.numeroContrato || '',
+    supervisor: fila.supervisor || 'Ing. Carlos Supervisor',
+    dependencia: fila.dependencia || 'Gestión Tecnológica (TIC)',
     password: fila.password || '',
   }
 
@@ -437,6 +571,8 @@ function limpiarFormulario() {
     documento: '',
     nombre: '',
     numeroContrato: '',
+    supervisor: '',
+    dependencia: '',
     correo: '',
     telefono: '',
     password: '',

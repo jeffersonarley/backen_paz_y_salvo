@@ -488,19 +488,27 @@ const opcionesContratistas = computed(() => {
 
 function onSeleccionarContratista(val) {
   if (!val) return
-  if (typeof val === 'object') {
-    solicitud.value.contratista = val.nombre
-    if (val.numeroContrato) {
-      solicitud.value.numeroContrato = val.numeroContrato
-    }
-  } else if (typeof val === 'string') {
-    solicitud.value.contratista = val
-    const encontrado = contratistasStore.contratistas.find(
-      (c) => c.nombre.toLowerCase().trim() === val.toLowerCase().trim(),
-    )
-    if (encontrado?.numeroContrato) {
+  const nombreContratista = typeof val === 'object' ? val.nombre : val
+  solicitud.value.contratista = nombreContratista
+
+  const encontrado = (contratistasStore.contratistas || []).find(
+    (c) => c.nombre.toLowerCase().trim() === String(nombreContratista).toLowerCase().trim(),
+  )
+  if (encontrado) {
+    if (encontrado.numeroContrato) {
       solicitud.value.numeroContrato = encontrado.numeroContrato
     }
+    // Si no es un supervisor imponiendo su área, cargar la dependencia y supervisor por defecto del contratista
+    if (auth.rolUsuario !== 'SUPERVISOR') {
+      if (encontrado.dependencia) {
+        solicitud.value.dependencia = encontrado.dependencia
+      }
+      if (encontrado.supervisor) {
+        solicitud.value.responsable = encontrado.supervisor
+      }
+    }
+  } else if (typeof val === 'object' && val.numeroContrato) {
+    solicitud.value.numeroContrato = val.numeroContrato
   }
 }
 
@@ -873,33 +881,66 @@ function nuevaSolicitud() {
   const randomSuffix = Math.floor(100 + Math.random() * 900)
   solicitud.value.numeroSolicitud = `SOL-2026-${randomSuffix}`
 
-  // Si el usuario autenticado es Contratista, autoasignar sus datos y contrato
-  if (auth.rolUsuario === 'CONTRATISTA' && auth.usuario?.nombre) {
+  if (auth.rolUsuario === 'SUPERVISOR') {
+    // Si el usuario autenticado es Supervisor, asignar por defecto su dependencia y a él como responsable
+    const miNombre = auth.usuario?.nombre || 'Ing. Carlos Supervisor'
+    const miDep = auth.usuario?.dependencia || 'Gestión Tecnológica (TIC)'
+    solicitud.value.dependencia = miDep
+    solicitud.value.responsable = miNombre
+
+    // Preseleccionar primer contratista supervisado por él o el primero de la lista
+    const contratistaACargo = (contratistasStore.contratistas || []).find(
+      (c) =>
+        (c.supervisor || '').toLowerCase().includes(miNombre.toLowerCase()) ||
+        miNombre.toLowerCase().includes((c.supervisor || '').toLowerCase()),
+    ) || (contratistasStore.contratistas || [])[0]
+
+    if (contratistaACargo) {
+      solicitud.value.contratista = contratistaACargo.nombre
+      solicitud.value.numeroContrato = contratistaACargo.numeroContrato || `CNT-2026-${randomSuffix}`
+    } else {
+      solicitud.value.numeroContrato = `CNT-2026-${randomSuffix}`
+    }
+  } else if (auth.rolUsuario === 'CONTRATISTA' && auth.usuario?.nombre) {
+    // Si el usuario autenticado es Contratista, autoasignar sus datos y contrato
     const miNombre = auth.usuario.nombre
     solicitud.value.contratista = miNombre
-    const encontrado = contratistasStore.contratistas.find(
+    const encontrado = (contratistasStore.contratistas || []).find(
       (c) =>
         c.nombre.toLowerCase().includes(miNombre.toLowerCase()) ||
         miNombre.toLowerCase().includes(c.nombre.toLowerCase()),
     )
     solicitud.value.numeroContrato =
       encontrado?.numeroContrato || auth.usuario?.numero_contrato || `CNT-2026-${randomSuffix}`
-  } else if (contratistasStore.contratistas.length > 0) {
-    // Si es Administrador o Supervisor creando, vincular al primer contratista del catálogo
-    const primerContratista = contratistasStore.contratistas[0]
-    solicitud.value.contratista = primerContratista.nombre
-    solicitud.value.numeroContrato = primerContratista.numeroContrato || `CNT-2026-${randomSuffix}`
-  } else {
-    solicitud.value.numeroContrato = `CNT-2026-${randomSuffix}`
-  }
 
-  // Preseleccionar primera dependencia activa y su responsable oficial
-  if (dependenciasStore.dependencias.length > 0) {
-    const primeraDep =
-      dependenciasStore.dependencias.find((d) => d.estado !== 'Inactiva') ||
-      dependenciasStore.dependencias[0]
-    solicitud.value.dependencia = primeraDep.nombre
-    solicitud.value.responsable = primeraDep.responsable
+    if (encontrado?.dependencia) {
+      solicitud.value.dependencia = encontrado.dependencia
+      solicitud.value.responsable = encontrado.supervisor || 'Ing. Carlos Supervisor'
+    } else if (dependenciasStore.dependencias.length > 0) {
+      const primeraDep =
+        dependenciasStore.dependencias.find((d) => d.estado !== 'Inactiva') ||
+        dependenciasStore.dependencias[0]
+      solicitud.value.dependencia = primeraDep.nombre
+      solicitud.value.responsable = primeraDep.responsable
+    }
+  } else {
+    // Si es Administrador creando, vincular al primer contratista y autoasignar su supervisor y dependencia por defecto
+    if (contratistasStore.contratistas.length > 0) {
+      const primerContratista = contratistasStore.contratistas[0]
+      solicitud.value.contratista = primerContratista.nombre
+      solicitud.value.numeroContrato = primerContratista.numeroContrato || `CNT-2026-${randomSuffix}`
+      solicitud.value.dependencia = primerContratista.dependencia || 'Gestión Tecnológica (TIC)'
+      solicitud.value.responsable = primerContratista.supervisor || 'Ing. Carlos Supervisor'
+    } else {
+      solicitud.value.numeroContrato = `CNT-2026-${randomSuffix}`
+      if (dependenciasStore.dependencias.length > 0) {
+        const primeraDep =
+          dependenciasStore.dependencias.find((d) => d.estado !== 'Inactiva') ||
+          dependenciasStore.dependencias[0]
+        solicitud.value.dependencia = primeraDep.nombre
+        solicitud.value.responsable = primeraDep.responsable
+      }
+    }
   }
 
   solicitud.value.estado = 'En revisión'

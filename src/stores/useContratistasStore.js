@@ -14,6 +14,8 @@ export const useContratistasStore = defineStore('contratistas', () => {
       correo: 'juan.perez@correo.com',
       telefono: '3101234567',
       cargo: 'Desarrollador Full-Stack Senior',
+      supervisor: 'Ing. Carlos Supervisor',
+      dependencia: 'Gestión Tecnológica (TIC)',
       password: '123',
     },
     {
@@ -23,6 +25,8 @@ export const useContratistasStore = defineStore('contratistas', () => {
       correo: 'contratista@gccon.com',
       telefono: '3157654321',
       cargo: 'Especialista en Soporte Informático',
+      supervisor: 'Ing. Carlos Supervisor',
+      dependencia: 'Gestión Tecnológica (TIC)',
       password: '123',
     },
     {
@@ -32,6 +36,8 @@ export const useContratistasStore = defineStore('contratistas', () => {
       correo: 'maria.gomez@correo.com',
       telefono: '3207654321',
       cargo: 'Instructora Contratista en Telemática',
+      supervisor: 'Dra. Ana María Gómez',
+      dependencia: 'Sistemas e Informática',
       password: '123',
     },
     {
@@ -41,6 +47,8 @@ export const useContratistasStore = defineStore('contratistas', () => {
       correo: 'carlos.mendoza@email.com',
       telefono: '3119876543',
       cargo: 'Consultor en Redes y Telecomunicaciones',
+      supervisor: 'Ing. Carlos Supervisor',
+      dependencia: 'Gestión Tecnológica (TIC)',
       password: '123',
     },
     {
@@ -50,6 +58,8 @@ export const useContratistasStore = defineStore('contratistas', () => {
       correo: 'diego.morales@correo.com',
       telefono: '3171234567',
       cargo: 'Técnico de Mantenimiento de Hardware',
+      supervisor: 'Ing. Fernando Ramírez',
+      dependencia: 'Infraestructura y Servicios Generales',
       password: '123',
     },
   ]
@@ -71,6 +81,10 @@ export const useContratistasStore = defineStore('contratistas', () => {
           correo: u.correo_institucional || u.correo,
           telefono: u.telefono || '3100000000',
           cargo: u.cargo || 'Contratista',
+          supervisor: u.supervisor || u.supervisor_id?.nombre_completo || 'Ing. Carlos Supervisor',
+          supervisor_id: u.supervisor_id?._id || u.supervisor_id || null,
+          dependencia: u.dependencia || u.dependencia_id?.nombre_dependencia || 'Gestión Tecnológica (TIC)',
+          dependencia_id: u.dependencia_id?._id || u.dependencia_id || null,
           password: '123',
         }))
 
@@ -105,6 +119,10 @@ export const useContratistasStore = defineStore('contratistas', () => {
         telefono: nuevoContratista.telefono,
         numero_contrato: nuevoContratista.numeroContrato,
         contrato: nuevoContratista.numeroContrato,
+        supervisor: nuevoContratista.supervisor,
+        supervisor_id: nuevoContratista.supervisor_id,
+        dependencia: nuevoContratista.dependencia,
+        dependencia_id: nuevoContratista.dependencia_id,
         cargo: nuevoContratista.cargo || 'Contratista',
         password: nuevoContratista.password,
         rol: 'Contratista',
@@ -127,6 +145,10 @@ export const useContratistasStore = defineStore('contratistas', () => {
             telefono: datosActualizados.telefono,
             numero_contrato: datosActualizados.numeroContrato,
             contrato: datosActualizados.numeroContrato,
+            supervisor: datosActualizados.supervisor,
+            supervisor_id: datosActualizados.supervisor_id,
+            dependencia: datosActualizados.dependencia,
+            dependencia_id: datosActualizados.dependencia_id,
             cargo: datosActualizados.cargo,
           })
         }

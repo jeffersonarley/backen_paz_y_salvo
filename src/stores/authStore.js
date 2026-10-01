@@ -43,6 +43,7 @@ export const useAuthStore = defineStore('auth', () => {
       password: 'super',
       rol: 'SUPERVISOR',
       cargo: 'Supervisor de Contratos TIC',
+      dependencia: 'Gestión Tecnológica (TIC)',
     },
     {
       id: 4,
@@ -51,6 +52,7 @@ export const useAuthStore = defineStore('auth', () => {
       password: '123',
       rol: 'SUPERVISOR',
       cargo: 'Supervisora Senior de Contratación',
+      dependencia: 'Sistemas e Informática',
     },
     {
       id: 5,
@@ -59,6 +61,7 @@ export const useAuthStore = defineStore('auth', () => {
       password: '123',
       rol: 'SUPERVISOR',
       cargo: 'Supervisor de Infraestructura',
+      dependencia: 'Infraestructura y Servicios Generales',
     },
     {
       id: 6,
@@ -172,6 +175,7 @@ export const useAuthStore = defineStore('auth', () => {
           correo: u.correo || u.correo_institucional,
           rol: u.rol,
           cargo: u.cargo || '',
+          dependencia: u.dependencia || u.dependencia_id?.nombre_dependencia || '',
         }
         usuario.value = userObj
         localStorage.setItem('auth_token', resp.data.token)
