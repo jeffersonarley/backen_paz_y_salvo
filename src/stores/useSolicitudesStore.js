@@ -380,7 +380,15 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
     )
     if (item) {
       item.estado = nuevoEstado
-      if (motivo) {
+      if (nuevoEstado === 'Firmado' || nuevoEstado === 'Aprobado' || nuevoEstado === 'Paz y Salvo') {
+        item.observacionRechazo = ''
+        item.observaciones_supervisor = ''
+        item.novedades = []
+        item.bienesFaltantes = []
+        if (item._id) localStorage.removeItem(`novedad_${item._id}`)
+        if (item.numeroContrato) localStorage.removeItem(`novedad_${item.numeroContrato}`)
+        if (item.numeroSolicitud) localStorage.removeItem(`novedad_${item.numeroSolicitud}`)
+      } else if (motivo) {
         item.observacionRechazo = motivo
         item.observaciones_supervisor = motivo
         if (item._id) localStorage.setItem(`novedad_${item._id}`, motivo)
@@ -391,10 +399,10 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
       try {
         await api.put(`/contratos/${idParaApi}`, {
           estado: nuevoEstado,
-          observaciones_supervisor: motivo,
-          observacion_rechazo: motivo,
-          observacionRechazo: motivo,
-          motivo: motivo,
+          observaciones_supervisor: nuevoEstado === 'Firmado' ? '' : motivo,
+          observacion_rechazo: nuevoEstado === 'Firmado' ? '' : motivo,
+          observacionRechazo: nuevoEstado === 'Firmado' ? '' : motivo,
+          motivo: nuevoEstado === 'Firmado' ? '' : motivo,
         })
       } catch (err) {
         console.warn('Sincronización de estado falló en backend, aplicado localmente:', err.message)
@@ -424,6 +432,10 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
       const todasFirmadas = solicitud.firmas?.every((f) => f.firmada)
       if (todasFirmadas) {
         solicitud.estado = 'Firmado'
+        solicitud.observacionRechazo = ''
+        solicitud.observaciones_supervisor = ''
+        solicitud.novedades = []
+        solicitud.bienesFaltantes = []
       }
     }
   }

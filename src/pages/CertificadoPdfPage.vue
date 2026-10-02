@@ -955,6 +955,19 @@ function guardarFirmaCertificado() {
       localStorage.setItem(`firma_${codigo}`, dataUrl)
     }
     localStorage.setItem('ultima_firma', dataUrl)
+
+    if (datosSolicitud.value.estado !== 'Rechazado') {
+      datosSolicitud.value.estado = 'Firmado'
+      datosSolicitud.value.observacionRechazo = ''
+      datosSolicitud.value.novedades = []
+      datosSolicitud.value.bienesFaltantes = []
+      if (codigo) {
+        localStorage.removeItem(`novedad_${codigo}`)
+      }
+      if (typeof store.cambiarEstado === 'function') {
+        store.cambiarEstado(codigo, 'Firmado')
+      }
+    }
   }
   dialogoFirma.value = false
 }
@@ -1144,6 +1157,25 @@ function guardarDatosFormato() {
 }
 
 const listaNovedadesCertificado = computed(() => {
+  const est = (datosSolicitud.value.estado || '').toLowerCase().trim()
+
+  // Si la solicitud está FIRMADA, APROBADA o en PAZ Y SALVO VIGENTE, el contratista está a paz y salvo:
+  // NO deben aparecer novedades ni observaciones de rechazo en el recuadro de obligaciones pendientes.
+  if (
+    est === 'firmado' ||
+    est === 'aprobado' ||
+    est === 'vigente' ||
+    est === 'finalizado' ||
+    est === 'paz y salvo'
+  ) {
+    return []
+  }
+
+  // Las novedades u observaciones de rechazo solo deben mostrarse si la solicitud está formalmente en 'Rechazado'
+  if (est !== 'rechazado') {
+    return []
+  }
+
   if (Array.isArray(datosSolicitud.value.novedades) && datosSolicitud.value.novedades.length > 0) {
     return datosSolicitud.value.novedades
   }
@@ -1355,6 +1387,21 @@ onMounted(async () => {
       } catch (errU) {
         console.warn('Búsqueda por contratista:', errU.message)
       }
+    }
+
+    // Si el certificado está firmado, aprobado o en paz y salvo, limpiar cualquier residuo de observaciones de rechazo
+    const estLimpio = (datosSolicitud.value.estado || '').toLowerCase().trim()
+    if (
+      estLimpio === 'firmado' ||
+      estLimpio === 'aprobado' ||
+      estLimpio === 'vigente' ||
+      estLimpio === 'finalizado' ||
+      estLimpio === 'paz y salvo'
+    ) {
+      datosSolicitud.value.observacionRechazo = ''
+      datosSolicitud.value.dependenciaRechazo = ''
+      datosSolicitud.value.novedades = []
+      datosSolicitud.value.bienesFaltantes = []
     }
   } else {
     const f = localStorage.getItem('ultima_firma')
