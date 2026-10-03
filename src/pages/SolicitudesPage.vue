@@ -8,6 +8,7 @@
       </div>
 
       <q-btn
+        v-if="esContratista || esAdmin"
         color="positive"
         icon="add"
         label="Nueva Solicitud"
@@ -41,7 +42,9 @@
             ? 'Solicitudes bajo mi Supervisión'
             : esResponsableArea
               ? 'Solicitudes en Evaluación / Firma de Dependencias'
-              : 'Listado de Solicitudes Paz y Salvo'
+              : esAdmin
+                ? 'Todas las Solicitudes (Administración)'
+                : 'Listado de Solicitudes Paz y Salvo'
       "
       :rows="rows"
       :columns="columns"
