@@ -293,6 +293,8 @@ async function guardarSolicitud() {
     numeroContrato: form.value.numeroContrato,
     contratista: nomContratista,
     nombreContratista: nomContratista,
+    documentoContratista: auth.usuario?.documento || auth.usuario?.identificacion || '',
+    correo: auth.usuario?.correo || auth.usuario?.correo_institucional || '',
     dependencia: depNombre,
     responsable: supNombre,
     objeto: form.value.objeto,

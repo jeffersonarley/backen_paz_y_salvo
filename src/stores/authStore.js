@@ -70,6 +70,8 @@ export const useAuthStore = defineStore('auth', () => {
       password: '123',
       rol: 'CONTRATISTA',
       cargo: 'Especialista en Soporte Informático',
+      documento: '1095432189',
+      numeroContrato: 'CNT-2026-014',
     },
     {
       id: 7,
@@ -78,6 +80,8 @@ export const useAuthStore = defineStore('auth', () => {
       password: '123',
       rol: 'CONTRATISTA',
       cargo: 'Desarrollador Full-Stack Senior',
+      documento: '1098765432',
+      numeroContrato: 'CNT-2025-088',
     },
     {
       id: 8,
@@ -86,6 +90,8 @@ export const useAuthStore = defineStore('auth', () => {
       password: '123',
       rol: 'CONTRATISTA',
       cargo: 'Instructora Contratista en Telemática',
+      documento: '1094321765',
+      numeroContrato: 'CNT-2026-029',
     },
     {
       id: 9,
@@ -94,6 +100,8 @@ export const useAuthStore = defineStore('auth', () => {
       password: '123',
       rol: 'CONTRATISTA',
       cargo: 'Consultor en Redes y Telecomunicaciones',
+      documento: '1097890123',
+      numeroContrato: 'CNT-2026-042',
     },
     {
       id: 10,
@@ -102,6 +110,8 @@ export const useAuthStore = defineStore('auth', () => {
       password: '123',
       rol: 'CONTRATISTA',
       cargo: 'Técnico de Mantenimiento de Hardware',
+      documento: '1096543210',
+      numeroContrato: 'CNT-2026-055',
     },
     {
       id: 11,
@@ -286,6 +296,9 @@ export const useAuthStore = defineStore('auth', () => {
           id: u.id || u._id,
           nombre: u.nombre || u.nombre_completo,
           correo: u.correo || u.correo_institucional,
+          documento: u.documento || u.identificacion || u.cedula || '',
+          telefono: u.telefono || '',
+          numeroContrato: u.numero_contrato || u.numeroContrato || '',
           rol: u.rol,
           cargo: u.cargo || '',
           dependencia: u.dependencia || u.dependencia_id?.nombre_dependencia || '',

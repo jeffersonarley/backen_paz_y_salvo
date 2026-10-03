@@ -745,16 +745,87 @@ const esSupervisorOAdmin = computed(
   () => auth.rolUsuario === 'SUPERVISOR' || auth.rolUsuario === 'ADMINISTRADOR',
 )
 
+function normalizarTexto(txt) {
+  return (txt || '')
+    .toString()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+}
+
 const solicitudesParaBandeja = computed(() => {
   const lista = store.solicitudes || []
-  if (esContratista.value && auth.usuario?.nombre) {
-    const nombreUsuario = auth.usuario.nombre.toLowerCase().trim()
-    const filtradas = lista.filter((s) => {
-      const c = (s.contratista || s.nombreContratista || '').toLowerCase().trim()
-      return c.includes(nombreUsuario) || nombreUsuario.includes(c)
+  if (!auth.usuario) return lista
+
+  const rol = (auth.rolUsuario || '').toUpperCase()
+
+  // 1. Si es CONTRATISTA: Solo sus solicitudes (NUNCA mostrar las de otros)
+  if (rol === 'CONTRATISTA') {
+    const u = auth.usuario
+    const miNombre = normalizarTexto(u.nombre || u.nombre_completo)
+    const miDocumento = String(u.documento || u.identificacion || '').trim()
+    const miCorreo = normalizarTexto(u.correo || u.correo_institucional)
+    const miContrato = normalizarTexto(u.numeroContrato || u.contrato)
+    const miId = String(u.id || u._id || '').trim()
+
+    return lista.filter((s) => {
+      const nom = normalizarTexto(s.contratista || s.nombreContratista)
+      const doc = String(s.documentoContratista || s.identificacion || s.documento || '').trim()
+      const cor = normalizarTexto(s.correo || s.correoContratista)
+      const con = normalizarTexto(s.numeroContrato || s.contrato)
+      const conId = String(s.contratista_id || s.usuario_id || s.usuario?._id || '').trim()
+
+      if (miDocumento && doc && miDocumento === doc) return true
+      if (miId && conId && miId === conId) return true
+      if (miCorreo && cor && miCorreo === cor) return true
+      if (miContrato && con && (miContrato === con || con.includes(miContrato))) return true
+      if (miNombre && nom && (nom.includes(miNombre) || miNombre.includes(nom))) return true
+
+      return false
     })
-    return filtradas.length > 0 ? filtradas : lista
   }
+
+  // 2. Si es SUPERVISOR: Solo solicitudes bajo su supervisión
+  if (rol === 'SUPERVISOR') {
+    const u = auth.usuario
+    const miNombre = normalizarTexto(u.nombre || u.nombre_completo)
+    const miCorreo = normalizarTexto(u.correo || u.correo_institucional)
+    const miDep = normalizarTexto(u.dependencia)
+
+    return lista.filter((s) => {
+      const resp = normalizarTexto(s.responsable || s.supervisor)
+      const dep = normalizarTexto(s.dependencia)
+      const cor = normalizarTexto(s.correoSupervisor || s.correo_supervisor)
+
+      if (miNombre && resp && (resp.includes(miNombre) || miNombre.includes(resp))) return true
+      if (miCorreo && cor && miCorreo === cor) return true
+      if (miDep && dep && (dep.includes(miDep) || miDep.includes(dep))) return true
+
+      return false
+    })
+  }
+
+  // 3. Si es RESPONSABLE_AREA: ve solicitudes de su área / pendientes de firma
+  if (rol === 'RESPONSABLE_AREA') {
+    const u = auth.usuario
+    const miDep = normalizarTexto(u.dependencia)
+    if (miDep) {
+      const filtradas = lista.filter((s) => {
+        const dep = normalizarTexto(s.dependencia)
+        if (dep && (dep.includes(miDep) || miDep.includes(dep))) return true
+        if (Array.isArray(s.firmas)) {
+          return s.firmas.some((f) => {
+            const nomF = normalizarTexto(f.dependenciaNombre || f.dependencia)
+            return nomF && (nomF.includes(miDep) || miDep.includes(nomF))
+          })
+        }
+        return false
+      })
+      if (filtradas.length > 0) return filtradas
+    }
+  }
+
   return lista
 })
 
