@@ -37,6 +37,34 @@ function validarRangoFechas(inicio, fin) {
     }
 }
 
+// Cadena de firmas de uno o varios contratos, agrupada por contrato y con
+// el nombre del área resuelto (populate de area_id) y la fecha de la acción.
+async function cargarTrazabilidad(contratoIds) {
+    const ids = (contratoIds || []).filter(Boolean);
+    if (ids.length === 0) {
+        return new Map();
+    }
+
+    const trazas = await TrazabilidadFirma.find({ contrato_id: { $in: ids } })
+        .populate('area_id', 'nombre_dependencia')
+        .populate('usuario_id', 'nombre_completo correo_institucional')
+        .sort({ createdAt: 1, _id: 1 })
+        .lean();
+
+    const porContrato = new Map();
+    for (const traza of trazas) {
+        const clave = String(traza.contrato_id);
+        const cadena = porContrato.get(clave) || [];
+        cadena.push({
+            ...traza,
+            area: traza.area_id?.nombre_dependencia || null,
+            fecha: traza.fecha_firma || traza.createdAt || null
+        });
+        porContrato.set(clave, cadena);
+    }
+    return porContrato;
+}
+
 // Diagrama 2: Registro contractual e inventario (transacción atómica + fallback)
 exports.crearContrato = asyncHandler(async (req, res) => {
     const { numero, telefono, dependencia, bienes, objeto_contractual, fecha_inicio, fecha_fin, adjunto_nombre } = req.body;
@@ -164,16 +192,25 @@ exports.misSolicitudes = asyncHandler(async (req, res) => {
         .populate('dependencia', 'nombre_dependencia')
         .populate('supervisor', 'nombre_completo correo_institucional')
         .sort({ createdAt: -1 });
-    res.status(200).json(contratos);
+
+    const trazasPorContrato = await cargarTrazabilidad(contratos.map(contrato => contrato._id));
+
+    res.status(200).json(contratos.map(contrato => {
+        const trazabilidad = trazasPorContrato.get(String(contrato._id)) || [];
+        return { ...contrato.toObject(), trazabilidad, firmas: trazabilidad };
+    }));
 });
 
-// Listar contratos según el rol (Supervisor: asignados; ResponsableArea: con firma en su área; Admin: todos)
+// Listar contratos según el rol (Contratista: los suyos; Supervisor: asignados;
+// ResponsableArea: con firma en su área; Admin: todos)
 exports.listarContratos = asyncHandler(async (req, res) => {
     const rol = req.usuario?.rol;
     const usuarioId = req.usuario?.id;
     let filtro = {};
 
-    if (rol === 'Supervisor') {
+    if (rol === 'Contratista') {
+        filtro = { usuario: usuarioId };
+    } else if (rol === 'Supervisor') {
         filtro = { supervisor: usuarioId };
     } else if (rol === 'ResponsableArea') {
         const dependencia_id = req.usuario?.dependencia_id;
@@ -191,25 +228,12 @@ exports.listarContratos = asyncHandler(async (req, res) => {
         .populate('supervisor', 'nombre_completo correo_institucional')
         .sort({ createdAt: -1 });
 
-    const trazas = await TrazabilidadFirma.find({
-        contrato_id: { $in: contratos.map(contrato => contrato._id) }
-    })
-        .populate('area_id', 'nombre_dependencia')
-        .populate('usuario_id', 'nombre_completo')
-        .sort({ createdAt: 1, _id: 1 })
-        .lean();
-    const trazasPorContrato = new Map();
-    for (const traza of trazas) {
-        const contratoId = String(traza.contrato_id);
-        const cadena = trazasPorContrato.get(contratoId) || [];
-        cadena.push(traza);
-        trazasPorContrato.set(contratoId, cadena);
-    }
+    const trazasPorContrato = await cargarTrazabilidad(contratos.map(contrato => contrato._id));
 
-    res.status(200).json(contratos.map(contrato => ({
-        ...contrato.toObject(),
-        firmas: trazasPorContrato.get(String(contrato._id)) || []
-    })));
+    res.status(200).json(contratos.map(contrato => {
+        const trazabilidad = trazasPorContrato.get(String(contrato._id)) || [];
+        return { ...contrato.toObject(), trazabilidad, firmas: trazabilidad };
+    }));
 });
 
 // Obtener detalle de un contrato (según permisos por rol)
@@ -250,7 +274,19 @@ exports.obtenerContrato = asyncHandler(async (req, res) => {
     }
 
     const bienes = await BienEntregado.find({ contrato_id: contrato._id });
-    res.status(200).json({ contrato, bienes });
+
+    // Trazabilidad de firmas: solo para el dueño, su supervisor y el administrador
+    const veTrazabilidad = ['Contratista', 'Supervisor', 'Administrador'].includes(rol);
+    const trazabilidad = veTrazabilidad
+        ? (await cargarTrazabilidad([contrato._id])).get(String(contrato._id)) || []
+        : [];
+
+    res.status(200).json({
+        contrato: { ...contrato.toObject(), trazabilidad, firmas: trazabilidad },
+        bienes,
+        trazabilidad,
+        firmas: trazabilidad
+    });
 });
 
 // RF-002: Contratista actualiza su contrato (solo en estado Borrador)

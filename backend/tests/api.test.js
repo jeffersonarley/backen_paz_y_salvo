@@ -421,3 +421,169 @@ describe('Flujo de firmas: rechazo, IDOR, concurrencia y verificación', () => {
     expect(res.status).toBe(400);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Filtrado de solicitudes por rol y cadena de firmas (RF-005)
+// ---------------------------------------------------------------------------
+describe('Filtrado por rol y cadena de firmas', () => {
+  let contPropio, contAjeno, responsable2;
+  let tokenPropio, tokenAjeno, tokenA, tokenS, tokenR, tokenR2;
+  let idPropio, idAjeno, idCadena;
+
+  const crear = (token, numero) => request(app)
+    .post('/api/contratos/nuevo')
+    .set('Authorization', `Bearer ${token}`)
+    .send({
+      numero, telefono: '3000000000', dependencia: area._id.toString(),
+      bienes: [{ descripcion: 'Equipo', codigo_inventario: `INV-${numero}` }]
+    });
+
+  beforeAll(async () => {
+    const hash = await bcrypt.hash(PASS, 8);
+    // El bloque se autoabastece: no depende de datos creados por otros describe
+    if (!(await DependenciaArea.findOne({ nombre_dependencia: 'Area Dos' }))) {
+      await DependenciaArea.create({ nombre_dependencia: 'Area Dos', activo: true });
+    }
+    contPropio = await Usuario.create({ nombre_completo: 'Cont Rol Propio', correo_institucional: 'cont.rol@empresa.edu', password_hash: hash, rol: 'Contratista', supervisor_id: supervisor._id });
+    contAjeno = await Usuario.create({ nombre_completo: 'Cont Rol Ajeno', correo_institucional: 'cont.rol.ajeno@empresa.edu', password_hash: hash, rol: 'Contratista', supervisor_id: supervisor._id });
+    responsable2 = await Usuario.findOne({ correo_institucional: 'resp2.test@institucion.edu.co' })
+      || await Usuario.create({ nombre_completo: 'Resp Dos Rol', correo_institucional: 'resp2.test@institucion.edu.co', password_hash: hash, rol: 'ResponsableArea', dependencia_id: (await DependenciaArea.findOne({ nombre_dependencia: 'Area Dos' }))._id });
+
+    tokenPropio = (await login(contPropio.correo_institucional)).body.token;
+    tokenAjeno = (await login(contAjeno.correo_institucional)).body.token;
+    tokenA = (await login(admin.correo_institucional)).body.token;
+    tokenS = (await login(supervisor.correo_institucional)).body.token;
+    tokenR = (await login(responsable.correo_institucional)).body.token;
+    tokenR2 = (await login(responsable2.correo_institucional)).body.token;
+    expect(tokenPropio).toBeDefined();
+
+    const propio = await crear(tokenPropio, 'CT-ROL-1');
+    expect(propio.status).toBe(201);
+    idPropio = propio.body.contrato._id;
+
+    const ajeno = await crear(tokenAjeno, 'CT-ROL-2');
+    expect(ajeno.status).toBe(201);
+    idAjeno = ajeno.body.contrato._id;
+
+    const cadena = await crear(tokenPropio, 'CT-ROL-3');
+    expect(cadena.status).toBe(201);
+    idCadena = cadena.body.contrato._id;
+  });
+
+  test('GET /contratos acepta al Contratista y solo devuelve sus propias solicitudes', async () => {
+    const res = await request(app).get('/api/contratos').set('Authorization', `Bearer ${tokenPropio}`);
+    expect(res.status).toBe(200);
+    expect(res.body.length).toBeGreaterThan(0);
+    for (const contrato of res.body) {
+      expect(String(contrato.usuario)).toBe(String(contPropio._id));
+      expect(Array.isArray(contrato.firmas)).toBe(true);
+      expect(Array.isArray(contrato.trazabilidad)).toBe(true);
+    }
+    const numeros = res.body.map(c => c.numero_contrato);
+    expect(numeros).toContain('CT-ROL-1');
+    expect(numeros).toContain('CT-ROL-3');
+    expect(numeros).not.toContain('CT-ROL-2');
+    expect(numeros).not.toContain('CT-TEST-001');
+    expect(numeros).not.toContain('CT-RECH-1');
+  });
+
+  test('un segundo contratista tampoco ve solicitudes ajenas', async () => {
+    const res = await request(app).get('/api/contratos').set('Authorization', `Bearer ${tokenAjeno}`);
+    expect(res.status).toBe(200);
+    expect(res.body.length).toBe(1);
+    expect(String(res.body[0].usuario)).toBe(String(contAjeno._id));
+    expect(res.body[0].numero_contrato).toBe('CT-ROL-2');
+  });
+
+  test('admin y supervisor conservan su visibilidad global/asignada', async () => {
+    const admin = await request(app).get('/api/contratos').set('Authorization', `Bearer ${tokenA}`);
+    expect(admin.status).toBe(200);
+    const numerosAdmin = admin.body.map(c => c.numero_contrato);
+    expect(numerosAdmin).toContain('CT-ROL-1');
+    expect(numerosAdmin).toContain('CT-ROL-2');
+
+    const sup = await request(app).get('/api/contratos').set('Authorization', `Bearer ${tokenS}`);
+    expect(sup.status).toBe(200);
+    expect(sup.body.length).toBeGreaterThan(0);
+    for (const contrato of sup.body) {
+      expect(String(contrato.supervisor?._id)).toBe(String(supervisor._id));
+      expect(Array.isArray(contrato.trazabilidad)).toBe(true);
+    }
+  });
+
+  test('mis-solicitudes adjunta trazabilidad con área, estado, observación y fecha', async () => {
+    const evaluar = await request(app).put(`/api/contratos/evaluar/${idPropio}`).set('Authorization', `Bearer ${tokenS}`).send({ aprobado: true });
+    expect(evaluar.status).toBe(200);
+
+    const rechazo = await request(app).post('/api/firmas/procesar').set('Authorization', `Bearer ${tokenR}`)
+      .send({ contratoId: idPropio, accion: 'Rechazar', observacion_rechazo: 'Falta devolver el equipo' });
+    expect(rechazo.status).toBe(200);
+
+    const res = await request(app).get('/api/contratos/mis-solicitudes').set('Authorization', `Bearer ${tokenPropio}`);
+    expect(res.status).toBe(200);
+    expect(res.body.every(c => String(c.usuario) === String(contPropio._id))).toBe(true);
+
+    const contrato = res.body.find(c => String(c._id) === String(idPropio));
+    expect(contrato).toBeDefined();
+    expect(contrato.estado).toBe('Rechazado');
+    expect(Array.isArray(contrato.trazabilidad)).toBe(true);
+    expect(contrato.trazabilidad.length).toBeGreaterThanOrEqual(2);
+
+    const rechazada = contrato.trazabilidad.find(t => t.estado === 'Rechazado');
+    expect(rechazada).toBeDefined();
+    expect(rechazada.area).toBe('Area Prueba');
+    expect(rechazada.area_id).toMatchObject({ nombre_dependencia: 'Area Prueba' });
+    expect(rechazada.observacion_rechazo).toBe('Falta devolver el equipo');
+    expect(rechazada.fecha).toBeTruthy();
+
+    const pendiente = contrato.trazabilidad.find(t => t.estado === 'Pendiente');
+    expect(pendiente).toBeDefined();
+    expect(pendiente.area).toBe('Area Dos');
+  });
+
+  test('la cadena de firmas completa se recupera con área, estado y fecha', async () => {
+    expect((await request(app).put(`/api/contratos/evaluar/${idCadena}`).set('Authorization', `Bearer ${tokenS}`).send({ aprobado: true })).status).toBe(200);
+    expect((await request(app).post('/api/firmas/procesar').set('Authorization', `Bearer ${tokenR}`)
+      .send({ contratoId: idCadena, accion: 'Aprobar', firma_base64: PNG_1X1 })).status).toBe(200);
+    const segunda = await request(app).post('/api/firmas/procesar').set('Authorization', `Bearer ${tokenR2}`)
+      .send({ contratoId: idCadena, accion: 'Aprobar', firma_base64: PNG_1X1 });
+    expect(segunda.status).toBe(200);
+    expect((await Contrato.findById(idCadena)).estado).toBe('Finalizado');
+
+    const res = await request(app).get('/api/contratos/mis-solicitudes').set('Authorization', `Bearer ${tokenPropio}`);
+    const contrato = res.body.find(c => String(c._id) === String(idCadena));
+    expect(contrato).toBeDefined();
+
+    const aprobadas = contrato.trazabilidad.filter(t => t.estado === 'Aprobado');
+    expect(aprobadas.length).toBe(2);
+    expect(aprobadas.map(t => t.area).sort()).toEqual(['Area Dos', 'Area Prueba']);
+    for (const firma of aprobadas) {
+      expect(firma.fecha).toBeTruthy();
+      expect(firma.fecha_firma).toBeTruthy();
+      expect(firma.area_id.nombre_dependencia).toBeTruthy();
+      expect(String(firma.usuario_id._id)).toBeTruthy();
+    }
+  });
+
+  test('el detalle incluye la traza de firmas para propietario, supervisor y administrador', async () => {
+    const accesos = [
+      ['propietario', tokenPropio],
+      ['supervisor', tokenS],
+      ['administrador', tokenA]
+    ];
+
+    for (const [rol, token] of accesos) {
+      const res = await request(app).get(`/api/contratos/${idPropio}`).set('Authorization', `Bearer ${token}`);
+      expect(`${rol}:${res.status}`).toBe(`${rol}:200`);
+      expect(Array.isArray(res.body.bienes)).toBe(true);
+      expect(Array.isArray(res.body.trazabilidad)).toBe(true);
+      expect(res.body.trazabilidad.length).toBeGreaterThanOrEqual(2);
+      expect(res.body.contrato.trazabilidad.length).toBe(res.body.trazabilidad.length);
+      expect(res.body.trazabilidad.some(t => t.estado === 'Rechazado' && t.observacion_rechazo)).toBe(true);
+      expect(res.body.trazabilidad.some(t => t.area === 'Area Prueba')).toBe(true);
+    }
+
+    const ajeno = await request(app).get(`/api/contratos/${idPropio}`).set('Authorization', `Bearer ${tokenAjeno}`);
+    expect(ajeno.status).toBe(403);
+  });
+});
