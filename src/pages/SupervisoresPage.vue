@@ -69,7 +69,7 @@
             dense
             color="negative"
             icon="person_off"
-            @click="eliminarSupervisor(props.row.documento)"
+            @click="eliminarSupervisor(props.row)"
           >
             <q-tooltip>Desactivar Supervisor</q-tooltip>
           </q-btn>
@@ -208,10 +208,9 @@
           <span class="text-h6">Confirmar desactivación</span>
         </q-card-section>
 
-        <q-card-section class="q-pt-none">
-          ¿Está seguro de desactivar al supervisor con documento
-          <strong>{{ documentoEliminar }}</strong
-          >?
+        <q-card-section class="q-pt-none text-body1">
+          ¿Está seguro de desactivar al supervisor
+          <strong>{{ nombreSupervisorEliminar }}</strong>?
         </q-card-section>
 
         <q-card-actions align="right">
@@ -252,6 +251,22 @@ const filtro = ref('')
 const dialogo = ref(false)
 const dialogoEliminar = ref(false)
 const documentoEliminar = ref('')
+const supervisorSeleccionadoEliminar = ref(null)
+
+const nombreSupervisorEliminar = computed(() => {
+  if (supervisorSeleccionadoEliminar.value) {
+    return (
+      supervisorSeleccionadoEliminar.value.nombre ||
+      supervisorSeleccionadoEliminar.value.nombre_completo ||
+      documentoEliminar.value ||
+      'el supervisor'
+    )
+  }
+  const s = store.supervisores.find(
+    (item) => item.documento === documentoEliminar.value || item._id === documentoEliminar.value,
+  )
+  return s?.nombre || s?.nombre_completo || documentoEliminar.value || 'el supervisor'
+})
 const editando = ref(false)
 const indiceEditar = ref(null)
 const mostrarPassword = ref(false)
@@ -429,18 +444,29 @@ function editarSupervisor(fila) {
   dialogo.value = true
 }
 
-function eliminarSupervisor(documento) {
-  documentoEliminar.value = documento
+function eliminarSupervisor(item) {
+  if (typeof item === 'object' && item !== null) {
+    supervisorSeleccionadoEliminar.value = item
+    documentoEliminar.value = item.documento || item._id || ''
+  } else {
+    documentoEliminar.value = item
+    supervisorSeleccionadoEliminar.value =
+      store.supervisores.find(
+        (s) => s.documento === item || s._id === item,
+      ) || null
+  }
   dialogoEliminar.value = true
 }
 
 function confirmarEliminar() {
+  const nombreSup = nombreSupervisorEliminar.value
   store.eliminar(documentoEliminar.value)
   documentoEliminar.value = ''
+  supervisorSeleccionadoEliminar.value = null
   dialogoEliminar.value = false
   $q.notify({
     type: 'info',
-    message: 'Supervisor desactivado correctamente.',
+    message: `Supervisor "${nombreSup}" desactivado correctamente.`,
   })
 }
 

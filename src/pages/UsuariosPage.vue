@@ -199,10 +199,9 @@
           <span class="text-h6">Confirmar desactivación</span>
         </q-card-section>
 
-        <q-card-section class="q-pt-none">
-          ¿Está seguro de desactivar al usuario con documento
-          <strong>{{ documentoEliminar }}</strong
-          >?
+        <q-card-section class="q-pt-none text-body1">
+          ¿Está seguro de desactivar al usuario
+          <strong>{{ usuarioEliminar?.nombre || documentoEliminar }}</strong>?
         </q-card-section>
 
         <q-card-actions align="right">
@@ -490,7 +489,7 @@ function editarUsuario(fila) {
 
 function eliminarUsuario(fila) {
   usuarioEliminar.value = fila
-  documentoEliminar.value = fila.nombre || fila.documento
+  documentoEliminar.value = fila.documento || fila.nombre || ''
   dialogoEliminar.value = true
 }
 
@@ -498,10 +497,11 @@ async function confirmarEliminar() {
   try {
     const idParaBorrar =
       usuarioEliminar.value?.id || usuarioEliminar.value?._id || documentoEliminar.value
+    const nom = usuarioEliminar.value?.nombre || 'Usuario'
     await api.delete(`/usuarios/${idParaBorrar}`)
     $q.notify({
       type: 'info',
-      message: 'Usuario desactivado correctamente.',
+      message: `Usuario "${nom}" desactivado correctamente.`,
     })
     await cargarUsuarios()
   } catch (err) {

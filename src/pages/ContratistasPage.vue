@@ -87,7 +87,7 @@
             dense
             color="negative"
             icon="person_off"
-            @click="eliminarContratista(props.row.documento)"
+            @click="eliminarContratista(props.row)"
           >
             <q-tooltip>Desactivar Contratista</q-tooltip>
           </q-btn>
@@ -270,10 +270,9 @@
           <span class="text-h6">Confirmar desactivación</span>
         </q-card-section>
 
-        <q-card-section class="q-pt-none">
-          ¿Está seguro de desactivar al contratista con documento
-          <strong>{{ documentoEliminar }}</strong
-          >?
+        <q-card-section class="q-pt-none text-body1">
+          ¿Está seguro de desactivar al contratista
+          <strong>{{ nombreContratistaEliminar }}</strong>?
         </q-card-section>
 
         <q-card-actions align="right">
@@ -328,6 +327,22 @@ function onSeleccionarSupervisor(nombre) {
 const dialogo = ref(false)
 const dialogoEliminar = ref(false)
 const documentoEliminar = ref('')
+const contratistaSeleccionadoEliminar = ref(null)
+
+const nombreContratistaEliminar = computed(() => {
+  if (contratistaSeleccionadoEliminar.value) {
+    return (
+      contratistaSeleccionadoEliminar.value.nombre ||
+      contratistaSeleccionadoEliminar.value.nombre_completo ||
+      documentoEliminar.value ||
+      'el contratista'
+    )
+  }
+  const c = store.contratistas.find(
+    (item) => item.documento === documentoEliminar.value || item._id === documentoEliminar.value,
+  )
+  return c?.nombre || c?.nombre_completo || documentoEliminar.value || 'el contratista'
+})
 const editando = ref(false)
 const indiceEditar = ref(null)
 const filtro = ref('')
@@ -546,19 +561,30 @@ function editarContratista(fila) {
   dialogo.value = true
 }
 
-function eliminarContratista(documento) {
-  documentoEliminar.value = documento
+function eliminarContratista(item) {
+  if (typeof item === 'object' && item !== null) {
+    contratistaSeleccionadoEliminar.value = item
+    documentoEliminar.value = item.documento || item._id || ''
+  } else {
+    documentoEliminar.value = item
+    contratistaSeleccionadoEliminar.value =
+      store.contratistas.find(
+        (c) => c.documento === item || c._id === item,
+      ) || null
+  }
   dialogoEliminar.value = true
 }
 
 function confirmarEliminar() {
+  const nombreCon = nombreContratistaEliminar.value
   store.eliminar(documentoEliminar.value)
 
   documentoEliminar.value = ''
+  contratistaSeleccionadoEliminar.value = null
   dialogoEliminar.value = false
   $q.notify({
     type: 'info',
-    message: 'Contratista desactivado correctamente.',
+    message: `Contratista "${nombreCon}" desactivado correctamente.`,
   })
 }
 

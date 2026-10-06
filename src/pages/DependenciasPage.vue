@@ -80,7 +80,7 @@
             dense
             color="negative"
             icon="domain_disabled"
-            @click="eliminarDependencia(props.row.codigo)"
+            @click="eliminarDependencia(props.row)"
           >
             <q-tooltip>{{
               props.row.estado === 'Inactivo' || props.row.estado === 'Inactiva'
@@ -258,10 +258,9 @@
           }}</span>
         </q-card-section>
 
-        <q-card-section class="q-pt-none">
-          ¿Está seguro de {{ esInactivaSeleccionada ? 'activar' : 'desactivar' }} la dependencia con
-          código <strong>{{ codigoEliminar }}</strong
-          >?
+        <q-card-section class="q-pt-none text-body1">
+          ¿Está seguro de {{ esInactivaSeleccionada ? 'activar' : 'desactivar' }} la dependencia
+          <strong>{{ nombreEliminar }}</strong>?
         </q-card-section>
 
         <q-card-actions align="right">
@@ -492,9 +491,30 @@ function onSeleccionarResponsable(val) {
   }
 }
 
+const dependenciaSeleccionadaEliminar = ref(null)
+
 const esInactivaSeleccionada = computed(() => {
-  const d = store.dependencias.find((item) => item.codigo === codigoEliminar.value)
+  const d =
+    dependenciaSeleccionadaEliminar.value ||
+    store.dependencias.find(
+      (item) => item.codigo === codigoEliminar.value || item._id === codigoEliminar.value,
+    )
   return d ? d.estado === 'Inactiva' || d.estado === 'Inactivo' : false
+})
+
+const nombreEliminar = computed(() => {
+  if (dependenciaSeleccionadaEliminar.value) {
+    return (
+      dependenciaSeleccionadaEliminar.value.nombre ||
+      dependenciaSeleccionadaEliminar.value.nombre_dependencia ||
+      codigoEliminar.value ||
+      'la dependencia'
+    )
+  }
+  const d = store.dependencias.find(
+    (item) => item.codigo === codigoEliminar.value || item._id === codigoEliminar.value,
+  )
+  return d?.nombre || d?.nombre_dependencia || codigoEliminar.value || 'la dependencia'
 })
 
 const dependencia = ref({
@@ -614,21 +634,32 @@ function editarDependencia(fila) {
   dialogo.value = true
 }
 
-function eliminarDependencia(codigo) {
-  codigoEliminar.value = codigo
+function eliminarDependencia(item) {
+  if (typeof item === 'object' && item !== null) {
+    dependenciaSeleccionadaEliminar.value = item
+    codigoEliminar.value = item.codigo || item._id || ''
+  } else {
+    codigoEliminar.value = item
+    dependenciaSeleccionadaEliminar.value =
+      store.dependencias.find(
+        (d) => d.codigo === item || d._id === item,
+      ) || null
+  }
   dialogoEliminar.value = true
 }
 
 function confirmarEliminar() {
   const eraInactiva = esInactivaSeleccionada.value
+  const nombreDep = nombreEliminar.value
   store.eliminar(codigoEliminar.value)
   codigoEliminar.value = ''
+  dependenciaSeleccionadaEliminar.value = null
   dialogoEliminar.value = false
   $q.notify({
     type: 'info',
     message: eraInactiva
-      ? 'Dependencia activada correctamente.'
-      : 'Dependencia desactivada correctamente.',
+      ? `Dependencia "${nombreDep}" activada correctamente.`
+      : `Dependencia "${nombreDep}" desactivada correctamente.`,
   })
 }
 
