@@ -111,7 +111,9 @@
                 <q-icon name="verified_user" color="positive" />
               </template>
               <div class="text-caption">
-                <strong>Destinatario oficial:</strong> Toda solicitud o paz y salvo vinculado a esta dependencia va dirigido directamente a este Responsable de Área para su revisión y firma oficial.
+                <strong>Destinatario oficial:</strong> Toda solicitud o paz y salvo vinculado a esta
+                dependencia va dirigido directamente a este Responsable de Área para su revisión y
+                firma oficial.
               </div>
             </q-banner>
 
@@ -155,7 +157,12 @@
               <template #option="scope">
                 <q-item v-bind="scope.itemProps">
                   <q-item-section avatar>
-                    <q-avatar :icon="scope.opt.icono || 'business'" color="primary" text-color="white" size="sm" />
+                    <q-avatar
+                      :icon="scope.opt.icono || 'business'"
+                      color="primary"
+                      text-color="white"
+                      size="sm"
+                    />
                   </q-item-section>
                   <q-item-section>
                     <q-item-label class="text-weight-bold">{{ scope.opt.nombre }}</q-item-label>
@@ -177,7 +184,9 @@
               input-debounce="0"
               new-value-mode="add-unique"
               @update:model-value="onSeleccionarResponsable"
-              :rules="[(val) => !!dependencia.responsable || !!val || 'El responsable es obligatorio']"
+              :rules="[
+                (val) => !!dependencia.responsable || !!val || 'El responsable es obligatorio',
+              ]"
               hint="Seleccione el responsable registrado o escriba uno nuevo"
             >
               <template #prepend>
@@ -190,7 +199,9 @@
                   </q-item-section>
                   <q-item-section>
                     <q-item-label class="text-weight-bold">{{ scope.opt.nombre }}</q-item-label>
-                    <q-item-label caption>{{ scope.opt.correo || 'Responsable de Área' }}</q-item-label>
+                    <q-item-label caption>{{
+                      scope.opt.correo || 'Responsable de Área'
+                    }}</q-item-label>
                   </q-item-section>
                 </q-item>
               </template>
@@ -214,10 +225,14 @@
             </q-input>
 
             <!-- Estado: Activa por defecto al crear, editable solo al editar -->
-            <div v-if="!editando" class="row items-center q-pa-sm bg-green-1 text-positive rounded-borders q-mt-xs">
+            <div
+              v-if="!editando"
+              class="row items-center q-pa-sm bg-green-1 text-positive rounded-borders q-mt-xs"
+            >
               <q-icon name="check_circle" color="positive" size="sm" class="q-mr-sm" />
               <div class="text-caption">
-                <strong>Estado:</strong> Activa (queda habilitada automáticamente para recibir solicitudes y firmas).
+                <strong>Estado:</strong> Activa (queda habilitada automáticamente para recibir
+                solicitudes y firmas).
               </div>
             </div>
 
@@ -230,14 +245,23 @@
               dense
             >
               <template #prepend>
-                <q-icon name="toggle_on" :color="dependencia.estado === 'Activa' ? 'positive' : 'grey-7'" />
+                <q-icon
+                  name="toggle_on"
+                  :color="dependencia.estado === 'Activa' ? 'positive' : 'grey-7'"
+                />
               </template>
             </q-select>
           </q-card-section>
 
           <q-card-actions align="right" class="q-pa-md">
             <q-btn flat label="Cancelar" color="grey-8" @click="cancelar" />
-            <q-btn unelevated type="submit" color="positive" label="Guardar Dependencia" icon="save" />
+            <q-btn
+              unelevated
+              type="submit"
+              color="positive"
+              label="Guardar Dependencia"
+              icon="save"
+            />
           </q-card-actions>
         </q-form>
       </q-card>
@@ -260,7 +284,8 @@
 
         <q-card-section class="q-pt-none text-body1">
           ¿Está seguro de {{ esInactivaSeleccionada ? 'activar' : 'desactivar' }} la dependencia
-          <strong>{{ nombreEliminar }}</strong>?
+          <strong>{{ nombreEliminar }}</strong
+          >?
         </q-card-section>
 
         <q-card-actions align="right">
@@ -405,8 +430,7 @@ function filtrarNombresDependencias(val, update) {
     const needle = val.toLowerCase()
     filtroNombresDependencias.value = nombresDependenciasSugeridas.filter(
       (v) =>
-        v.nombre.toLowerCase().includes(needle) ||
-        v.descripcion.toLowerCase().includes(needle),
+        v.nombre.toLowerCase().includes(needle) || v.descripcion.toLowerCase().includes(needle),
     )
   })
 }
@@ -641,9 +665,7 @@ function eliminarDependencia(item) {
   } else {
     codigoEliminar.value = item
     dependenciaSeleccionadaEliminar.value =
-      store.dependencias.find(
-        (d) => d.codigo === item || d._id === item,
-      ) || null
+      store.dependencias.find((d) => d.codigo === item || d._id === item) || null
   }
   dialogoEliminar.value = true
 }

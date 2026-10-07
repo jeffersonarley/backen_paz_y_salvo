@@ -52,7 +52,8 @@ export const useSupervisoresStore = defineStore('supervisores', () => {
           correo: u.correo_institucional || u.correo,
           telefono: u.telefono || '3100000000',
           cargo: u.cargo || 'Supervisor de Contratos',
-          dependencia: u.dependencia || u.dependencia_id?.nombre_dependencia || 'Gestión Tecnológica (TIC)',
+          dependencia:
+            u.dependencia || u.dependencia_id?.nombre_dependencia || 'Gestión Tecnológica (TIC)',
           dependencia_id: u.dependencia_id?._id || u.dependencia_id || null,
           password: '123',
         }))

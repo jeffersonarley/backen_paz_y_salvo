@@ -203,11 +203,31 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
             est = 'En revisión'
           }
 
+          let docCon =
+            c.documento_contratista ||
+            c.identificacion ||
+            c.documentoContratista ||
+            c.documento ||
+            c.usuario?.documento ||
+            c.usuario?.identificacion ||
+            ''
+          if (!docCon || docCon === '—') {
+            const baseMatch = solicitudesBase.find(
+              (sb) =>
+                (sb.contratista || '').toLowerCase().trim() === nom.toLowerCase().trim() ||
+                (sb.numeroContrato || '').toLowerCase().trim() === String(num).toLowerCase().trim(),
+            )
+            if (baseMatch?.documentoContratista) {
+              docCon = baseMatch.documentoContratista
+            }
+          }
+
           return {
             _id: c._id,
             id: num,
             numeroSolicitud: `SOL-${String(num).replace(/\D/g, '').slice(-4).padStart(4, '0') || '00' + (idx + 1)}`,
-            documentoContratista: c.telefono || '—',
+            documentoContratista: docCon || '—',
+            identificacion: docCon || '',
             contratista: nom,
             nombreContratista: nom,
             numeroContrato: num,
@@ -269,6 +289,11 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
   async function agregarSolicitud(nuevaSolicitud) {
     const num = nuevaSolicitud.numeroContrato || `CNT-${Date.now().toString().slice(-4)}`
     const nom = nuevaSolicitud.contratista || nuevaSolicitud.nombreContratista || 'Contratista'
+    const doc =
+      nuevaSolicitud.identificacion ||
+      nuevaSolicitud.documentoContratista ||
+      nuevaSolicitud.documento ||
+      ''
     const dep = nuevaSolicitud.dependencia || 'Gestión Tecnológica'
     const sup = nuevaSolicitud.responsable || 'Supervisor Asignado'
     const fch = nuevaSolicitud.fecha || new Date().toISOString().split('T')[0]
@@ -283,6 +308,8 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
       numeroContrato: num,
       contratista: nom,
       nombreContratista: nom,
+      documentoContratista: doc || '—',
+      identificacion: doc,
       dependencia: dep,
       responsable: sup,
       fecha: fch,
@@ -304,7 +331,10 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
         numero: num,
         contratista: nom,
         nombre_contratista: nom,
-        telefono: nuevaSolicitud.documentoContratista || nuevaSolicitud.telefono || '3001234567',
+        documento_contratista: doc,
+        identificacion: doc,
+        documento: doc,
+        telefono: nuevaSolicitud.telefono || '3001234567',
         dependencia: dep,
         estado: est,
         bienes: [
@@ -338,6 +368,11 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
     )
     if (item) {
       Object.assign(item, datosActualizados)
+      if (datosActualizados.identificacion || datosActualizados.documentoContratista) {
+        const d = datosActualizados.identificacion || datosActualizados.documentoContratista
+        item.identificacion = d
+        item.documentoContratista = d
+      }
       const motivo =
         datosActualizados.observacionRechazo ||
         datosActualizados.observaciones_supervisor ||
@@ -356,6 +391,8 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
         await api.put(`/contratos/${idParaApi}`, {
           numero_contrato: item.numeroContrato,
           contratista: item.contratista || item.nombreContratista,
+          documento_contratista: item.identificacion || item.documentoContratista || '',
+          identificacion: item.identificacion || item.documentoContratista || '',
           dependencia: item.dependencia,
           estado: item.estado,
           observaciones_supervisor: motivo,
@@ -380,7 +417,11 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
     )
     if (item) {
       item.estado = nuevoEstado
-      if (nuevoEstado === 'Firmado' || nuevoEstado === 'Aprobado' || nuevoEstado === 'Paz y Salvo') {
+      if (
+        nuevoEstado === 'Firmado' ||
+        nuevoEstado === 'Aprobado' ||
+        nuevoEstado === 'Paz y Salvo'
+      ) {
         item.observacionRechazo = ''
         item.observaciones_supervisor = ''
         item.novedades = []

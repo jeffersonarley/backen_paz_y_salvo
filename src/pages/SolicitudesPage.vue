@@ -81,9 +81,17 @@
                 clickable
                 @click.stop="abrirModalNovedades(props.row)"
               >
-                {{ obtenerNovedadesFila(props.row)[0]?.dependencia || props.row.dependencia || '1 Novedad' }}
+                {{
+                  obtenerNovedadesFila(props.row)[0]?.dependencia ||
+                  props.row.dependencia ||
+                  '1 Novedad'
+                }}
                 <q-tooltip class="bg-grey-9 text-caption">
-                  {{ obtenerNovedadesFila(props.row)[0]?.motivo || props.row.observacionRechazo || 'Clic para ver detalle de la novedad' }}
+                  {{
+                    obtenerNovedadesFila(props.row)[0]?.motivo ||
+                    props.row.observacionRechazo ||
+                    'Clic para ver detalle de la novedad'
+                  }}
                 </q-tooltip>
               </q-chip>
 
@@ -101,11 +109,15 @@
               >
                 {{ obtenerNovedadesFila(props.row).length }} áreas pendientes
                 <q-tooltip class="bg-grey-9 text-caption">
-                  <div class="text-weight-bold text-negative q-mb-xs">Áreas con novedades pendientes:</div>
+                  <div class="text-weight-bold text-negative q-mb-xs">
+                    Áreas con novedades pendientes:
+                  </div>
                   <div v-for="(nov, i) in obtenerNovedadesFila(props.row)" :key="i">
                     • <strong>{{ nov.dependencia }}:</strong> {{ nov.motivo }}
                   </div>
-                  <div class="text-caption text-italic q-mt-xs text-amber-3">Clic para abrir detalle</div>
+                  <div class="text-caption text-italic q-mt-xs text-amber-3">
+                    Clic para abrir detalle
+                  </div>
                 </q-tooltip>
               </q-chip>
             </template>
@@ -401,13 +413,23 @@
     <q-dialog v-model="dialogoNovedades">
       <q-card style="min-width: 480px; max-width: 95vw" class="rounded-borders">
         <q-card-section class="row items-center bg-red-1 text-negative q-py-sm">
-          <q-avatar icon="report_problem" color="negative" text-color="white" size="md" class="q-mr-sm" />
+          <q-avatar
+            icon="report_problem"
+            color="negative"
+            text-color="white"
+            size="md"
+            class="q-mr-sm"
+          />
           <div>
             <div class="text-subtitle1 text-weight-bold">
               Novedades Reportadas por Dependencia ({{ novedadesSeleccionadas.length }})
             </div>
             <div class="text-caption text-grey-8">
-              {{ solicitudSeleccionadaNovedad?.numeroSolicitud || solicitudSeleccionadaNovedad?.numeroContrato }} — {{ solicitudSeleccionadaNovedad?.contratista }}
+              {{
+                solicitudSeleccionadaNovedad?.numeroSolicitud ||
+                solicitudSeleccionadaNovedad?.numeroContrato
+              }}
+              — {{ solicitudSeleccionadaNovedad?.contratista }}
             </div>
           </div>
           <q-space />
@@ -420,7 +442,9 @@
               <q-icon name="info" color="warning" />
             </template>
             <div class="text-caption">
-              <strong>Procedimiento de Subsanación:</strong> El contratista solo debe acudir a las dependencias relacionadas a continuación para subsanar los requerimientos. Las aprobaciones y firmas de las demás áreas permanecen intactas y válidas.
+              <strong>Procedimiento de Subsanación:</strong> El contratista solo debe acudir a las
+              dependencias relacionadas a continuación para subsanar los requerimientos. Las
+              aprobaciones y firmas de las demás áreas permanecen intactas y válidas.
             </div>
           </q-banner>
 
@@ -431,8 +455,12 @@
               </q-item-section>
               <q-item-section>
                 <div class="row items-center justify-between">
-                  <span class="text-subtitle2 text-weight-bold text-dark">{{ nov.dependencia }}</span>
-                  <q-badge color="negative" class="text-weight-bold q-px-xs">Pendiente de Subsanar</q-badge>
+                  <span class="text-subtitle2 text-weight-bold text-dark">{{
+                    nov.dependencia
+                  }}</span>
+                  <q-badge color="negative" class="text-weight-bold q-px-xs"
+                    >Pendiente de Subsanar</q-badge
+                  >
                 </div>
                 <div class="text-body2 text-grey-9 q-mt-xs">
                   <strong>Novedad / Observación:</strong> {{ nov.motivo }}
@@ -506,6 +534,10 @@ function onSeleccionarContratista(val) {
     (c) => c.nombre.toLowerCase().trim() === String(nombreContratista).toLowerCase().trim(),
   )
   if (encontrado) {
+    if (encontrado.documento) {
+      solicitud.value.documentoContratista = encontrado.documento
+      solicitud.value.identificacion = encontrado.documento
+    }
     if (encontrado.numeroContrato) {
       solicitud.value.numeroContrato = encontrado.numeroContrato
     }
@@ -551,9 +583,7 @@ function onSeleccionarDependencia(val) {
   }
 }
 
-const puedeFirmar = computed(() =>
-  auth.tienePermiso(['RESPONSABLE_AREA']),
-)
+const puedeFirmar = computed(() => auth.tienePermiso(['RESPONSABLE_AREA']))
 
 const esContratista = computed(() => auth.tienePermiso(['CONTRATISTA']))
 const esSupervisor = computed(() => auth.tienePermiso(['SUPERVISOR']))
@@ -814,7 +844,8 @@ function irAFirmar(fila) {
   if (!auth.tienePermiso(['RESPONSABLE_AREA'])) {
     $q.notify({
       type: 'warning',
-      message: 'La evaluación y firma de dependencias está reservada exclusivamente para los Responsables de Área.',
+      message:
+        'La evaluación y firma de dependencias está reservada exclusivamente para los Responsables de Área.',
       icon: 'lock',
     })
     return
@@ -872,11 +903,38 @@ function verCertificado(fila) {
     const fchCon =
       fila.fechaContrato ||
       (fila.contrato && fila.contrato.includes('/') ? fila.contrato : '18/09/2026')
+
+    let iden =
+      fila.identificacion ||
+      (fila.documentoContratista && fila.documentoContratista !== '—'
+        ? fila.documentoContratista
+        : '') ||
+      (fila.documento && fila.documento !== '—' ? fila.documento : '') ||
+      ''
+
+    const nomCont = (fila.contratista || fila.nombreContratista || '').trim().toLowerCase()
+    if (!iden || iden === '—') {
+      const cMatch = contratistasStore.contratistas?.find(
+        (c) => (c.nombre || '').trim().toLowerCase() === nomCont,
+      )
+      if (cMatch?.documento) {
+        iden = cMatch.documento
+      } else if (
+        auth.usuario?.documento &&
+        (auth.rolUsuario === 'CONTRATISTA' ||
+          (auth.usuario?.nombre || '').trim().toLowerCase() === nomCont)
+      ) {
+        iden = auth.usuario.documento
+      } else if (auth.usuario?.identificacion) {
+        iden = auth.usuario.identificacion
+      }
+    }
+
     const datosParaPdf = {
       contratista: fila.contratista || fila.nombreContratista || '',
-      identificacion: fila.identificacion || fila.documentoContratista || fila.documento || '',
-      ciudad: (!fila.ciudad || fila.ciudad === 'Ibagué') ? 'San Gil' : fila.ciudad,
-      regional: (!fila.regional || fila.regional === 'Tolima') ? 'Santander' : fila.regional,
+      identificacion: iden,
+      ciudad: !fila.ciudad || fila.ciudad === 'Ibagué' ? 'San Gil' : fila.ciudad,
+      regional: !fila.regional || fila.regional === 'Tolima' ? 'Santander' : fila.regional,
       fecha: fila.fecha || new Date().toLocaleDateString('es-CO'),
       direccion: (fila.direccion || fila.dependencia || 'Bienestar al Aprendiz').replace(
         /\s*\/\s*Contratista/i,
@@ -892,11 +950,20 @@ function verCertificado(fila) {
       observacionRechazo: fila.observacionRechazo || fila.observaciones_supervisor || '',
     }
     localStorage.setItem(`certificado_datos_${codigo}`, JSON.stringify(datosParaPdf))
+    if (datosParaPdf.identificacion) {
+      localStorage.setItem(`certificado_identificacion_${codigo}`, datosParaPdf.identificacion)
+    }
     if (fila.contratista) {
       localStorage.setItem(
         `certificado_datos_${fila.contratista.toLowerCase().trim()}`,
         JSON.stringify(datosParaPdf),
       )
+      if (datosParaPdf.identificacion) {
+        localStorage.setItem(
+          `certificado_identificacion_${fila.contratista.toLowerCase().trim()}`,
+          datosParaPdf.identificacion,
+        )
+      }
     }
     if (datosParaPdf.identificacion) {
       localStorage.setItem(
@@ -986,8 +1053,8 @@ function editarSolicitud(fila) {
     numeroContrato: fila.numeroContrato || fila.contrato || '',
     contratista: fila.contratista || fila.nombreContratista || '',
     identificacion: fila.identificacion || fila.documentoContratista || fila.documento || '',
-    ciudad: (!fila.ciudad || fila.ciudad === 'Ibagué') ? 'San Gil' : fila.ciudad,
-    regional: (!fila.regional || fila.regional === 'Tolima') ? 'Santander' : fila.regional,
+    ciudad: !fila.ciudad || fila.ciudad === 'Ibagué' ? 'San Gil' : fila.ciudad,
+    regional: !fila.regional || fila.regional === 'Tolima' ? 'Santander' : fila.regional,
     direccion: (fila.direccion || fila.dependencia || fila.nombreDependencia || '').replace(
       /\s*\/\s*Contratista/i,
       '',
@@ -1050,15 +1117,17 @@ function nuevaSolicitud() {
     solicitud.value.responsable = miNombre
 
     // Preseleccionar primer contratista supervisado por él o el primero de la lista
-    const contratistaACargo = (contratistasStore.contratistas || []).find(
-      (c) =>
-        (c.supervisor || '').toLowerCase().includes(miNombre.toLowerCase()) ||
-        miNombre.toLowerCase().includes((c.supervisor || '').toLowerCase()),
-    ) || (contratistasStore.contratistas || [])[0]
+    const contratistaACargo =
+      (contratistasStore.contratistas || []).find(
+        (c) =>
+          (c.supervisor || '').toLowerCase().includes(miNombre.toLowerCase()) ||
+          miNombre.toLowerCase().includes((c.supervisor || '').toLowerCase()),
+      ) || (contratistasStore.contratistas || [])[0]
 
     if (contratistaACargo) {
       solicitud.value.contratista = contratistaACargo.nombre
-      solicitud.value.numeroContrato = contratistaACargo.numeroContrato || `CNT-2026-${randomSuffix}`
+      solicitud.value.numeroContrato =
+        contratistaACargo.numeroContrato || `CNT-2026-${randomSuffix}`
     } else {
       solicitud.value.numeroContrato = `CNT-2026-${randomSuffix}`
     }
@@ -1089,7 +1158,8 @@ function nuevaSolicitud() {
     if (contratistasStore.contratistas.length > 0) {
       const primerContratista = contratistasStore.contratistas[0]
       solicitud.value.contratista = primerContratista.nombre
-      solicitud.value.numeroContrato = primerContratista.numeroContrato || `CNT-2026-${randomSuffix}`
+      solicitud.value.numeroContrato =
+        primerContratista.numeroContrato || `CNT-2026-${randomSuffix}`
       solicitud.value.dependencia = primerContratista.dependencia || 'Gestión Tecnológica (TIC)'
       solicitud.value.responsable = primerContratista.supervisor || 'Ing. Carlos Supervisor'
     } else {

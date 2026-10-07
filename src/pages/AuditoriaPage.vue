@@ -67,7 +67,9 @@
         <!-- Celda Fecha -->
         <template #body-cell-fecha="props">
           <q-td :props="props">
-            <div class="text-weight-bold text-grey-9">{{ formatearFecha(props.row.createdAt) }}</div>
+            <div class="text-weight-bold text-grey-9">
+              {{ formatearFecha(props.row.createdAt) }}
+            </div>
             <div class="text-caption text-grey-6">{{ formatearHora(props.row.createdAt) }}</div>
           </q-td>
         </template>
@@ -125,14 +127,7 @@
         <!-- Celda Detalles -->
         <template #body-cell-detalles="props">
           <q-td :props="props">
-            <q-btn
-              flat
-              dense
-              round
-              color="primary"
-              icon="info"
-              @click="mostrarDetalle(props.row)"
-            >
+            <q-btn flat dense round color="primary" icon="info" @click="mostrarDetalle(props.row)">
               <q-tooltip>Ver datos del evento</q-tooltip>
             </q-btn>
           </q-td>
@@ -180,9 +175,10 @@
             </div>
             <q-separator class="q-my-sm" />
             <div class="text-weight-bold text-grey-8 q-mb-xs">Datos adicionales (JSON):</div>
-            <pre class="bg-grey-9 text-white q-pa-md rounded-borders" style="max-height: 250px; overflow: auto">{{
-              JSON.stringify(eventoSeleccionado.detalles || {}, null, 2)
-            }}</pre>
+            <pre
+              class="bg-grey-9 text-white q-pa-md rounded-borders"
+              style="max-height: 250px; overflow: auto"
+              >{{ JSON.stringify(eventoSeleccionado.detalles || {}, null, 2) }}</pre>
           </div>
         </q-card-section>
 
@@ -280,7 +276,10 @@ function formatearHora(fechaIso) {
 function obtenerIniciales(nombre) {
   if (!nombre) return 'S'
   const partes = nombre.trim().split(/\s+/)
-  return partes.slice(0, 2).map((p) => p[0].toUpperCase()).join('')
+  return partes
+    .slice(0, 2)
+    .map((p) => p[0].toUpperCase())
+    .join('')
 }
 
 function obtenerColorRol(rol) {

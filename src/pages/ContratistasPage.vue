@@ -215,18 +215,22 @@
               dense
               hint="Mínimo 8 caracteres, con mayúscula, minúscula y número"
               @focus="avisarRequisitosPassword"
-              :rules="editando ? [
-                (val) => !val || val.length >= 8 || 'Mínimo 8 caracteres',
-                (val) => !val || /[A-Z]/.test(val) || 'Debe incluir al menos una mayúscula',
-                (val) => !val || /[a-z]/.test(val) || 'Debe incluir al menos una minúscula',
-                (val) => !val || /[0-9]/.test(val) || 'Debe incluir al menos un número',
-              ] : [
-                (val) => !!val || 'La contraseña es obligatoria',
-                (val) => (val && val.length >= 8) || 'Mínimo 8 caracteres',
-                (val) => /[A-Z]/.test(val) || 'Debe incluir al menos una mayúscula',
-                (val) => /[a-z]/.test(val) || 'Debe incluir al menos una minúscula',
-                (val) => /[0-9]/.test(val) || 'Debe incluir al menos un número',
-              ]"
+              :rules="
+                editando
+                  ? [
+                      (val) => !val || val.length >= 8 || 'Mínimo 8 caracteres',
+                      (val) => !val || /[A-Z]/.test(val) || 'Debe incluir al menos una mayúscula',
+                      (val) => !val || /[a-z]/.test(val) || 'Debe incluir al menos una minúscula',
+                      (val) => !val || /[0-9]/.test(val) || 'Debe incluir al menos un número',
+                    ]
+                  : [
+                      (val) => !!val || 'La contraseña es obligatoria',
+                      (val) => (val && val.length >= 8) || 'Mínimo 8 caracteres',
+                      (val) => /[A-Z]/.test(val) || 'Debe incluir al menos una mayúscula',
+                      (val) => /[a-z]/.test(val) || 'Debe incluir al menos una minúscula',
+                      (val) => /[0-9]/.test(val) || 'Debe incluir al menos un número',
+                    ]
+              "
             >
               <template #append>
                 <q-icon
@@ -250,13 +254,7 @@
 
           <q-card-actions align="right" class="q-pa-md">
             <q-btn flat label="Cancelar" color="grey-8" @click="cancelar" :disable="guardando" />
-            <q-btn
-              unelevated
-              type="submit"
-              color="positive"
-              label="Guardar"
-              :loading="guardando"
-            />
+            <q-btn unelevated type="submit" color="positive" label="Guardar" :loading="guardando" />
           </q-card-actions>
         </q-form>
       </q-card>
@@ -272,7 +270,8 @@
 
         <q-card-section class="q-pt-none text-body1">
           ¿Está seguro de desactivar al contratista
-          <strong>{{ nombreContratistaEliminar }}</strong>?
+          <strong>{{ nombreContratistaEliminar }}</strong
+          >?
         </q-card-section>
 
         <q-card-actions align="right">
@@ -502,7 +501,9 @@ async function guardarContratista() {
     limpiarFormulario()
   } catch (err) {
     const mensajeError =
-      err.response?.data?.mensaje || err.mensaje || 'Error al guardar contratista en la base de datos.'
+      err.response?.data?.mensaje ||
+      err.mensaje ||
+      'Error al guardar contratista en la base de datos.'
     errorFormulario.value = mensajeError
     $q.notify({
       type: 'negative',
@@ -568,9 +569,7 @@ function eliminarContratista(item) {
   } else {
     documentoEliminar.value = item
     contratistaSeleccionadoEliminar.value =
-      store.contratistas.find(
-        (c) => c.documento === item || c._id === item,
-      ) || null
+      store.contratistas.find((c) => c.documento === item || c._id === item) || null
   }
   dialogoEliminar.value = true
 }

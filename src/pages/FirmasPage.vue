@@ -547,7 +547,8 @@
                   <q-icon name="verified_user" color="primary" />
                 </template>
                 <div>
-                  <strong>Vista de Supervisión y Control:</strong> La firma de paz y salvo corresponde exclusivamente al Responsable de Área asignado.
+                  <strong>Vista de Supervisión y Control:</strong> La firma de paz y salvo
+                  corresponde exclusivamente al Responsable de Área asignado.
                 </div>
               </q-banner>
 
@@ -959,7 +960,8 @@ onMounted(() => {
   if (!esResponsableArea.value) {
     $q.notify({
       type: 'warning',
-      message: 'El módulo de firmas y evaluación de dependencias es exclusivo para los Responsables de Área.',
+      message:
+        'El módulo de firmas y evaluación de dependencias es exclusivo para los Responsables de Área.',
       icon: 'lock',
     })
     router.replace({ name: 'solicitudes' })

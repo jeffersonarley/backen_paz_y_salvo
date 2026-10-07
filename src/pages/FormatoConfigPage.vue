@@ -27,8 +27,8 @@
               Parámetros de la Versión Vigente
             </div>
             <div class="text-caption text-grey-6 q-mb-md">
-              Cualquier cambio guardado invalidará la caché en memoria y aplicará inmediatamente a los
-              nuevos trámites contractuales y PDFs generados.
+              Cualquier cambio guardado invalidará la caché en memoria y aplicará inmediatamente a
+              los nuevos trámites contractuales y PDFs generados.
             </div>
 
             <div class="row q-col-gutter-md">
@@ -157,7 +157,9 @@
               <q-separator class="q-my-sm" />
 
               <div class="text-caption text-grey-8 text-italic q-my-sm">
-                "{{ form.texto_encabezado || 'Constancia institucional de paz y salvo contractual.' }}"
+                "{{
+                  form.texto_encabezado || 'Constancia institucional de paz y salvo contractual.'
+                }}"
               </div>
 
               <q-separator class="q-my-sm" />
@@ -207,9 +209,10 @@ async function cargarFormato() {
           ? new Date(res.data.fecha_vigencia).toISOString().split('T')[0]
           : new Date().toISOString().split('T')[0],
         texto_encabezado: res.data.texto_encabezado || form.value.texto_encabezado,
-        campos_obligatorios: Array.isArray(res.data.campos_obligatorios) && res.data.campos_obligatorios.length > 0
-          ? [...res.data.campos_obligatorios]
-          : form.value.campos_obligatorios,
+        campos_obligatorios:
+          Array.isArray(res.data.campos_obligatorios) && res.data.campos_obligatorios.length > 0
+            ? [...res.data.campos_obligatorios]
+            : form.value.campos_obligatorios,
       }
     }
   } catch (err) {

@@ -48,7 +48,11 @@
       <!-- Lado Derecho: Acciones principales con estilo homogéneo en una sola fila -->
       <div class="toolbar-right row items-center q-gutter-sm no-wrap">
         <q-btn
-          v-if="miFilaParaFirmar && datosSolicitud.estado !== 'Rechazado' && !firmasTabla[miFilaParaFirmar.id]"
+          v-if="
+            miFilaParaFirmar &&
+            datosSolicitud.estado !== 'Rechazado' &&
+            !firmasTabla[miFilaParaFirmar.id]
+          "
           outline
           dense
           color="primary"
@@ -57,10 +61,17 @@
           class="q-px-sm"
           @click="abrirModalFirmaFila(miFilaParaFirmar)"
         >
-          <q-tooltip>Estampar tu firma oficial en {{ miFilaParaFirmar.dependencia.replace(/<[^>]*>/g, ' ') }}</q-tooltip>
+          <q-tooltip
+            >Estampar tu firma oficial en
+            {{ miFilaParaFirmar.dependencia.replace(/<[^>]*>/g, ' ') }}</q-tooltip
+          >
         </q-btn>
         <q-btn
-          v-if="miFilaParaFirmar && datosSolicitud.estado !== 'Rechazado' && firmasTabla[miFilaParaFirmar.id]"
+          v-if="
+            miFilaParaFirmar &&
+            datosSolicitud.estado !== 'Rechazado' &&
+            firmasTabla[miFilaParaFirmar.id]
+          "
           flat
           dense
           color="grey-7"
@@ -79,7 +90,9 @@
           class="q-px-sm"
           @click="abrirModalEditarDatos"
         >
-          <q-tooltip>Modificar o completar datos del contratista, contrato, regional y causal</q-tooltip>
+          <q-tooltip
+            >Modificar o completar datos del contratista, contrato, regional y causal</q-tooltip
+          >
         </q-btn>
         <q-btn
           unelevated
@@ -153,17 +166,33 @@
 
         <!-- Tabla de Clasificación de la Información (6 celdas exactas) -->
         <!-- Tabla de Clasificación de la Información (6 celdas exactas) -->
-        <div class="clasificacion-tabla cursor-pointer" @click="abrirModalEditarDatos" title="Clic para cambiar clasificación de la información">
+        <div
+          class="clasificacion-tabla cursor-pointer"
+          @click="abrirModalEditarDatos"
+          title="Clic para cambiar clasificación de la información"
+        >
           <div class="clasif-col">Pública</div>
-          <div class="clasif-check">{{ datosSolicitud.clasificacion === 'Publica' || !datosSolicitud.clasificacion ? 'X' : '' }}</div>
+          <div class="clasif-check">
+            {{
+              datosSolicitud.clasificacion === 'Publica' || !datosSolicitud.clasificacion ? 'X' : ''
+            }}
+          </div>
           <div class="clasif-col">Pública Clasificada</div>
-          <div class="clasif-check">{{ datosSolicitud.clasificacion === 'Publica Clasificada' ? 'X' : '' }}</div>
+          <div class="clasif-check">
+            {{ datosSolicitud.clasificacion === 'Publica Clasificada' ? 'X' : '' }}
+          </div>
           <div class="clasif-col">Pública Reservada</div>
-          <div class="clasif-check">{{ datosSolicitud.clasificacion === 'Publica Reservada' ? 'X' : '' }}</div>
+          <div class="clasif-check">
+            {{ datosSolicitud.clasificacion === 'Publica Reservada' ? 'X' : '' }}
+          </div>
         </div>
 
         <!-- Datos del Contratista - Cuadrícula Oficial GCCON-F-088 -->
-        <div class="seccion-datos cursor-pointer" @click="abrirModalEditarDatos" title="Clic para editar o corregir datos del contratista, fechas o contrato">
+        <div
+          class="seccion-datos cursor-pointer"
+          @click="abrirModalEditarDatos"
+          title="Clic para editar o corregir datos del contratista, fechas o contrato"
+        >
           <!-- Fila 1: Nombres y Apellidos del Contratista | Identificación -->
           <div class="fila-contratista-1">
             <div class="celda-nombre-contratista">
@@ -218,22 +247,39 @@
         <!-- Causal de Terminación del Contrato -->
         <div class="titulo-causal">CAUSAL DE TERMINACIÓN DEL CONTRATO</div>
 
-        <div class="fila-causales cursor-pointer" @click="abrirModalEditarDatos" title="Clic para seleccionar causal de terminación">
+        <div
+          class="fila-causales cursor-pointer"
+          @click="abrirModalEditarDatos"
+          title="Clic para seleccionar causal de terminación"
+        >
           <div class="causal-item">
             <span class="causal-nombre">LIQUIDACIÓN POR MUTUO<br />ACUERDO</span>
-            <div class="causal-caja-cuadrada">{{ datosSolicitud.causalTerminacion === 'LIQUIDACION_MUTUO_ACUERDO' || !datosSolicitud.causalTerminacion ? 'X' : '' }}</div>
+            <div class="causal-caja-cuadrada">
+              {{
+                datosSolicitud.causalTerminacion === 'LIQUIDACION_MUTUO_ACUERDO' ||
+                !datosSolicitud.causalTerminacion
+                  ? 'X'
+                  : ''
+              }}
+            </div>
           </div>
           <div class="causal-item">
             <span class="causal-nombre">CESIÓN</span>
-            <div class="causal-caja-rect">{{ datosSolicitud.causalTerminacion === 'CESION' ? 'X' : '' }}</div>
+            <div class="causal-caja-rect">
+              {{ datosSolicitud.causalTerminacion === 'CESION' ? 'X' : '' }}
+            </div>
           </div>
           <div class="causal-item">
             <span class="causal-nombre">LIQUIDACIÓN ANTICIPADA<br />POR MUTUO ACUERDO</span>
-            <div class="causal-caja-cuadrada">{{ datosSolicitud.causalTerminacion === 'LIQUIDACION_ANTICIPADA' ? 'X' : '' }}</div>
+            <div class="causal-caja-cuadrada">
+              {{ datosSolicitud.causalTerminacion === 'LIQUIDACION_ANTICIPADA' ? 'X' : '' }}
+            </div>
           </div>
           <div class="causal-item">
             <span class="causal-nombre">TERMINACIÓN<br />UNILATERAL</span>
-            <div class="causal-caja-cuadrada">{{ datosSolicitud.causalTerminacion === 'TERMINACION_UNILATERAL' ? 'X' : '' }}</div>
+            <div class="causal-caja-cuadrada">
+              {{ datosSolicitud.causalTerminacion === 'TERMINACION_UNILATERAL' ? 'X' : '' }}
+            </div>
           </div>
         </div>
 
@@ -333,7 +379,9 @@
                 class="contenedor-firma-img"
               >
                 <img :src="firmaGuardada" alt="Firma del Contratista" class="img-firma-estampada" />
-                <q-tooltip v-if="esContratista">Clic para editar, agrandar o ajustar tu firma</q-tooltip>
+                <q-tooltip v-if="esContratista"
+                  >Clic para editar, agrandar o ajustar tu firma</q-tooltip
+                >
               </div>
               <div v-else class="contenedor-firma-placeholder no-print">
                 <q-btn
@@ -374,11 +422,7 @@
         <q-card-section class="bg-primary text-white row items-center justify-between">
           <div class="text-h6">
             <q-icon name="edit_note" class="q-mr-sm" />
-            {{
-              firmandoFila
-                ? `Firma: ${firmandoFila.nombres}`
-                : 'Firma del Contratista'
-            }}
+            {{ firmandoFila ? `Firma: ${firmandoFila.nombres}` : 'Firma del Contratista' }}
           </div>
           <q-btn icon="close" flat round dense v-close-popup />
         </q-card-section>
@@ -421,12 +465,15 @@
 
         <q-card-section class="q-pa-lg scroll" style="max-height: 75vh">
           <div class="text-caption text-grey-8 q-mb-md">
-            Esta información se guardará permanentemente para este usuario y se reflejará de forma exacta en el certificado impreso.
+            Esta información se guardará permanentemente para este usuario y se reflejará de forma
+            exacta en el certificado impreso.
           </div>
 
           <!-- Clasificación de la Información -->
           <div class="q-mb-md">
-            <div class="text-subtitle2 text-weight-bold text-dark q-mb-xs">Clasificación de la Información:</div>
+            <div class="text-subtitle2 text-weight-bold text-dark q-mb-xs">
+              Clasificación de la Información:
+            </div>
             <q-btn-toggle
               v-model="formularioEdicion.clasificacion"
               spread
@@ -439,7 +486,7 @@
               :options="[
                 { label: 'Pública', value: 'Publica' },
                 { label: 'Pública Clasificada', value: 'Publica Clasificada' },
-                { label: 'Pública Reservada', value: 'Publica Reservada' }
+                { label: 'Pública Reservada', value: 'Publica Reservada' },
               ]"
             />
           </div>
@@ -495,12 +542,7 @@
               </q-select>
             </div>
             <div class="col-12 col-md-4">
-              <q-input
-                v-model="formularioEdicion.regional"
-                label="Regional *"
-                outlined
-                dense
-              >
+              <q-input v-model="formularioEdicion.regional" label="Regional *" outlined dense>
                 <template #prepend>
                   <q-icon name="map" color="primary" />
                 </template>
@@ -631,6 +673,7 @@ import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useSolicitudesStore } from '../stores/useSolicitudesStore.js'
+import { useContratistasStore } from '../stores/useContratistasStore.js'
 import { useAuthStore } from '../stores/authStore.js'
 import api from '../services/api'
 import FirmaCanvas from '../components/FirmaCanvas.vue'
@@ -640,6 +683,7 @@ const $q = useQuasar()
 const router = useRouter()
 const route = useRoute()
 const store = useSolicitudesStore()
+const contratistasStore = useContratistasStore()
 const auth = useAuthStore()
 
 const esContratista = computed(() => auth.rolUsuario === 'CONTRATISTA')
@@ -681,8 +725,7 @@ const filasDependencias = ref([
   },
   {
     id: 5,
-    dependencia:
-      'SERVICIOS GENERALES, ADQUISICIONES<br>(Administración de edificio; Contratación)',
+    dependencia: 'SERVICIOS GENERALES, ADQUISICIONES<br>(Administración de edificio; Contratación)',
     marca: 'X',
     nombres: 'Juan David Silva Guierrez',
   },
@@ -724,8 +767,7 @@ const filasDependencias = ref([
   },
   {
     id: 12,
-    dependencia:
-      'APOYO AL SEGUIMIENTO DE LOS PROCESOS ADMINISTRATIVOS Y NOVEDADES',
+    dependencia: 'APOYO AL SEGUIMIENTO DE LOS PROCESOS ADMINISTRATIVOS Y NOVEDADES',
     marca: 'X',
     nombres: 'Nelson Fabian Duarte Peñaloza / Eileen Erlensi Hurtado Ariza',
   },
@@ -817,20 +859,66 @@ function puedeFirmarFila(fila) {
 
   // Coincidencia directa por correo institucional
   if (correoUsuario) {
-    if (fila.id === 1 && (correoUsuario.includes('tic') || correoUsuario.includes('chacon'))) return true
-    if (fila.id === 2 && (correoUsuario.includes('document') || correoUsuario.includes('ramirez'))) return true
-    if (fila.id === 3 && (correoUsuario.includes('secretaria') || correoUsuario.includes('carne') || correoUsuario.includes('sanabria'))) return true
-    if (fila.id === 4 && (correoUsuario.includes('almacen') || correoUsuario.includes('inventario'))) return true
-    if (fila.id === 5 && (correoUsuario.includes('servicios') || correoUsuario.includes('silva'))) return true
-    if (fila.id === 6 && (correoUsuario.includes('contab') || correoUsuario.includes('melgarejo'))) return true
-    if (fila.id === 7 && (correoUsuario.includes('tesor') || correoUsuario.includes('mayorga'))) return true
-    if (fila.id === 8 && (correoUsuario.includes('coordinac') || correoUsuario.includes('sanabria'))) return true
-    if (fila.id === 9 && (correoUsuario.includes('biblio') || correoUsuario.includes('celis') || correoUsuario.includes('martinez'))) return true
-    if (fila.id === 10 && (correoUsuario.includes('siga') || correoUsuario.includes('garcia') || correoUsuario.includes('jaimes'))) return true
-    if (fila.id === 11 && (correoUsuario.includes('educat') || correoUsuario.includes('gomez'))) return true
-    if (fila.id === 12 && (correoUsuario.includes('duarte') || correoUsuario.includes('hurtado') || correoUsuario.includes('novedad'))) return true
-    if (fila.id === 13 && (correoUsuario.includes('productiv') || correoUsuario.includes('carreno'))) return true
-    if (fila.id === 14 && (correoUsuario.includes('supervisor') || correoUsuario.includes('sanabria'))) return true
+    if (fila.id === 1 && (correoUsuario.includes('tic') || correoUsuario.includes('chacon')))
+      return true
+    if (fila.id === 2 && (correoUsuario.includes('document') || correoUsuario.includes('ramirez')))
+      return true
+    if (
+      fila.id === 3 &&
+      (correoUsuario.includes('secretaria') ||
+        correoUsuario.includes('carne') ||
+        correoUsuario.includes('sanabria'))
+    )
+      return true
+    if (
+      fila.id === 4 &&
+      (correoUsuario.includes('almacen') || correoUsuario.includes('inventario'))
+    )
+      return true
+    if (fila.id === 5 && (correoUsuario.includes('servicios') || correoUsuario.includes('silva')))
+      return true
+    if (fila.id === 6 && (correoUsuario.includes('contab') || correoUsuario.includes('melgarejo')))
+      return true
+    if (fila.id === 7 && (correoUsuario.includes('tesor') || correoUsuario.includes('mayorga')))
+      return true
+    if (
+      fila.id === 8 &&
+      (correoUsuario.includes('coordinac') || correoUsuario.includes('sanabria'))
+    )
+      return true
+    if (
+      fila.id === 9 &&
+      (correoUsuario.includes('biblio') ||
+        correoUsuario.includes('celis') ||
+        correoUsuario.includes('martinez'))
+    )
+      return true
+    if (
+      fila.id === 10 &&
+      (correoUsuario.includes('siga') ||
+        correoUsuario.includes('garcia') ||
+        correoUsuario.includes('jaimes'))
+    )
+      return true
+    if (fila.id === 11 && (correoUsuario.includes('educat') || correoUsuario.includes('gomez')))
+      return true
+    if (
+      fila.id === 12 &&
+      (correoUsuario.includes('duarte') ||
+        correoUsuario.includes('hurtado') ||
+        correoUsuario.includes('novedad'))
+    )
+      return true
+    if (
+      fila.id === 13 &&
+      (correoUsuario.includes('productiv') || correoUsuario.includes('carreno'))
+    )
+      return true
+    if (
+      fila.id === 14 &&
+      (correoUsuario.includes('supervisor') || correoUsuario.includes('sanabria'))
+    )
+      return true
   }
 
   // Coincidencia por nombre del usuario contra los nombres de la fila
@@ -839,43 +927,120 @@ function puedeFirmarFila(fila) {
       return true
     }
 
-    if (fila.id === 1 && (nombreUsuario.includes('franklin') || nombreUsuario.includes('chacon'))) return true
-    if (fila.id === 2 && (nombreUsuario.includes('hilda') || (nombreUsuario.includes('lucia') && nombreUsuario.includes('ramirez')))) return true
-    if (fila.id === 3 && (nombreUsuario.includes('johon') || nombreUsuario.includes('sanabria'))) return true
-    if (fila.id === 4 && (nombreUsuario.includes('martha') || depUsuario.includes('almacen'))) return true
-    if (fila.id === 5 && (nombreUsuario.includes('juan david') || (nombreUsuario.includes('silva') && (nombreUsuario.includes('guierrez') || nombreUsuario.includes('gutierrez'))))) return true
-    if (fila.id === 6 && (nombreUsuario.includes('zaida leny') || (nombreUsuario.includes('zaida') && nombreUsuario.includes('melgarejo')))) return true
-    if (fila.id === 7 && (nombreUsuario.includes('nelcy') || nombreUsuario.includes('mayorga'))) return true
-    if (fila.id === 8 && (nombreUsuario.includes('johon') || nombreUsuario.includes('sanabria'))) return true
-    if (fila.id === 9 && (nombreUsuario.includes('andrea') || nombreUsuario.includes('juliana') || nombreUsuario.includes('celis') || nombreUsuario.includes('yudith') || nombreUsuario.includes('martinez') || nombreUsuario.includes('biblioteca'))) return true
-    if (fila.id === 10 && (nombreUsuario.includes('zaida jeleidy') || (nombreUsuario.includes('jeleidy') && nombreUsuario.includes('garcia')) || (nombreUsuario.includes('zaida') && nombreUsuario.includes('jaimes')))) return true
-    if (fila.id === 11 && (nombreUsuario.includes('erika') || (nombreUsuario.includes('johana') && nombreUsuario.includes('gomez')))) return true
-    if (fila.id === 12 && (nombreUsuario.includes('nelson') || nombreUsuario.includes('duarte') || nombreUsuario.includes('eileen') || nombreUsuario.includes('erlensi') || nombreUsuario.includes('hurtado'))) return true
-    if (fila.id === 13 && (nombreUsuario.includes('karen') || (nombreUsuario.includes('andrea') && nombreUsuario.includes('carreno')))) return true
-    if (fila.id === 14 && (nombreUsuario.includes('johon') || nombreUsuario.includes('sanabria'))) return true
+    if (fila.id === 1 && (nombreUsuario.includes('franklin') || nombreUsuario.includes('chacon')))
+      return true
+    if (
+      fila.id === 2 &&
+      (nombreUsuario.includes('hilda') ||
+        (nombreUsuario.includes('lucia') && nombreUsuario.includes('ramirez')))
+    )
+      return true
+    if (fila.id === 3 && (nombreUsuario.includes('johon') || nombreUsuario.includes('sanabria')))
+      return true
+    if (fila.id === 4 && (nombreUsuario.includes('martha') || depUsuario.includes('almacen')))
+      return true
+    if (
+      fila.id === 5 &&
+      (nombreUsuario.includes('juan david') ||
+        (nombreUsuario.includes('silva') &&
+          (nombreUsuario.includes('guierrez') || nombreUsuario.includes('gutierrez'))))
+    )
+      return true
+    if (
+      fila.id === 6 &&
+      (nombreUsuario.includes('zaida leny') ||
+        (nombreUsuario.includes('zaida') && nombreUsuario.includes('melgarejo')))
+    )
+      return true
+    if (fila.id === 7 && (nombreUsuario.includes('nelcy') || nombreUsuario.includes('mayorga')))
+      return true
+    if (fila.id === 8 && (nombreUsuario.includes('johon') || nombreUsuario.includes('sanabria')))
+      return true
+    if (
+      fila.id === 9 &&
+      (nombreUsuario.includes('andrea') ||
+        nombreUsuario.includes('juliana') ||
+        nombreUsuario.includes('celis') ||
+        nombreUsuario.includes('yudith') ||
+        nombreUsuario.includes('martinez') ||
+        nombreUsuario.includes('biblioteca'))
+    )
+      return true
+    if (
+      fila.id === 10 &&
+      (nombreUsuario.includes('zaida jeleidy') ||
+        (nombreUsuario.includes('jeleidy') && nombreUsuario.includes('garcia')) ||
+        (nombreUsuario.includes('zaida') && nombreUsuario.includes('jaimes')))
+    )
+      return true
+    if (
+      fila.id === 11 &&
+      (nombreUsuario.includes('erika') ||
+        (nombreUsuario.includes('johana') && nombreUsuario.includes('gomez')))
+    )
+      return true
+    if (
+      fila.id === 12 &&
+      (nombreUsuario.includes('nelson') ||
+        nombreUsuario.includes('duarte') ||
+        nombreUsuario.includes('eileen') ||
+        nombreUsuario.includes('erlensi') ||
+        nombreUsuario.includes('hurtado'))
+    )
+      return true
+    if (
+      fila.id === 13 &&
+      (nombreUsuario.includes('karen') ||
+        (nombreUsuario.includes('andrea') && nombreUsuario.includes('carreno')))
+    )
+      return true
+    if (fila.id === 14 && (nombreUsuario.includes('johon') || nombreUsuario.includes('sanabria')))
+      return true
   }
 
   // Coincidencia por dependencia configurada en el perfil
   if (depUsuario) {
-    if (fila.id === 1 && (depUsuario.includes('tic') || depUsuario.includes('tecnol') || depUsuario.includes('sistema'))) return true
-    if (fila.id === 2 && (depUsuario.includes('document') || depUsuario.includes('archivo'))) return true
-    if (fila.id === 3 && (depUsuario.includes('secretaria') || depUsuario.includes('carne'))) return true
-    if (fila.id === 4 && (depUsuario.includes('almacen') || depUsuario.includes('inventario'))) return true
-    if (fila.id === 5 && (depUsuario.includes('servicios') || depUsuario.includes('adquisic') || depUsuario.includes('edificio'))) return true
-    if (fila.id === 6 && (depUsuario.includes('contab'))) return true
-    if (fila.id === 7 && (depUsuario.includes('tesor'))) return true
-    if (fila.id === 8 && (depUsuario.includes('coordinac') || depUsuario.includes('academ'))) return true
-    if (fila.id === 9 && (depUsuario.includes('biblio'))) return true
-    if (fila.id === 10 && (depUsuario.includes('siga') || depUsuario.includes('calidad'))) return true
-    if (fila.id === 11 && (depUsuario.includes('educat') || depUsuario.includes('admin educ'))) return true
-    if (fila.id === 12 && (depUsuario.includes('novedad') || depUsuario.includes('proceso admin'))) return true
-    if (fila.id === 13 && (depUsuario.includes('etapa') || depUsuario.includes('productiv'))) return true
+    if (
+      fila.id === 1 &&
+      (depUsuario.includes('tic') ||
+        depUsuario.includes('tecnol') ||
+        depUsuario.includes('sistema'))
+    )
+      return true
+    if (fila.id === 2 && (depUsuario.includes('document') || depUsuario.includes('archivo')))
+      return true
+    if (fila.id === 3 && (depUsuario.includes('secretaria') || depUsuario.includes('carne')))
+      return true
+    if (fila.id === 4 && (depUsuario.includes('almacen') || depUsuario.includes('inventario')))
+      return true
+    if (
+      fila.id === 5 &&
+      (depUsuario.includes('servicios') ||
+        depUsuario.includes('adquisic') ||
+        depUsuario.includes('edificio'))
+    )
+      return true
+    if (fila.id === 6 && depUsuario.includes('contab')) return true
+    if (fila.id === 7 && depUsuario.includes('tesor')) return true
+    if (fila.id === 8 && (depUsuario.includes('coordinac') || depUsuario.includes('academ')))
+      return true
+    if (fila.id === 9 && depUsuario.includes('biblio')) return true
+    if (fila.id === 10 && (depUsuario.includes('siga') || depUsuario.includes('calidad')))
+      return true
+    if (fila.id === 11 && (depUsuario.includes('educat') || depUsuario.includes('admin educ')))
+      return true
+    if (fila.id === 12 && (depUsuario.includes('novedad') || depUsuario.includes('proceso admin')))
+      return true
+    if (fila.id === 13 && (depUsuario.includes('etapa') || depUsuario.includes('productiv')))
+      return true
   }
 
   // Coincidencia por cargo
   if (cargoUsuario) {
-    if (fila.id === 1 && (cargoUsuario.includes('tic') || cargoUsuario.includes('tecnol'))) return true
-    if (fila.id === 4 && (cargoUsuario.includes('almacen') || cargoUsuario.includes('inventario'))) return true
+    if (fila.id === 1 && (cargoUsuario.includes('tic') || cargoUsuario.includes('tecnol')))
+      return true
+    if (fila.id === 4 && (cargoUsuario.includes('almacen') || cargoUsuario.includes('inventario')))
+      return true
     if (fila.id === 6 && cargoUsuario.includes('contab')) return true
     if (fila.id === 7 && cargoUsuario.includes('tesor')) return true
     if (fila.id === 9 && cargoUsuario.includes('biblio')) return true
@@ -936,7 +1101,6 @@ function abrirModalFirmaFila(fila) {
     })
   }
 }
-
 
 function guardarFirmaCertificado() {
   if (!canvasRef.value) return
@@ -1070,12 +1234,31 @@ function abrirModalEditarDatos() {
   const ciudadActual = datosSolicitud.value.ciudad
   const regionalActual = datosSolicitud.value.regional
 
+  let idenActual = datosSolicitud.value.identificacion || ''
+  if (!idenActual || idenActual === '—') {
+    const nomCon = (datosSolicitud.value.contratista || '').trim().toLowerCase()
+    const cMatch = contratistasStore.contratistas?.find(
+      (c) => (c.nombre || '').trim().toLowerCase() === nomCon,
+    )
+    if (cMatch?.documento) {
+      idenActual = cMatch.documento
+    } else if (
+      auth.usuario?.documento &&
+      (auth.rolUsuario === 'CONTRATISTA' ||
+        (auth.usuario?.nombre || '').trim().toLowerCase() === nomCon)
+    ) {
+      idenActual = auth.usuario.documento
+    } else if (auth.usuario?.identificacion) {
+      idenActual = auth.usuario.identificacion
+    }
+  }
+
   formularioEdicion.value = {
     contratista: datosSolicitud.value.contratista || '',
-    identificacion: datosSolicitud.value.identificacion || '',
-    ciudad: (!ciudadActual || ciudadActual === 'Ibagué') ? 'San Gil' : ciudadActual,
+    identificacion: idenActual,
+    ciudad: !ciudadActual || ciudadActual === 'Ibagué' ? 'San Gil' : ciudadActual,
     fecha: datosSolicitud.value.fecha || new Date().toISOString().slice(0, 10),
-    regional: (!regionalActual || regionalActual === 'Tolima') ? 'Santander' : regionalActual,
+    regional: !regionalActual || regionalActual === 'Tolima' ? 'Santander' : regionalActual,
     direccion: datosSolicitud.value.direccion || '',
     numeroContrato: datosSolicitud.value.numeroContrato || datosSolicitud.value.contrato || '',
     fechaContrato: datosSolicitud.value.fechaContrato || '',
@@ -1087,9 +1270,12 @@ function abrirModalEditarDatos() {
 }
 
 function guardarDatosFormato() {
+  const idenLimpia = (formularioEdicion.value.identificacion || '').trim()
+
   datosSolicitud.value = {
     ...datosSolicitud.value,
     ...formularioEdicion.value,
+    identificacion: idenLimpia,
     contrato: formularioEdicion.value.numeroContrato
       ? `${formularioEdicion.value.numeroContrato} — ${formularioEdicion.value.fechaContrato || datosSolicitud.value.fecha}`
       : datosSolicitud.value.contrato,
@@ -1099,17 +1285,24 @@ function guardarDatosFormato() {
 
   // 1. Guardar en localStorage para este usuario / contrato
   localStorage.setItem(`certificado_datos_${codigo}`, JSON.stringify(datosSolicitud.value))
+  if (idenLimpia) {
+    localStorage.setItem(`certificado_identificacion_${codigo}`, idenLimpia)
+  }
   if (datosSolicitud.value.contratista) {
     localStorage.setItem(
       `certificado_datos_${datosSolicitud.value.contratista.toLowerCase().trim()}`,
       JSON.stringify(datosSolicitud.value),
     )
+    if (idenLimpia) {
+      localStorage.setItem(
+        `certificado_identificacion_${datosSolicitud.value.contratista.toLowerCase().trim()}`,
+        idenLimpia,
+      )
+    }
   }
-  if (datosSolicitud.value.identificacion) {
-    localStorage.setItem(
-      `certificado_datos_${datosSolicitud.value.identificacion.trim()}`,
-      JSON.stringify(datosSolicitud.value),
-    )
+  if (idenLimpia) {
+    localStorage.setItem(`certificado_datos_${idenLimpia}`, JSON.stringify(datosSolicitud.value))
+    localStorage.setItem(`certificado_identificacion_${idenLimpia}`, idenLimpia)
   }
   if (datosSolicitud.value.numeroContrato) {
     localStorage.setItem(
@@ -1203,7 +1396,16 @@ const listaNovedadesCertificado = computed(() => {
 })
 
 onMounted(async () => {
-  const codigo = route.query.codigo || route.params.id
+  if (contratistasStore.contratistas.length === 0 && contratistasStore.cargarContratistas) {
+    await contratistasStore.cargarContratistas()
+  }
+
+  const codigo =
+    route.query.codigo ||
+    route.params.id ||
+    auth.usuario?.numeroContrato ||
+    auth.usuario?.nombre ||
+    ''
   if (codigo) {
     const f = localStorage.getItem(`firma_${codigo}`) || localStorage.getItem('ultima_firma')
     if (f) firmaGuardada.value = f
@@ -1251,25 +1453,102 @@ onMounted(async () => {
         fchContrato = numContrato
       }
 
+      const nomContratista =
+        datosSolicitud.value.contratista ||
+        encontrada.contratista ||
+        encontrada.nombreContratista ||
+        'Paula Valentina Rache Fonseca'
+
+      // Resolver identificación
+      let docResuelto = ''
+      const idenStorage =
+        localStorage.getItem(`certificado_identificacion_${codigo}`) ||
+        localStorage.getItem(`certificado_identificacion_${String(codigo).toLowerCase().trim()}`) ||
+        (nomContratista
+          ? localStorage.getItem(
+              `certificado_identificacion_${nomContratista.toLowerCase().trim()}`,
+            )
+          : null)
+      if (idenStorage && idenStorage !== '—' && idenStorage !== '1098765432') {
+        docResuelto = idenStorage
+      }
+
+      if (
+        !docResuelto &&
+        datosSolicitud.value.identificacion &&
+        datosSolicitud.value.identificacion !== '—' &&
+        datosSolicitud.value.identificacion !== '1098765432'
+      ) {
+        docResuelto = datosSolicitud.value.identificacion
+      }
+
+      if (!docResuelto) {
+        if (
+          encontrada.identificacion &&
+          encontrada.identificacion !== '—' &&
+          encontrada.identificacion !== '1098765432'
+        ) {
+          docResuelto = encontrada.identificacion
+        } else if (
+          encontrada.documento &&
+          encontrada.documento !== '—' &&
+          encontrada.documento !== '1098765432'
+        ) {
+          docResuelto = encontrada.documento
+        } else if (
+          encontrada.documentoContratista &&
+          encontrada.documentoContratista !== '—' &&
+          encontrada.documentoContratista !== '1098765432'
+        ) {
+          docResuelto = encontrada.documentoContratista
+        }
+      }
+
+      if (!docResuelto || docResuelto === '—' || docResuelto === '1098765432') {
+        const conMatch = contratistasStore.contratistas?.find(
+          (c) => (c.nombre || '').trim().toLowerCase() === nomContratista.trim().toLowerCase(),
+        )
+        if (conMatch?.documento) {
+          docResuelto = conMatch.documento
+        } else if (
+          auth.usuario?.documento &&
+          (auth.rolUsuario === 'CONTRATISTA' ||
+            (auth.usuario?.nombre || '').trim().toLowerCase() ===
+              nomContratista.trim().toLowerCase())
+        ) {
+          docResuelto = auth.usuario.documento
+        } else if (auth.usuario?.identificacion) {
+          docResuelto = auth.usuario.identificacion
+        }
+      }
+
+      if (!docResuelto || docResuelto === '—') {
+        if (encontrada.identificacion && encontrada.identificacion !== '—')
+          docResuelto = encontrada.identificacion
+        else if (encontrada.documento && encontrada.documento !== '—')
+          docResuelto = encontrada.documento
+        else if (encontrada.documentoContratista && encontrada.documentoContratista !== '—')
+          docResuelto = encontrada.documentoContratista
+        else docResuelto = '1098765432'
+      }
+
       datosSolicitud.value = {
-        contratista:
-          datosSolicitud.value.contratista ||
-          encontrada.contratista ||
-          encontrada.nombreContratista ||
-          'Paula Valentina Rache Fonseca',
-        identificacion:
-          datosSolicitud.value.identificacion ||
-          encontrada.identificacion ||
-          encontrada.documento ||
-          encontrada.documentoContratista ||
-          '1098765432',
-        ciudad: (!datosSolicitud.value.ciudad || datosSolicitud.value.ciudad === 'Ibagué')
-          ? ((encontrada.ciudad && encontrada.ciudad !== 'Ibagué') ? encontrada.ciudad : 'San Gil')
-          : datosSolicitud.value.ciudad,
-        fecha: datosSolicitud.value.fecha || encontrada.fecha || new Date().toLocaleDateString('es-CO'),
-        regional: (!datosSolicitud.value.regional || datosSolicitud.value.regional === 'Tolima')
-          ? ((encontrada.regional && encontrada.regional !== 'Tolima') ? encontrada.regional : 'Santander')
-          : datosSolicitud.value.regional,
+        contratista: nomContratista,
+        identificacion: docResuelto,
+        ciudad:
+          !datosSolicitud.value.ciudad || datosSolicitud.value.ciudad === 'Ibagué'
+            ? encontrada.ciudad && encontrada.ciudad !== 'Ibagué'
+              ? encontrada.ciudad
+              : 'San Gil'
+            : datosSolicitud.value.ciudad,
+        fecha:
+          datosSolicitud.value.fecha || encontrada.fecha || new Date().toLocaleDateString('es-CO'),
+        regional:
+          !datosSolicitud.value.regional || datosSolicitud.value.regional === 'Tolima'
+            ? encontrada.regional && encontrada.regional !== 'Tolima'
+              ? encontrada.regional
+              : 'Santander'
+            : datosSolicitud.value.regional,
         direccion: (
           datosSolicitud.value.direccion ||
           encontrada.direccion ||
@@ -1285,10 +1564,8 @@ onMounted(async () => {
           datosSolicitud.value.causalTerminacion ||
           encontrada.causalTerminacion ||
           'LIQUIDACION_MUTUO_ACUERDO',
-        clasificacion:
-          datosSolicitud.value.clasificacion || encontrada.clasificacion || 'Publica',
-        responsable:
-          encontrada.responsable || encontrada.supervisor || 'Ing. Carlos Supervisor',
+        clasificacion: datosSolicitud.value.clasificacion || encontrada.clasificacion || 'Publica',
+        responsable: encontrada.responsable || encontrada.supervisor || 'Ing. Carlos Supervisor',
         estado: encontrada.estado || 'En revisión',
         observacionRechazo:
           encontrada.observacionRechazo || encontrada.observaciones_supervisor || '',
@@ -1309,28 +1586,54 @@ onMounted(async () => {
             item.numero === codigo,
         )
         if (c) {
+          const nomApi =
+            datosSolicitud.value.contratista ||
+            c.nombre_contratista ||
+            c.contratista ||
+            'Paula Valentina Rache Fonseca'
+          let docApi =
+            (datosSolicitud.value.identificacion &&
+            datosSolicitud.value.identificacion !== '—' &&
+            datosSolicitud.value.identificacion !== '1098765432'
+              ? datosSolicitud.value.identificacion
+              : '') ||
+            c.documento_contratista ||
+            c.identificacion ||
+            c.documento ||
+            c.usuario?.documento ||
+            ''
+          if (!docApi || docApi === '—' || docApi === '1098765432') {
+            const matchCt = contratistasStore.contratistas?.find(
+              (ct) => (ct.nombre || '').trim().toLowerCase() === nomApi.trim().toLowerCase(),
+            )
+            if (matchCt?.documento) docApi = matchCt.documento
+            else if (auth.usuario?.documento) docApi = auth.usuario.documento
+            else if (auth.usuario?.identificacion) docApi = auth.usuario.identificacion
+          }
+
           datosSolicitud.value = {
             ...datosSolicitud.value,
-            contratista:
-              datosSolicitud.value.contratista ||
-              c.nombre_contratista ||
-              c.contratista ||
-              'Paula Valentina Rache Fonseca',
-            identificacion: datosSolicitud.value.identificacion || c.telefono || '1098765432',
-            ciudad: (!datosSolicitud.value.ciudad || datosSolicitud.value.ciudad === 'Ibagué')
-              ? ((c.ciudad && c.ciudad !== 'Ibagué') ? c.ciudad : 'San Gil')
-              : datosSolicitud.value.ciudad,
+            contratista: nomApi,
+            identificacion: docApi || '1098765432',
+            ciudad:
+              !datosSolicitud.value.ciudad || datosSolicitud.value.ciudad === 'Ibagué'
+                ? c.ciudad && c.ciudad !== 'Ibagué'
+                  ? c.ciudad
+                  : 'San Gil'
+                : datosSolicitud.value.ciudad,
             fecha: datosSolicitud.value.fecha || new Date().toLocaleDateString('es-CO'),
-            regional: (!datosSolicitud.value.regional || datosSolicitud.value.regional === 'Tolima')
-              ? ((c.regional && c.regional !== 'Tolima') ? c.regional : 'Santander')
-              : datosSolicitud.value.regional,
+            regional:
+              !datosSolicitud.value.regional || datosSolicitud.value.regional === 'Tolima'
+                ? c.regional && c.regional !== 'Tolima'
+                  ? c.regional
+                  : 'Santander'
+                : datosSolicitud.value.regional,
             direccion: (
               datosSolicitud.value.direccion ||
               c.dependencia?.nombre_dependencia ||
               'Gestión Tecnológica (TIC)'
             ).replace(/\s*\/\s*Contratista/i, ''),
-            numeroContrato:
-              datosSolicitud.value.numeroContrato || c.numero_contrato || codigo,
+            numeroContrato: datosSolicitud.value.numeroContrato || c.numero_contrato || codigo,
             fechaContrato: datosSolicitud.value.fechaContrato || '18/09/2026',
             contrato: c.numero_contrato || codigo,
             responsable: c.supervisor || 'Ing. Carlos Supervisor',
@@ -1367,7 +1670,8 @@ onMounted(async () => {
             u.dependencia_id?.nombre_dependencia ||
             'Bienestar al Aprendiz'
           ).replace(/\s*\/\s*Contratista/i, '')
-          const numCon = u.numero_contrato || (codigo && !codigo.includes('/') ? codigo : 'CNT-2026-001')
+          const numCon =
+            u.numero_contrato || (codigo && !codigo.includes('/') ? codigo : 'CNT-2026-001')
           const fchCon = u.createdAt
             ? new Date(u.createdAt).toLocaleDateString('es-CO')
             : codigo.includes('/')
@@ -1386,6 +1690,31 @@ onMounted(async () => {
         }
       } catch (errU) {
         console.warn('Búsqueda por contratista:', errU.message)
+      }
+    }
+
+    // Verificación final de identificación si quedó vacía o placeholder
+    if (
+      !datosSolicitud.value.identificacion ||
+      datosSolicitud.value.identificacion === '—' ||
+      datosSolicitud.value.identificacion === '1098765432'
+    ) {
+      const nomFinal = (datosSolicitud.value.contratista || auth.usuario?.nombre || '')
+        .trim()
+        .toLowerCase()
+      const conMatch = contratistasStore.contratistas?.find(
+        (c) => (c.nombre || '').trim().toLowerCase() === nomFinal,
+      )
+      if (conMatch?.documento) {
+        datosSolicitud.value.identificacion = conMatch.documento
+      } else if (
+        auth.usuario?.documento &&
+        (auth.rolUsuario === 'CONTRATISTA' ||
+          (auth.usuario?.nombre || '').trim().toLowerCase() === nomFinal)
+      ) {
+        datosSolicitud.value.identificacion = auth.usuario.documento
+      } else if (auth.usuario?.identificacion) {
+        datosSolicitud.value.identificacion = auth.usuario.identificacion
       }
     }
 

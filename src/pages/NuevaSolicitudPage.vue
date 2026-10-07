@@ -24,7 +24,7 @@
             </div>
 
             <div class="row q-col-gutter-sm">
-              <div class="col-12 col-sm-6">
+              <div class="col-12 col-sm-4">
                 <q-input
                   v-model="form.numeroContrato"
                   outlined
@@ -35,7 +35,7 @@
                   :rules="[(val) => !!val || 'El número de contrato es obligatorio']"
                 />
               </div>
-              <div class="col-12 col-sm-6">
+              <div class="col-12 col-sm-4">
                 <q-input
                   v-model="form.contratista"
                   outlined
@@ -43,6 +43,17 @@
                   label="Nombre del Contratista *"
                   placeholder="Nombre completo del contratista"
                   :rules="[(val) => !!val || 'El nombre del contratista es obligatorio']"
+                />
+              </div>
+              <div class="col-12 col-sm-4">
+                <q-input
+                  v-model="form.identificacion"
+                  outlined
+                  dense
+                  label="Identificación / Cédula *"
+                  placeholder="Ej. 1098765432"
+                  hint="Documento oficial para GCCON-F-088"
+                  :rules="[(val) => !!val || 'La identificación es obligatoria']"
                 />
               </div>
             </div>
@@ -72,11 +83,15 @@
                   <q-icon name="supervised_user_circle" color="primary" />
                 </template>
                 <div>
-                  <strong>Responsable de Área:</strong> {{ responsableDependenciaActual.responsable }}
-                  <span v-if="responsableDependenciaActual.correo" class="text-grey-8"> ({{ responsableDependenciaActual.correo }})</span>
+                  <strong>Responsable de Área:</strong>
+                  {{ responsableDependenciaActual.responsable }}
+                  <span v-if="responsableDependenciaActual.correo" class="text-grey-8">
+                    ({{ responsableDependenciaActual.correo }})</span
+                  >
                 </div>
                 <div class="text-grey-7 q-mt-xs">
-                  Esta solicitud irá dirigida a este Responsable de Área para la validación de bienes y firma de paz y salvo.
+                  Esta solicitud irá dirigida a este Responsable de Área para la validación de
+                  bienes y firma de paz y salvo.
                 </div>
               </q-banner>
             </div>
@@ -192,9 +207,9 @@ const anioActual = new Date().getFullYear()
 
 const form = ref({
   numeroContrato:
-    auth.usuario?.numeroContrato ||
-    `CNT-${anioActual}-${Math.floor(100 + Math.random() * 900)}`,
+    auth.usuario?.numeroContrato || `CNT-${anioActual}-${Math.floor(100 + Math.random() * 900)}`,
   contratista: auth.usuario?.nombre || '',
+  identificacion: auth.usuario?.documento || auth.usuario?.identificacion || '',
   dependencia: null,
   objeto: '',
   fechaInicio: '',
@@ -222,7 +237,7 @@ const responsableDependenciaActual = computed(() => {
   if (!form.value.dependencia) return null
   const depNombre =
     typeof form.value.dependencia === 'object'
-      ? (form.value.dependencia.nombre || form.value.dependencia.label || '')
+      ? form.value.dependencia.nombre || form.value.dependencia.label || ''
       : form.value.dependencia
 
   const encontrada = dependenciasStore.dependencias.find(
@@ -253,6 +268,9 @@ onMounted(async () => {
   if (!form.value.contratista && auth.usuario?.nombre) {
     form.value.contratista = auth.usuario.nombre
   }
+  if (!form.value.identificacion && (auth.usuario?.documento || auth.usuario?.identificacion)) {
+    form.value.identificacion = auth.usuario?.documento || auth.usuario?.identificacion
+  }
   try {
     await dependenciasStore.cargarDependencias()
     if (dependenciasStore.dependencias.length > 0) {
@@ -262,9 +280,7 @@ onMounted(async () => {
     }
 
     const supRes = await api.get('/usuarios?rol=Supervisor')
-    const sups = Array.isArray(supRes.data)
-      ? supRes.data
-      : supRes.data?.usuarios || []
+    const sups = Array.isArray(supRes.data) ? supRes.data : supRes.data?.usuarios || []
     if (sups.length > 0) {
       opcionesSupervisores.value = sups.map((s) => ({
         id: s._id || s.id,
@@ -285,6 +301,12 @@ async function guardarSolicitud() {
     auth.nombre ||
     'Contratista'
   ).trim()
+  const docContratista = (
+    form.value.identificacion ||
+    auth.usuario?.documento ||
+    auth.usuario?.identificacion ||
+    ''
+  ).trim()
   const supNombre =
     typeof form.value.supervisor === 'object'
       ? form.value.supervisor?.nombre
@@ -298,7 +320,8 @@ async function guardarSolicitud() {
     numeroContrato: form.value.numeroContrato,
     contratista: nomContratista,
     nombreContratista: nomContratista,
-    documentoContratista: auth.usuario?.documento || auth.usuario?.identificacion || '',
+    identificacion: docContratista,
+    documentoContratista: docContratista,
     correo: auth.usuario?.correo || auth.usuario?.correo_institucional || '',
     dependencia: depNombre,
     responsable: supNombre,

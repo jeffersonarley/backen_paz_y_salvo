@@ -83,7 +83,8 @@ export const useContratistasStore = defineStore('contratistas', () => {
           cargo: u.cargo || 'Contratista',
           supervisor: u.supervisor || u.supervisor_id?.nombre_completo || 'Ing. Carlos Supervisor',
           supervisor_id: u.supervisor_id?._id || u.supervisor_id || null,
-          dependencia: u.dependencia || u.dependencia_id?.nombre_dependencia || 'Gestión Tecnológica (TIC)',
+          dependencia:
+            u.dependencia || u.dependencia_id?.nombre_dependencia || 'Gestión Tecnológica (TIC)',
           dependencia_id: u.dependencia_id?._id || u.dependencia_id || null,
           password: '123',
         }))
