@@ -29,8 +29,9 @@
                   v-model="form.numeroContrato"
                   outlined
                   dense
-                  label="Número de Contrato *"
+                  label="Número de Contrato (Vigencia Actual) *"
                   placeholder="Ej. CNT-2026-014"
+                  hint="Indique el contrato de la vigencia a liquidar (varía por año)"
                   :rules="[(val) => !!val || 'El número de contrato es obligatorio']"
                 />
               </div>
@@ -187,8 +188,12 @@ const dependenciasStore = useDependenciasStore()
 const auth = useAuthStore()
 const cargando = ref(false)
 
+const anioActual = new Date().getFullYear()
+
 const form = ref({
-  numeroContrato: `CNT-2026-${Math.floor(100 + Math.random() * 900)}`,
+  numeroContrato:
+    auth.usuario?.numeroContrato ||
+    `CNT-${anioActual}-${Math.floor(100 + Math.random() * 900)}`,
   contratista: auth.usuario?.nombre || '',
   dependencia: null,
   objeto: '',

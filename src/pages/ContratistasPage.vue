@@ -128,12 +128,12 @@
 
             <q-input
               v-model="contratista.numeroContrato"
-              label="Número de Contrato *"
+              label="Número de Contrato (Vigencia Actual) *"
               placeholder="Ej. CNT-2026-001"
               outlined
               dense
               :rules="[(val) => !!val || 'El número de contrato es obligatorio']"
-              hint="Código oficial del contrato supervisado"
+              hint="Código oficial del contrato supervisado (se actualiza por año/vigencia)"
             >
               <template #prepend>
                 <q-icon name="description" color="primary" />
