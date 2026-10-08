@@ -85,7 +85,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useAuthStore } from '../store/authStore'
+import { useAuthStore } from '../stores/authStore'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
