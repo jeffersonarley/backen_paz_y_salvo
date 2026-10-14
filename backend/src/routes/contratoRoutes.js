@@ -62,8 +62,8 @@ router.get('/:id/observaciones', verificarToken, contratoController.obtenerObser
 // RF-003: eliminar un bien del inventario (Contratista, en Borrador)
 router.delete('/:id/bienes/:bienId', verificarToken, verificarRol('Contratista'), contratoController.eliminarBien);
 
-// Listar contratos por rol (Supervisor / Admin / ResponsableArea)
-router.get('/', verificarToken, verificarRol('Supervisor', 'Administrador', 'ResponsableArea'), contratoController.listarContratos);
+// Listar contratos por rol (Contratista: los suyos / Supervisor / Admin / ResponsableArea)
+router.get('/', verificarToken, verificarRol('Contratista', 'Supervisor', 'Administrador', 'ResponsableArea'), contratoController.listarContratos);
 
 // RF-002: cancelar contrato en Borrador
 router.delete('/:id', verificarToken, verificarRol('Contratista'), contratoController.cancelarContrato);

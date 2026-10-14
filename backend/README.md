@@ -255,9 +255,9 @@ La jerarquía se valida con el middleware `verificarJerarquia` (`src/middlewares
 | Método | Ruta | Acceso | Descripción |
 |---|---|---|---|
 | POST | `/api/contratos/nuevo` | Contratista | Crear contrato + bienes (estado `Borrador`) |
-| GET | `/api/contratos/mis-solicitudes` | Contratista | Consultar mis solicitudes (RF-005) |
-| GET | `/api/contratos` | Supervisor / Admin / ResponsableArea | Listar por rol |
-| GET | `/api/contratos/:id` | dueño/supervisor/admin/responsable | Detalle + bienes |
+| GET | `/api/contratos/mis-solicitudes` | Contratista | Consultar mis solicitudes con `trazabilidad[]` (RF-005) |
+| GET | `/api/contratos` | Contratista / Supervisor / Admin / ResponsableArea | Listar por rol (Contratista: solo las suyas) |
+| GET | `/api/contratos/:id` | dueño/supervisor/admin/responsable | Detalle + bienes + trazabilidad de firmas (dueño/supervisor/admin) |
 | PUT | `/api/contratos/:id` | Contratista | Actualizar solo en `Borrador` (RF-002) |
 | DELETE | `/api/contratos/:id` | Contratista | Cancelar contrato en `Borrador` (RF-002 esc.4) |
 | DELETE | `/api/contratos/:id/bienes/:bienId` | Contratista | Eliminar un bien del inventario (RF-003 esc.4) |
