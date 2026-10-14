@@ -762,6 +762,18 @@ const columnasBandeja = [
     field: (row) => row.dependencia || row.nombreDependencia || '—',
     align: 'left',
   },
+  {
+    name: 'firmante',
+    label: 'Gestionada por',
+    field: (row) => row.usuarioFirma || '—',
+    align: 'left',
+  },
+  {
+    name: 'fechaFirma',
+    label: 'Fecha de gestión',
+    field: (row) => row.fechaFirma ? new Date(row.fechaFirma).toLocaleString() : '—',
+    align: 'left',
+  },
   { name: 'estado', label: 'Estado', field: 'estado', align: 'center' },
   {
     name: 'observacion',
@@ -817,7 +829,10 @@ const historialDelContrato = computed(() => {
   if (!contratoId) return []
   const registros = [...solicitudesPendientes.value, ...solicitudesHistorial.value]
     .filter((firma) => String(firma._id) === String(contratoId))
-    .sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0))
+    .sort((a, b) =>
+      (a.orden || Number.MAX_SAFE_INTEGER) - (b.orden || Number.MAX_SAFE_INTEGER) ||
+      new Date(a.createdAt || 0) - new Date(b.createdAt || 0),
+    )
   return registros
 })
 
@@ -851,6 +866,7 @@ function mapearTraza(registro) {
     observacionRechazo: registro.observacion_rechazo || '',
     fechaFirma: registro.fecha_firma,
     usuarioFirma: registro.usuario_id?.nombre_completo || '',
+    orden: registro.orden,
     area,
     createdAt: registro.createdAt,
     bienes: [],

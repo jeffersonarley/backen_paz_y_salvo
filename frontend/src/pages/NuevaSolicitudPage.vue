@@ -20,10 +20,12 @@
             <q-icon name="account_tree" />
           </template>
           <div class="text-weight-bold">
-            Una sola solicitud recorrerá secuencialmente todas las áreas activas del sistema.
+            Tras la aprobación de supervisión, una solicitud recorrerá secuencialmente las áreas activas,
+            desde la más antigua.
           </div>
           <div class="text-caption">
-            No es necesario registrar una solicitud distinta para cada área.
+            Cada área podrá gestionarla cuando la anterior apruebe; un rechazo detiene la cadena.
+            No registre una solicitud distinta para cada área.
           </div>
         </q-banner>
 

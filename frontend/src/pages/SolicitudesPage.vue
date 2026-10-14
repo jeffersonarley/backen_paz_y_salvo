@@ -67,7 +67,7 @@
             header-class="text-primary"
           >
             <q-list v-if="props.row.firmas.length" dense separator>
-              <q-item v-for="firma in props.row.firmas" :key="firma._id">
+              <q-item v-for="(firma, index) in props.row.firmas" :key="firma._id">
                 <q-item-section avatar>
                   <q-icon
                     :name="iconoEstadoFirma(firma.estado)"
@@ -75,11 +75,21 @@
                   />
                 </q-item-section>
                 <q-item-section>
-                  <q-item-label class="text-weight-medium">{{ firma.area }}</q-item-label>
+                  <q-item-label class="text-weight-medium">
+                    {{ firma.orden || index + 1 }}. {{ firma.area }}
+                  </q-item-label>
                   <q-item-label caption>
                     <q-badge :color="colorEstadoFirma(firma.estado)" class="q-mr-xs">
                       {{ firma.estado }}
                     </q-badge>
+                    <q-badge
+                      v-if="esFirmaEnTurno(props.row.firmas, index)"
+                      color="primary"
+                      class="q-mr-xs"
+                    >
+                      En turno
+                    </q-badge>
+                    <span v-else-if="firma.estado === 'Pendiente'">En espera · </span>
                     {{ formatoFecha(firma.fecha) }}
                     <span v-if="firma.usuario"> · {{ firma.usuario }}</span>
                   </q-item-label>
@@ -363,6 +373,11 @@ function iconoEstadoFirma(estado) {
   return 'pending'
 }
 
+function esFirmaEnTurno(firmas, indice) {
+  return firmas[indice]?.estado === 'Pendiente' &&
+    firmas.slice(0, indice).every((firma) => firma.estado === 'Aprobado')
+}
+
 function formatoFecha(fecha) {
   if (!fecha) return 'Pendiente'
   return new Date(fecha).toLocaleDateString()
@@ -480,6 +495,7 @@ async function cargarSolicitudes() {
         firmas: Array.isArray(c.firmas)
           ? c.firmas.map((firma) => ({
               _id: firma._id,
+              orden: firma.orden,
               area: firma.area_id?.nombre_dependencia || 'Área sin nombre',
               estado: firma.estado || 'Pendiente',
               fecha: firma.fecha_firma,

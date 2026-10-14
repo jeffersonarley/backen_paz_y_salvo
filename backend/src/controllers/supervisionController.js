@@ -89,7 +89,8 @@ exports.evaluarContrato = asyncHandler(async (req, res) => {
     }
 
     // --- APROBADO ---
-    const areasActivas = await DependenciaArea.find({ activo: true });
+    const areasActivas = (await DependenciaArea.find({ activo: true }))
+        .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt) || String(a._id).localeCompare(String(b._id)));
     if (areasActivas.length === 0) {
         // Sin áreas no habría quién firme y el contrato quedaría "Pendiente de Firmas" para siempre
         throw new AppError('No hay dependencias activas para abrir las firmas. Cree o active al menos una.', 409);
@@ -109,9 +110,10 @@ exports.evaluarContrato = asyncHandler(async (req, res) => {
         // (antes se duplicaban). La trazabilidad de lo ocurrido queda en historial_auditoria.
         await TrazabilidadFirma.deleteMany({ contrato_id: contrato._id });
 
-        await TrazabilidadFirma.insertMany(areasActivas.map(area => ({
+        await TrazabilidadFirma.insertMany(areasActivas.map((area, index) => ({
             contrato_id: contrato._id,
             area_id: area._id,
+            orden: index + 1,
             estado: 'Pendiente',
             hash_verificacion: ''
         })));

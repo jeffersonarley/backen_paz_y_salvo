@@ -13,6 +13,10 @@ const trazabilidadFirmaSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Usuario'
     },
+    orden: {
+        type: Number,
+        min: 1
+    },
     estado: {
         type: String,
         enum: ['Pendiente', 'Aprobado', 'Rechazado', 'Cancelado'],

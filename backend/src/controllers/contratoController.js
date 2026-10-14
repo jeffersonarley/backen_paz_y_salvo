@@ -7,6 +7,7 @@ const { getFormatoVigente } = require('../services/formatoCache');
 const { registrar } = require('../services/auditoriaService');
 const asyncHandler = require('../utils/asyncHandler');
 const AppError = require('../utils/AppError');
+const ordenarTrazasFirma = require('../utils/ordenarTrazasFirma');
 
 // Helper: resolver la dependencia por su ObjectId o por su nombre
 async function resolverDependencia(valor) {
@@ -35,6 +36,38 @@ function validarRangoFechas(inicio, fin) {
     if (inicio && fin && new Date(fin) < new Date(inicio)) {
         throw new AppError('La fecha de fin no puede ser anterior a la fecha de inicio.', 400);
     }
+}
+
+// Cadena de firmas de uno o varios contratos, agrupada por contrato y con
+// el nombre del área resuelto (populate de area_id) y la fecha de la acción.
+async function cargarTrazabilidad(contratoIds) {
+    const ids = (contratoIds || []).filter(Boolean);
+    if (ids.length === 0) {
+        return new Map();
+    }
+
+    const trazas = await TrazabilidadFirma.find({ contrato_id: { $in: ids } })
+        .populate('area_id', 'nombre_dependencia createdAt')
+        .populate('usuario_id', 'nombre_completo correo_institucional')
+        .lean();
+
+    const porContrato = new Map();
+    for (const traza of trazas) {
+        const clave = String(traza.contrato_id);
+        const cadena = porContrato.get(clave) || [];
+        cadena.push(traza);
+        porContrato.set(clave, cadena);
+    }
+
+    for (const [contratoId, cadena] of porContrato) {
+        porContrato.set(contratoId, ordenarTrazasFirma(cadena).map((traza, index) => ({
+            ...traza,
+            orden: index + 1,
+            area: traza.area_id?.nombre_dependencia || null,
+            fecha: traza.fecha_firma || traza.createdAt || null
+        })));
+    }
+    return porContrato;
 }
 
 // Diagrama 2: Registro contractual e inventario (transacción atómica + fallback)
@@ -194,9 +227,8 @@ exports.listarContratos = asyncHandler(async (req, res) => {
     const trazas = await TrazabilidadFirma.find({
         contrato_id: { $in: contratos.map(contrato => contrato._id) }
     })
-        .populate('area_id', 'nombre_dependencia')
+        .populate('area_id', 'nombre_dependencia createdAt')
         .populate('usuario_id', 'nombre_completo')
-        .sort({ createdAt: 1, _id: 1 })
         .lean();
     const trazasPorContrato = new Map();
     for (const traza of trazas) {
@@ -208,7 +240,13 @@ exports.listarContratos = asyncHandler(async (req, res) => {
 
     res.status(200).json(contratos.map(contrato => ({
         ...contrato.toObject(),
-        firmas: trazasPorContrato.get(String(contrato._id)) || []
+        firmas: ordenarTrazasFirma(trazasPorContrato.get(String(contrato._id)) || [])
+            .map((traza, index) => ({
+                ...traza,
+                orden: index + 1,
+                area: traza.area_id?.nombre_dependencia || null,
+                fecha: traza.fecha_firma || traza.createdAt || null
+            }))
     })));
 });
 
