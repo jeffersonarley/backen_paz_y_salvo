@@ -459,9 +459,10 @@ const datosSolicitud = ref({
   firmas: [],
 })
 
-onMounted(() => {
+onMounted(async () => {
   const codigo = route.query.codigo || route.params.id
   if (codigo) {
+    if (!store.solicitudes.length) await store.cargarSolicitudes()
     const f = localStorage.getItem(`firma_${codigo}`) || localStorage.getItem('ultima_firma')
     if (f) firmaGuardada.value = f
 
