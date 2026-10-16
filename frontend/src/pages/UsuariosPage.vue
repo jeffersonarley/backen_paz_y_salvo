@@ -125,7 +125,7 @@
               ]"
             />
 
-            <q-input v-model="usuario.telefono" label="Teléfono" outlined dense />
+            <q-input v-model="usuario.telefono" label="Teléfono" outlined dense bottom-slots />
 
             <q-select
               v-model="usuario.rol"

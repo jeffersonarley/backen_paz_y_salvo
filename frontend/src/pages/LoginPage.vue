@@ -3,7 +3,7 @@
     <q-card class="login-card">
       <img :src="logoSena" class="logo" alt="Logo SENA" />
 
-      <q-form @submit.prevent="ingresar" class="q-gutter-y-xs">
+      <q-form @submit.prevent="ingresar" class="login-form">
         <!-- Selector de Rol -->
         <q-select
           v-model="rolSeleccionado"
@@ -12,7 +12,7 @@
           outlined
           dense
           label="Seleccionar Tipo de Usuario / Rol *"
-          class="q-mb-md"
+          bottom-slots
         >
           <template #prepend>
             <q-icon
@@ -40,7 +40,6 @@
           outlined
           dense
           label="Correo o Documento de Identidad *"
-          class="q-mb-md"
           :rules="[(val) => !!val || 'El correo o documento es requerido']"
         >
           <template #prepend>
@@ -55,7 +54,6 @@
           dense
           :type="verPassword ? 'text' : 'password'"
           label="Contraseña *"
-          class="q-mb-lg"
           :rules="[(val) => !!val || 'La contraseña es requerida']"
         >
           <template #prepend>
@@ -74,7 +72,7 @@
           type="submit"
           color="positive"
           label="Iniciar sesión"
-          class="full-width boton"
+          class="full-width boton q-mt-md"
           unelevated
           :loading="cargando"
         />
@@ -216,6 +214,14 @@ async function ingresar() {
   text-align: center;
   background: #ffffff;
   box-shadow: 0 15px 40px rgba(0, 0, 0, 0.35);
+}
+
+/* Todos los campos reservan el mismo espacio inferior (mensaje de validación)
+   y se separan con el mismo gap, para que queden equidistantes. */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .logo {
