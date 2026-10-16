@@ -305,7 +305,7 @@ La jerarquía se valida con el middleware `verificarJerarquia` (`src/middlewares
 | `contratos_gccon_f088` | `Contrato` | `numero_contrato`, `nombre_contratista`, `correo_contratista`, `dependencia` (ObjectId), `usuario`, `supervisor`, `estado`, `observaciones_supervisor`, `version_formato` |
 | `bienes_entregados` | `BienEntregado` | `contrato_id`, `descripcion`, `codigo_inventario`, `cantidad`, `estado_bien` |
 | `dependencias_areas` | `DependenciaArea` | `nombre_dependencia`, `activo`, `responsable_id` |
-| `trazabilidad_firmas` | `TrazabilidadFirma` | `contrato_id`, `area_id`, `usuario_id`, `estado`, `observacion_rechazo`, `hash_verificacion`, `fecha_firma` |
+| `trazabilidad_firmas` | `TrazabilidadFirma` | `contrato_id`, `area_id`, `usuario_id`, `orden`, `estado`, `observacion_rechazo`, `hash_verificacion`, `fecha_firma` |
 | `formato_config` | `FormatoConfig` | `codigo_formato`, `numero_version`, `fecha_vigencia`, `texto_encabezado`, `campos_obligatorios` |
 | `historial_auditoria` | `HistorialAuditoria` | `usuario_id`, `accion`, `entidad_afectada`, `detalles` |
 
@@ -367,8 +367,11 @@ http://localhost:3000/api-docs
    contrato en `Borrador` con `insertMany` de bienes dentro de una transacción (o fallback).
 3. **Validación del supervisor** (`/api/contratos/evaluar/:id`): exclusivo Supervisor, valida
    por cruce de IDs. Rechazo → vuelve a `Borrador` + correo. Aprobación → `Pendiente de Firmas`
-   y abre un casillero por dependencia activa en `trazabilidad_firmas`.
-4. **Dictamen de área** (`/api/firmas/procesar`): genera huella SHA-256
+   y abre un casillero por dependencia activa en `trazabilidad_firmas`, en orden de creación
+   de las áreas (la más antigua primero).
+4. **Dictamen secuencial de área** (`/api/firmas/procesar`): solo habilita el primer casillero
+   pendiente; una aprobación habilita el área siguiente y un rechazo cancela los casilleros
+   restantes. Genera huella SHA-256
    (`contrato_id:jefe_id:timestamp`), cuenta pendientes; al llegar a 0 → `Finalizado` + PDF
    con PDFKit y destrucción biométrica de la imagen de firma en RAM.
 5. **Recuperación de contraseña** (`/api/auth/recuperar` y `/api/auth/restablecer`): token

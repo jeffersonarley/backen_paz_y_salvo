@@ -329,6 +329,7 @@ describe('Flujo de firmas: rechazo, IDOR, concurrencia y verificación', () => {
     const rechazo = await firmar(tokenR, id, 'Rechazar', { observacion_rechazo: 'Falta devolver el equipo' });
     expect(rechazo.status).toBe(200);
     expect((await Contrato.findById(id)).estado).toBe('Rechazado');
+    expect(await TrazabilidadFirma.countDocuments({ contrato_id: id, estado: 'Cancelado' })).toBeGreaterThan(0);
 
     // Aunque otra área quiera aprobar, ya no se puede: el trámite está detenido
     const aprobar = await firmar(tokenR2, id, 'Aprobar');
@@ -360,6 +361,24 @@ describe('Flujo de firmas: rechazo, IDOR, concurrencia y verificación', () => {
     expect((await TrazabilidadFirma.findOne({ contrato_id: id, area_id: area._id })).estado).toBe('Pendiente');
   });
 
+  test('solo el siguiente responsable en el orden de creación tiene una firma pendiente', async () => {
+    const id = await crearContrato('CT-SECUENCIAL-1');
+    expect((await evaluar(id)).status).toBe(200);
+
+    const pendientesAreaInicial = await request(app).get('/api/firmas/pendientes').set('Authorization', `Bearer ${tokenR}`);
+    expect(pendientesAreaInicial.status).toBe(200);
+    expect(pendientesAreaInicial.body.some(firma => String(firma.contrato_id._id) === id)).toBe(true);
+
+    const pendientesAreaSiguiente = await request(app).get('/api/firmas/pendientes').set('Authorization', `Bearer ${tokenR2}`);
+    expect(pendientesAreaSiguiente.status).toBe(200);
+    expect(pendientesAreaSiguiente.body.some(firma => String(firma.contrato_id._id) === id)).toBe(false);
+    expect((await firmar(tokenR2, id, 'Aprobar', { firma_base64: PNG_1X1 })).status).toBe(409);
+
+    expect((await firmar(tokenR, id, 'Aprobar', { firma_base64: PNG_1X1 })).status).toBe(200);
+    const siguienteHabilitada = await request(app).get('/api/firmas/pendientes').set('Authorization', `Bearer ${tokenR2}`);
+    expect(siguienteHabilitada.body.some(firma => String(firma.contrato_id._id) === id)).toBe(true);
+  });
+
   test('IDOR: un ResponsableArea sin casillero en el contrato no puede consultarlo (403)', async () => {
     const id = (await Contrato.findOne({ numero_contrato: 'CT-RECH-1' }))._id.toString();
     expect((await request(app).get(`/api/contratos/${id}`).set('Authorization', `Bearer ${tokenR3}`)).status).toBe(403);
@@ -372,12 +391,14 @@ describe('Flujo de firmas: rechazo, IDOR, concurrencia y verificación', () => {
   testConcurrencia('firmas simultáneas: el contrato se finaliza y notifica UNA sola vez', async () => {
     const id = await crearContrato('CT-CONC-1');
     expect((await evaluar(id)).status).toBe(200);
+    expect((await firmar(tokenR, id, 'Aprobar', { firma_base64: PNG_1X1 })).status).toBe(200);
 
     const [a, b] = await Promise.all([
-      firmar(tokenR, id, 'Aprobar', { firma_base64: PNG_1X1 }),
+      firmar(tokenR2, id, 'Aprobar', { firma_base64: PNG_1X1 }),
       firmar(tokenR2, id, 'Aprobar', { firma_base64: PNG_1X1 })
     ]);
-    expect([a.status, b.status]).toEqual([200, 200]);
+    expect([a.status, b.status].filter(status => status === 200)).toHaveLength(1);
+    expect([400, 409]).toContain([a.status, b.status].find(status => status !== 200));
     expect((await Contrato.findById(id)).estado).toBe('Finalizado');
 
     const finalizaciones = await HistorialAuditoria.countDocuments({ accion: 'FINALIZAR_CONTRATO', 'detalles.contrato_id': new mongoose.Types.ObjectId(id) });

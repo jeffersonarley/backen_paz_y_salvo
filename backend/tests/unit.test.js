@@ -6,6 +6,7 @@ const { generarHashFirma, hashCoincide } = require('../src/utils/firmaHash');
 const normalizarRol = require('../src/utils/normalizarRol');
 const { hashToken } = require('../src/utils/tokens');
 const validarPassword = require('../src/utils/validarPassword');
+const ordenarTrazasFirma = require('../src/utils/ordenarTrazasFirma');
 
 const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
 
@@ -47,6 +48,24 @@ describe('hash de verificación (HMAC)', () => {
 });
 
 describe('utilidades', () => {
+  test('ordena firmas por la prioridad persistida o por la fecha de creación del área', () => {
+    const areas = [
+      { _id: 'area-reciente', createdAt: new Date('2026-03-01') },
+      { _id: 'area-antigua', createdAt: new Date('2026-01-01') },
+    ];
+    const nuevas = [
+      { _id: 'firma-2', orden: 2, area_id: areas[1] },
+      { _id: 'firma-1', orden: 1, area_id: areas[0] },
+    ];
+    const antiguas = [
+      { _id: 'firma-reciente', area_id: areas[0] },
+      { _id: 'firma-antigua', area_id: areas[1] },
+    ];
+
+    expect(ordenarTrazasFirma(nuevas).map(firma => firma._id)).toEqual(['firma-1', 'firma-2']);
+    expect(ordenarTrazasFirma(antiguas).map(firma => firma._id)).toEqual(['firma-antigua', 'firma-reciente']);
+  });
+
   test('normalizarRol unifica variantes y no rompe con valores no textuales', () => {
     expect(normalizarRol('ADMINISTRADOR')).toBe('Administrador');
     expect(normalizarRol('responsable-area')).toBe('ResponsableArea');

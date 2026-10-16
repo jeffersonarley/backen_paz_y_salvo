@@ -9,6 +9,7 @@ const { decodificarFirma } = require('../utils/firma');
 const { generarHashFirma, hashCoincide } = require('../utils/firmaHash');
 const asyncHandler = require('../utils/asyncHandler');
 const AppError = require('../utils/AppError');
+const ordenarTrazasFirma = require('../utils/ordenarTrazasFirma');
 
 const ACCIONES = { aprobar: 'Aprobar', rechazar: 'Rechazar' };
 
@@ -55,6 +56,17 @@ exports.procesarFirma = asyncHandler(async (req, res) => {
         throw new AppError(`Esta área ya realizó su acción: ${traz.estado}`, 400);
     }
 
+    const trazasContrato = ordenarTrazasFirma(await TrazabilidadFirma.find({ contrato_id: contrato._id })
+        .populate({ path: 'area_id', model: 'DependenciaArea', select: 'createdAt' })
+        .lean());
+    const indiceActual = trazasContrato.findIndex(firma => String(firma._id) === String(traz._id));
+    if (indiceActual < 0) {
+        throw new AppError('No se pudo determinar el orden de la cadena de firmas.', 409);
+    }
+    if (trazasContrato.slice(0, indiceActual).some(firma => firma.estado !== 'Aprobado')) {
+        throw new AppError('Esta área debe esperar a que la anterior complete su aprobación.', 409);
+    }
+
     const usuarioId = req.usuario.id;
 
     // ---------------- RECHAZO ----------------
@@ -82,6 +94,10 @@ exports.procesarFirma = asyncHandler(async (req, res) => {
         await Contrato.updateOne(
             { _id: contrato._id, estado: 'Pendiente de Firmas' },
             { $set: { estado: 'Rechazado' } }
+        );
+        await TrazabilidadFirma.updateMany(
+            { contrato_id: contrato._id, estado: 'Pendiente' },
+            { $set: { estado: 'Cancelado' } }
         );
 
         const correo = await enviarCorreo({
@@ -229,7 +245,32 @@ exports.listarPendientes = asyncHandler(async (req, res) => {
         .populate({ path: 'contrato_id', model: 'Contrato' })
         .populate({ path: 'area_id', model: 'DependenciaArea' });
 
-    res.status(200).json(pendientes);
+    const solicitudesEnFirma = pendientes.filter(firma => firma.contrato_id?.estado === 'Pendiente de Firmas');
+    if (solicitudesEnFirma.length === 0) {
+        return res.status(200).json([]);
+    }
+
+    const contratoIds = [...new Set(solicitudesEnFirma.map(firma => String(firma.contrato_id._id)))];
+    const trazas = await TrazabilidadFirma.find({ contrato_id: { $in: contratoIds } })
+        .populate({ path: 'area_id', model: 'DependenciaArea', select: 'createdAt' })
+        .lean();
+    const trazasPorContrato = new Map();
+    for (const traza of trazas) {
+        const contratoId = String(traza.contrato_id);
+        const grupo = trazasPorContrato.get(contratoId) || [];
+        grupo.push(traza);
+        trazasPorContrato.set(contratoId, grupo);
+    }
+
+    const turnosDisponibles = new Set();
+    for (const grupo of trazasPorContrato.values()) {
+        const siguiente = ordenarTrazasFirma(grupo).find(firma => firma.estado !== 'Aprobado');
+        if (siguiente?.estado === 'Pendiente') {
+            turnosDisponibles.add(String(siguiente._id));
+        }
+    }
+
+    res.status(200).json(solicitudesEnFirma.filter(firma => turnosDisponibles.has(String(firma._id))));
 });
 
 // RF-013: Listar historial de solicitudes ya gestionadas por el responsable de área
@@ -247,7 +288,8 @@ exports.listarHistorial = asyncHandler(async (req, res) => {
     const historial = await TrazabilidadFirma.find(filtro)
         .populate({ path: 'contrato_id', model: 'Contrato' })
         .populate({ path: 'area_id', model: 'DependenciaArea' })
-        .populate({ path: 'usuario_id', model: 'Usuario', select: 'nombre_completo' });
+        .populate({ path: 'usuario_id', model: 'Usuario', select: 'nombre_completo' })
+        .sort({ fecha_firma: -1, createdAt: -1 });
 
     res.status(200).json(historial);
 });
