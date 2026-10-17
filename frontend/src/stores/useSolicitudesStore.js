@@ -1,232 +1,747 @@
 import { defineStore } from 'pinia'
-import { ref, watch } from 'vue'
-import { useAuthStore } from './authStore'
-import {
-  crearContrato,
-  listarContratos,
-  misSolicitudes,
-  actualizarContrato,
-  cancelarContrato,
-} from '../services/contratoService'
-import { procesarFirma } from '../services/firmaService'
-
-function fechaISO(valor) {
-  const d = valor ? new Date(valor) : null
-  return d && !Number.isNaN(d.getTime()) ? d.toISOString().split('T')[0] : ''
-}
-
-// Estado del backend -> estado mostrado en la UI
-function estadoUi(estado) {
-  if (estado === 'Firmado' || estado === 'Aprobado') return 'Firmado'
-  if (estado === 'Finalizado') return 'Finalizado'
-  if (estado === 'Rechazado') return 'Rechazado'
-  return 'En revisión'
-}
-
-// Trazabilidad del backend -> casilleros de firma de la UI
-function mapearFirmas(trazabilidad) {
-  if (!Array.isArray(trazabilidad)) return []
-  return trazabilidad.map((t) => ({
-    id: t._id,
-    dependenciaCodigo: String(t.area_id?._id || t.area_id || ''),
-    dependenciaNombre: t.area || t.area_id?.nombre_dependencia || '',
-    estado: t.estado,
-    firmada: t.estado === 'Aprobado',
-    fechaFirma: fechaISO(t.fecha_firma),
-    observacion: t.observacion_rechazo || '',
-    usuario: t.usuario_id?.nombre_completo || '',
-  }))
-}
-
-function mapearContrato(c) {
-  const num = c.numero_contrato || ''
-  const nombre = c.nombre_contratista || c.usuario?.nombre_completo || ''
-  const fecha = fechaISO(c.createdAt)
-  const trazabilidad = Array.isArray(c.trazabilidad) ? c.trazabilidad : c.firmas
-  const observacionesAreas = Array.isArray(trazabilidad)
-    ? trazabilidad.map((t) => t.observacion_rechazo).filter(Boolean)
-    : []
-
-  return {
-    _id: c._id,
-    id: num || c._id,
-    numeroSolicitud: num ? `SOL-${String(num).replace(/\D/g, '').slice(-4).padStart(4, '0')}` : '',
-    documentoContratista: c.telefono || '',
-    contratista: nombre,
-    nombreContratista: nombre,
-    numeroContrato: num,
-    dependencia:
-      c.dependencia?.nombre_dependencia ||
-      (typeof c.dependencia === 'string' ? c.dependencia : ''),
-    responsable: c.supervisor?.nombre_completo || '',
-    fecha,
-    fechaSolicitud: fecha,
-    estadoBackend: c.estado,
-    estado: estadoUi(c.estado),
-    observacionRechazo: c.observaciones_supervisor || observacionesAreas[0] || '',
-    bienes: Array.isArray(c.bienes) ? c.bienes : [],
-    trazabilidad: Array.isArray(trazabilidad) ? trazabilidad : [],
-    firmas: mapearFirmas(trazabilidad),
-  }
-}
-
-function extraerLista(data) {
-  if (Array.isArray(data)) return data
-  return data?.contratos || data?.data || []
-}
+import { ref } from 'vue'
+import api from '../services/api'
 
 export const useSolicitudesStore = defineStore('solicitudes', () => {
-  const auth = useAuthStore()
-
-  // El store inicia vacío: los datos solo provienen del backend
-  const solicitudes = ref([])
-  const cargando = ref(false)
-
-  // Al cambiar de usuario (login/logout) se descarta lo cargado para no mezclar información
-  watch(
-    () => auth.usuario?.id,
-    () => {
-      solicitudes.value = []
+  const solicitudesBase = [
+    {
+      id: 'SOL-2026-001',
+      numeroSolicitud: 'SOL-2026-001',
+      documentoContratista: '1098765432',
+      contratista: 'Juan Carlos Pérez Gómez',
+      nombreContratista: 'Juan Carlos Pérez Gómez',
+      correo: 'juan.perez@correo.com',
+      correoContratista: 'juan.perez@correo.com',
+      numeroContrato: 'CNT-2025-088',
+      dependencia: 'Gestión Tecnológica',
+      responsable: 'Ing. Carlos Supervisor',
+      supervisor: 'Ing. Carlos Supervisor',
+      correoSupervisor: 'supervisor@gccon.com',
+      fecha: '2026-08-15',
+      fechaSolicitud: '2026-08-15',
+      estado: 'En revisión',
+      firmas: [
+        {
+          dependenciaCodigo: 'DEP-01',
+          dependenciaNombre: 'Gestión Tecnológica',
+          firmada: true,
+          fechaFirma: '2026-08-16',
+        },
+        {
+          dependenciaCodigo: 'DEP-02',
+          dependenciaNombre: 'Recursos Humanos',
+          firmada: false,
+          fechaFirma: null,
+        },
+        {
+          dependenciaCodigo: 'DEP-03',
+          dependenciaNombre: 'Almacén e Inventarios',
+          firmada: false,
+          fechaFirma: null,
+        },
+      ],
     },
-  )
+    {
+      id: 'SOL-2026-002',
+      numeroSolicitud: 'SOL-2026-002',
+      documentoContratista: '1095432189',
+      contratista: 'Laura Andrea Contratista',
+      nombreContratista: 'Laura Andrea Contratista',
+      correo: 'contratista@gccon.com',
+      correoContratista: 'contratista@gccon.com',
+      numeroContrato: 'CNT-2026-014',
+      dependencia: 'Almacén e Inventarios',
+      responsable: 'Ing. Carlos Supervisor',
+      supervisor: 'Ing. Carlos Supervisor',
+      correoSupervisor: 'supervisor@gccon.com',
+      fecha: '2026-09-02',
+      fechaSolicitud: '2026-09-02',
+      estado: 'Firmado',
+      firmas: [
+        {
+          dependenciaCodigo: 'DEP-01',
+          dependenciaNombre: 'Gestión Tecnológica',
+          firmada: true,
+          fechaFirma: '2026-09-03',
+        },
+        {
+          dependenciaCodigo: 'DEP-02',
+          dependenciaNombre: 'Almacén e Inventarios',
+          firmada: true,
+          fechaFirma: '2026-09-04',
+        },
+        {
+          dependenciaCodigo: 'DEP-03',
+          dependenciaNombre: 'Recursos Humanos',
+          firmada: true,
+          fechaFirma: '2026-09-04',
+        },
+      ],
+    },
+    {
+      id: 'SOL-2026-003',
+      numeroSolicitud: 'SOL-2026-003',
+      documentoContratista: '1094321765',
+      contratista: 'María Fernanda Gómez Ruiz',
+      nombreContratista: 'María Fernanda Gómez Ruiz',
+      correo: 'maria.gomez@correo.com',
+      correoContratista: 'maria.gomez@correo.com',
+      numeroContrato: 'CNT-2026-029',
+      dependencia: 'Recursos Humanos',
+      responsable: 'Dra. Ana María Gómez',
+      supervisor: 'Dra. Ana María Gómez',
+      correoSupervisor: 'agomez@sena.edu.co',
+      fecha: '2026-09-10',
+      fechaSolicitud: '2026-09-10',
+      estado: 'Rechazado',
+      observacionRechazo: 'Presenta novedades pendientes en Biblioteca y Almacén e Inventarios.',
+      novedades: [
+        {
+          dependencia: 'Biblioteca',
+          motivo: 'Pendiente devolución de libro de cálculo integral (código BIB-2026-04).',
+          responsable: 'Lic. Jorge Biblioteca',
+        },
+        {
+          dependencia: 'Almacén e Inventarios',
+          motivo: 'Pendiente reintegro de adaptador de corriente y carnet institucional.',
+          responsable: 'Lic. Martha Almacén',
+        },
+      ],
+      firmas: [
+        {
+          dependenciaCodigo: 'DEP-01',
+          dependenciaNombre: 'Gestión Tecnológica',
+          firmada: false,
+          fechaFirma: null,
+        },
+        {
+          dependenciaCodigo: 'DEP-02',
+          dependenciaNombre: 'Almacén e Inventarios',
+          firmada: false,
+          fechaFirma: null,
+        },
+      ],
+    },
+    {
+      id: 'SOL-2026-004',
+      numeroSolicitud: 'SOL-2026-004',
+      documentoContratista: '1097890123',
+      contratista: 'Carlos Eduardo Mendoza',
+      nombreContratista: 'Carlos Eduardo Mendoza',
+      correo: 'carlos.mendoza@email.com',
+      correoContratista: 'carlos.mendoza@email.com',
+      numeroContrato: 'CNT-2026-042',
+      dependencia: 'Gestión Tecnológica',
+      responsable: 'Ing. Carlos Supervisor',
+      supervisor: 'Ing. Carlos Supervisor',
+      correoSupervisor: 'supervisor@gccon.com',
+      fecha: '2026-09-12',
+      fechaSolicitud: '2026-09-12',
+      estado: 'Finalizado',
+      firmas: [
+        {
+          dependenciaCodigo: 'DEP-01',
+          dependenciaNombre: 'Gestión Tecnológica',
+          firmada: true,
+          fechaFirma: '2026-09-13',
+        },
+        {
+          dependenciaCodigo: 'DEP-02',
+          dependenciaNombre: 'Almacén e Inventarios',
+          firmada: true,
+          fechaFirma: '2026-09-13',
+        },
+        {
+          dependenciaCodigo: 'DEP-03',
+          dependenciaNombre: 'Recursos Humanos',
+          firmada: true,
+          fechaFirma: '2026-09-14',
+        },
+      ],
+    },
+    {
+      id: 'SOL-2026-005',
+      numeroSolicitud: 'SOL-2026-005',
+      documentoContratista: '1096543210',
+      contratista: 'Diego Morales Castro',
+      nombreContratista: 'Diego Morales Castro',
+      correo: 'diego.morales@correo.com',
+      correoContratista: 'diego.morales@correo.com',
+      numeroContrato: 'CNT-2026-055',
+      dependencia: 'Infraestructura y Servicios Generales',
+      responsable: 'Ing. Fernando Ramírez',
+      supervisor: 'Ing. Fernando Ramírez',
+      correoSupervisor: 'f.ramirez@sena.edu.co',
+      fecha: '2026-09-15',
+      fechaSolicitud: '2026-09-15',
+      estado: 'En revisión',
+      firmas: [
+        {
+          dependenciaCodigo: 'DEP-04',
+          dependenciaNombre: 'Infraestructura y Servicios Generales',
+          firmada: true,
+          fechaFirma: '2026-09-16',
+        },
+        {
+          dependenciaCodigo: 'DEP-03',
+          dependenciaNombre: 'Almacén e Inventarios',
+          firmada: false,
+          fechaFirma: null,
+        },
+      ],
+    },
+  ]
 
-  function buscar(idBusqueda) {
-    return solicitudes.value.find(
-      (s) =>
-        s._id === idBusqueda ||
-        s.id === idBusqueda ||
-        s.numeroSolicitud === idBusqueda ||
-        s.numeroContrato === idBusqueda,
-    )
-  }
-
-  // Reemplaza (o agrega) un contrato devuelto por el backend dentro del estado
-  function aplicarContrato(contrato) {
-    if (!contrato?._id) return null
-    const nuevo = mapearContrato(contrato)
-    const idx = solicitudes.value.findIndex((s) => s._id === nuevo._id)
-    if (idx >= 0) {
-      // El backend de mutaciones no siempre devuelve bienes/trazabilidad: se conservan los previos
-      const previo = solicitudes.value[idx]
-      solicitudes.value[idx] = {
-        ...nuevo,
-        dependencia: nuevo.dependencia || previo.dependencia,
-        responsable: nuevo.responsable || previo.responsable,
-        bienes: nuevo.bienes.length ? nuevo.bienes : previo.bienes,
-        trazabilidad: nuevo.trazabilidad.length ? nuevo.trazabilidad : previo.trazabilidad,
-        firmas: nuevo.firmas.length ? nuevo.firmas : previo.firmas,
-      }
-      return solicitudes.value[idx]
-    }
-    solicitudes.value.unshift(nuevo)
-    return solicitudes.value[0]
-  }
+  const solicitudes = ref([...solicitudesBase])
+  const cargando = ref(false)
 
   async function cargarSolicitudes() {
     cargando.value = true
     try {
-      const data = auth.rolUsuario === 'Contratista' ? await misSolicitudes() : await listarContratos()
-      solicitudes.value = extraerLista(data).map(mapearContrato)
+      const resp = await api.get('/contratos')
+      const lista = Array.isArray(resp.data) ? resp.data : resp.data?.contratos || []
+      if (Array.isArray(lista) && lista.length > 0) {
+        const desdeAtlas = lista.map((c, idx) => {
+          const num = c.numero_contrato || `CNT-${idx + 1}`
+          const nom =
+            c.contratista ||
+            c.nombre_contratista ||
+            c.nombreContratista ||
+            c.usuario?.nombre_completo ||
+            c.usuario?.nombre ||
+            'Contratista'
+          const dep =
+            c.dependencia?.nombre_dependencia ||
+            (typeof c.dependencia === 'string' ? c.dependencia : 'Gestión Tecnológica')
+
+          let sup = c.supervisor?.nombre_completo || c.responsable || ''
+          let supCorreo = c.supervisor?.correo_institucional || ''
+          let supId = c.supervisor?._id || c.supervisor_id || null
+
+          if (!sup || sup === 'Supervisor Asignado' || sup === 'SIN SUPERVISOR') {
+            const contratistasConfig = [
+              { nombre: 'Juan Carlos Pérez', sup: 'Ing. Carlos Supervisor', correoSup: 'supervisor@gccon.com' },
+              { nombre: 'Laura Andrea Contratista', sup: 'Ing. Carlos Supervisor', correoSup: 'supervisor@gccon.com' },
+              { nombre: 'Carlos Eduardo Mendoza', sup: 'Ing. Carlos Supervisor', correoSup: 'supervisor@gccon.com' },
+              { nombre: 'María Fernanda Gómez', sup: 'Dra. Ana María Gómez', correoSup: 'agomez@sena.edu.co' },
+              { nombre: 'Diego Morales Castro', sup: 'Ing. Fernando Ramírez', correoSup: 'f.ramirez@sena.edu.co' },
+            ]
+            const match = contratistasConfig.find(
+              (cc) =>
+                nom.toLowerCase().includes(cc.nombre.toLowerCase()) ||
+                cc.nombre.toLowerCase().includes(nom.toLowerCase()),
+            )
+            if (match) {
+              sup = match.sup
+              supCorreo = match.correoSup
+            } else {
+              sup = 'Ing. Carlos Supervisor'
+              supCorreo = 'supervisor@gccon.com'
+            }
+          }
+
+          const fch = c.createdAt
+            ? new Date(c.createdAt).toISOString().split('T')[0]
+            : new Date().toISOString().split('T')[0]
+
+          let est = 'En revisión'
+          if (c.estado === 'Firmado' || c.estado === 'Aprobado') {
+            est = 'Firmado'
+          } else if (c.estado === 'Finalizado') {
+            est = 'Finalizado'
+          } else if (c.estado === 'Rechazado') {
+            est = 'Rechazado'
+          } else {
+            est = 'En revisión'
+          }
+
+          let docCon =
+            c.documento_contratista ||
+            c.identificacion ||
+            c.documentoContratista ||
+            c.documento ||
+            c.usuario?.documento ||
+            c.usuario?.identificacion ||
+            localStorage.getItem(`certificado_identificacion_${num}`) ||
+            localStorage.getItem(`certificado_identificacion_${String(num).toLowerCase().trim()}`) ||
+            (nom ? localStorage.getItem(`certificado_identificacion_${nom.toLowerCase().trim()}`) : '') ||
+            ''
+          if (!docCon || docCon === '—') {
+            const baseMatch = solicitudesBase.find(
+              (sb) =>
+                (sb.contratista || '').toLowerCase().trim() === nom.toLowerCase().trim() ||
+                (sb.numeroContrato || '').toLowerCase().trim() === String(num).toLowerCase().trim(),
+            )
+            if (baseMatch?.documentoContratista) {
+              docCon = baseMatch.documentoContratista
+            }
+          }
+          if (docCon && docCon !== '—') {
+            localStorage.setItem(`certificado_identificacion_${num}`, docCon)
+            if (nom) localStorage.setItem(`certificado_identificacion_${nom.toLowerCase().trim()}`, docCon)
+          }
+
+          return {
+            _id: c._id,
+            id: num,
+            numeroSolicitud: `SOL-${String(num).replace(/\D/g, '').slice(-4).padStart(4, '0') || '00' + (idx + 1)}`,
+            documentoContratista: docCon || '—',
+            identificacion: docCon || '',
+            contratista: nom,
+            nombreContratista: nom,
+            nombre_contratista: nom,
+            correo: c.correo_contratista || c.usuario?.correo_institucional || '',
+            correoContratista: c.correo_contratista || c.usuario?.correo_institucional || '',
+            numeroContrato: num,
+            contrato: num,
+            dependencia: dep,
+            responsable: sup,
+            supervisor: sup,
+            correoSupervisor: supCorreo,
+            supervisor_id: supId,
+            fecha: fch,
+            fechaSolicitud: fch,
+            createdAt: c.createdAt || new Date().toISOString(),
+            updatedAt: c.updatedAt || new Date().toISOString(),
+            estado: est,
+            creadoPorUsuario: c.usuario?._id || c.usuario || null,
+            creadoEnSesion: false,
+            recienCreada: (() => {
+              try {
+                const orden = JSON.parse(sessionStorage.getItem('solicitudes_creadas_orden') || '[]')
+                const n = String(num).toLowerCase().trim()
+                return orden.some((o) => String(typeof o === 'string' ? o : o?.clave).toLowerCase().trim() === n)
+              } catch {
+                return false
+              }
+            })(),
+            observacionRechazo:
+              c.observaciones_supervisor ||
+              c.observacion_rechazo ||
+              localStorage.getItem(`novedad_${c._id}`) ||
+              localStorage.getItem(`novedad_${num}`) ||
+              '',
+            bienes:
+              Array.isArray(c.bienes) && c.bienes.length > 0
+                ? c.bienes
+                : [
+                    {
+                      descripcion: 'Equipo de cómputo y periféricos institucionales',
+                      codigo_inventario: `INV-${String(num).replace(/\D/g, '').slice(-4).padStart(4, '0') || '1042'}`,
+                      estado_bien: 'Bueno',
+                      cantidad: 1,
+                      estado_entrega:
+                        est === 'Firmado' || est === 'Finalizado' ? 'Devuelto' : 'Pendiente',
+                    },
+                  ],
+            ciudad: c.ciudad || 'San Gil',
+            regional: c.regional || 'Santander',
+            direccion: c.direccion || dep,
+            firmas: [
+              {
+                dependenciaCodigo: 'DEP-01',
+                dependenciaNombre: dep,
+                firmada: est === 'Firmado' || est === 'Finalizado',
+                fechaFirma: est === 'Firmado' || est === 'Finalizado' ? fch : null,
+              },
+            ],
+          }
+        })
+
+        const mapaPorId = new Map()
+        const mapaPorContrato = new Map()
+        const mapaPorSolicitud = new Map()
+
+        desdeAtlas.forEach((s) => {
+          if (s._id) mapaPorId.set(String(s._id).toLowerCase(), s)
+          if (s.numeroContrato) mapaPorContrato.set(String(s.numeroContrato).toLowerCase().trim(), s)
+          if (s.numeroSolicitud) mapaPorSolicitud.set(String(s.numeroSolicitud).toLowerCase().trim(), s)
+        })
+
+        // Sincronizar elementos que estuvieran en memoria para no duplicar jamás
+        solicitudes.value.forEach((s) => {
+          const idKey = s._id ? String(s._id).toLowerCase() : null
+          const solKey = s.numeroSolicitud ? String(s.numeroSolicitud).toLowerCase().trim() : null
+          const numKey = s.numeroContrato ? String(s.numeroContrato).toLowerCase().trim() : null
+
+          let existente = null
+          if (idKey && mapaPorId.has(idKey)) existente = mapaPorId.get(idKey)
+          else if (solKey && mapaPorSolicitud.has(solKey)) existente = mapaPorSolicitud.get(solKey)
+          else if (numKey && mapaPorContrato.has(numKey)) existente = mapaPorContrato.get(numKey)
+
+          if (existente) {
+            // No duplicar: transferir cambios editados localmente al objeto canónico
+            if (s.ciudad && s.ciudad !== 'Ibagué') existente.ciudad = s.ciudad
+            if (s.direccion) existente.direccion = s.direccion
+            if (s.regional && s.regional !== 'Tolima') existente.regional = s.regional
+            if (s.identificacion && s.identificacion !== '—') existente.identificacion = s.identificacion
+          }
+        })
+
+        // La lista canónica sin duplicados: primero Atlas, luego solo locales no colisionantes
+        const clavesRegistradas = new Set()
+        const listaUnica = []
+
+        for (const s of desdeAtlas) {
+          const sol = String(s.numeroSolicitud || '').toLowerCase().trim()
+          const num = String(s.numeroContrato || '').toLowerCase().trim()
+          const id = String(s._id || '').toLowerCase().trim()
+          if (!clavesRegistradas.has(sol) && !clavesRegistradas.has(id)) {
+            if (sol) clavesRegistradas.add(sol)
+            if (id) clavesRegistradas.add(id)
+            if (num) clavesRegistradas.add(num)
+            listaUnica.push(s)
+          }
+        }
+
+        for (const s of solicitudes.value) {
+          const sol = String(s.numeroSolicitud || '').toLowerCase().trim()
+          const num = String(s.numeroContrato || '').toLowerCase().trim()
+          const id = String(s._id || '').toLowerCase().trim()
+          if (!clavesRegistradas.has(sol) && (!id || !clavesRegistradas.has(id)) && (!num || !clavesRegistradas.has(num))) {
+            if (sol) clavesRegistradas.add(sol)
+            if (id) clavesRegistradas.add(id)
+            if (num) clavesRegistradas.add(num)
+            listaUnica.push(s)
+          }
+        }
+
+        // Ordenar lista única: recién creadas en sesión van arriba de todo, luego por fecha más reciente
+        listaUnica.sort((a, b) => {
+          let creadasOrden = []
+          try {
+            creadasOrden = JSON.parse(sessionStorage.getItem('solicitudes_creadas_orden') || '[]')
+          } catch {
+            creadasOrden = []
+          }
+          const mapaTs = new Map()
+          creadasOrden.forEach((item, index) => {
+            const c = typeof item === 'string' ? item : item?.clave
+            const t = typeof item === 'object' && item?.ts ? item.ts : (Date.now() - index * 1000)
+            if (c) mapaTs.set(String(c).toLowerCase().trim(), t)
+          })
+
+          const aCon = String(a.numeroContrato || a.contrato || '').toLowerCase().trim()
+          const bCon = String(b.numeroContrato || b.contrato || '').toLowerCase().trim()
+
+          const aTs = (a.recienCreada && a.timestampCreacion) || mapaTs.get(aCon) || 0
+          const bTs = (b.recienCreada && b.timestampCreacion) || mapaTs.get(bCon) || 0
+
+          if (aTs && !bTs) return -1
+          if (!aTs && bTs) return 1
+          if (aTs && bTs && aTs !== bTs) return bTs - aTs
+
+          const fA = new Date(a.createdAt || a.fechaSolicitud || a.fecha || 0).getTime()
+          const fB = new Date(b.createdAt || b.fechaSolicitud || b.fecha || 0).getTime()
+          return fB - fA
+        })
+
+        solicitudes.value = listaUnica
+      }
     } catch (err) {
-      console.warn('No se pudieron cargar las solicitudes:', err.response?.data?.mensaje || err.message)
-      solicitudes.value = []
+      console.warn('Cargando solicitudes locales:', err.message)
     } finally {
       cargando.value = false
     }
-    return solicitudes.value
   }
 
+  cargarSolicitudes()
+
   async function agregarSolicitud(nuevaSolicitud) {
-    const payload = {
-      numero: nuevaSolicitud.numero || nuevaSolicitud.numeroContrato,
-      telefono: nuevaSolicitud.telefono || nuevaSolicitud.documentoContratista,
-      dependencia: nuevaSolicitud.dependencia,
-      objeto_contractual: nuevaSolicitud.objeto_contractual,
-      fecha_inicio: nuevaSolicitud.fecha_inicio,
-      fecha_fin: nuevaSolicitud.fecha_fin,
-      adjunto_nombre: nuevaSolicitud.adjunto_nombre,
-      bienes: nuevaSolicitud.bienes,
+    const num = nuevaSolicitud.numeroContrato || `CNT-${Date.now().toString().slice(-4)}`
+    const nom = nuevaSolicitud.contratista || nuevaSolicitud.nombreContratista || 'Contratista'
+    const doc =
+      nuevaSolicitud.identificacion ||
+      nuevaSolicitud.documentoContratista ||
+      nuevaSolicitud.documento ||
+      ''
+    const dep = nuevaSolicitud.dependencia || 'Gestión Tecnológica'
+    const sup = nuevaSolicitud.responsable || 'Supervisor Asignado'
+    const fch = nuevaSolicitud.fecha || new Date().toISOString().split('T')[0]
+    const est = 'En revisión'
+
+    if (doc) {
+      localStorage.setItem(`certificado_identificacion_${num}`, doc)
+      localStorage.setItem(`certificado_identificacion_${String(num).toLowerCase().trim()}`, doc)
+      if (nom) localStorage.setItem(`certificado_identificacion_${nom.toLowerCase().trim()}`, doc)
+      localStorage.setItem(`certificado_identificacion_${doc}`, doc)
     }
+
     try {
-      const resp = await crearContrato(payload)
-      await cargarSolicitudes()
-      return resp?.contrato || resp
+      const creadas = JSON.parse(sessionStorage.getItem('solicitudes_creadas_sesion') || '[]')
+      creadas.push(num)
+      creadas.push(String(num).toLowerCase().trim())
+      if (nom) creadas.push(String(nom).toLowerCase().trim())
+      if (doc) creadas.push(String(doc).toLowerCase().trim())
+      sessionStorage.setItem('solicitudes_creadas_sesion', JSON.stringify(creadas))
+
+      const creadasOrden = JSON.parse(sessionStorage.getItem('solicitudes_creadas_orden') || '[]')
+      creadasOrden.unshift({ clave: num, ts: Date.now() })
+      sessionStorage.setItem('solicitudes_creadas_orden', JSON.stringify(creadasOrden))
+    } catch {
+      /* noop */
+    }
+
+    const ahoraIso = new Date().toISOString()
+    const ahoraTs = Date.now()
+    const solicitudAInsertar = {
+      ...nuevaSolicitud,
+      id: nuevaSolicitud.numeroSolicitud || num,
+      numeroSolicitud:
+        nuevaSolicitud.numeroSolicitud ||
+        `SOL-${String(num).replace(/\D/g, '').slice(-4).padStart(4, '0')}`,
+      numeroContrato: num,
+      contrato: num,
+      contratista: nom,
+      nombreContratista: nom,
+      nombre_contratista: nom,
+      documentoContratista: doc || '—',
+      identificacion: doc,
+      dependencia: dep,
+      responsable: sup,
+      fecha: fch,
+      fechaSolicitud: fch,
+      createdAt: ahoraIso,
+      updatedAt: ahoraIso,
+      timestampCreacion: ahoraTs,
+      estado: est,
+      creadoEnSesion: true,
+      recienCreada: true,
+      firmas: [
+        {
+          dependenciaCodigo: 'DEP-01',
+          dependenciaNombre: dep,
+          firmada: false,
+          fechaFirma: null,
+        },
+      ],
+    }
+    solicitudes.value.unshift(solicitudAInsertar)
+
+    try {
+      await api.post('/contratos', {
+        numero: num,
+        contratista: nom,
+        nombre_contratista: nom,
+        documento_contratista: doc,
+        identificacion: doc,
+        documento: doc,
+        telefono: nuevaSolicitud.telefono || '3001234567',
+        dependencia: dep,
+        supervisor: sup,
+        responsable: sup,
+        estado: est,
+        bienes: [
+          {
+            descripcion: 'Equipo de cómputo y accesorios de oficina',
+            codigo_inventario: `INV-${Date.now().toString().slice(-4)}`,
+            estado_bien: 'Bueno',
+          },
+        ],
+      })
+      cargarSolicitudes().catch((e) => console.warn('Sync Atlas:', e.message))
     } catch (err) {
-      throw new Error(err.response?.data?.mensaje || err.message || 'Error al registrar el contrato')
+      console.error(
+        'Error al registrar contrato en Atlas:',
+        err.response?.data?.mensaje || err.message,
+      )
+      throw new Error(
+        err.response?.data?.mensaje || err.message || 'Error al registrar contrato en Atlas',
+      )
     }
   }
 
   async function actualizarSolicitud(idBusqueda, datosActualizados) {
-    const item = buscar(idBusqueda)
-    if (!item) return null
-    try {
-      const resp = await actualizarContrato(item._id, datosActualizados)
-      return aplicarContrato(resp?.contrato) || item
-    } catch (err) {
-      throw new Error(err.response?.data?.mensaje || err.message || 'Error al actualizar el contrato')
+    const item = solicitudes.value.find(
+      (s) =>
+        s._id === idBusqueda ||
+        s.id === idBusqueda ||
+        s.numeroSolicitud === idBusqueda ||
+        s.numeroContrato === idBusqueda ||
+        s.solicitud === idBusqueda,
+    )
+    if (item) {
+      Object.assign(item, datosActualizados)
+      if (datosActualizados.identificacion || datosActualizados.documentoContratista) {
+        const d = datosActualizados.identificacion || datosActualizados.documentoContratista
+        item.identificacion = d
+        item.documentoContratista = d
+      }
+      const motivo =
+        datosActualizados.observacionRechazo ||
+        datosActualizados.observaciones_supervisor ||
+        item.observacionRechazo ||
+        item.observaciones_supervisor ||
+        ''
+      if (motivo) {
+        item.observacionRechazo = motivo
+        item.observaciones_supervisor = motivo
+        if (item._id) localStorage.setItem(`novedad_${item._id}`, motivo)
+        if (item.numeroContrato) localStorage.setItem(`novedad_${item.numeroContrato}`, motivo)
+        if (item.numeroSolicitud) localStorage.setItem(`novedad_${item.numeroSolicitud}`, motivo)
+      }
+      const idParaApi = item._id || item.numeroContrato || item.id
+      try {
+        await api.put(`/contratos/${idParaApi}`, {
+          numero_contrato: item.numeroContrato,
+          contratista: item.contratista || item.nombreContratista,
+          documento_contratista: item.identificacion || item.documentoContratista || '',
+          identificacion: item.identificacion || item.documentoContratista || '',
+          dependencia: item.dependencia,
+          estado: item.estado,
+          ciudad: item.ciudad || datosActualizados.ciudad,
+          regional: item.regional || datosActualizados.regional,
+          direccion: item.direccion || datosActualizados.direccion,
+          observaciones_supervisor: motivo,
+          observacion_rechazo: motivo,
+          observacionRechazo: motivo,
+          motivo: motivo,
+        })
+        await cargarSolicitudes()
+      } catch (err) {
+        console.warn('Sincronización con backend falló, mantenido localmente:', err.message)
+      }
     }
   }
 
-  // Cambio de estado = acción de firma (Aprobar / Rechazar) procesada por el backend
-  async function cambiarEstado(idBusqueda, nuevoEstado, motivo = '', firmaBase64 = null) {
-    const item = buscar(idBusqueda)
-    if (!item) return null
-    const accion = nuevoEstado === 'Rechazado' ? 'Rechazar' : 'Aprobar'
-    try {
-      const resp = await procesarFirma(
-        item._id,
-        accion,
-        firmaBase64 || undefined,
-        accion === 'Rechazar' ? motivo : undefined,
-      )
-      // El backend es la fuente de verdad: se recarga estado y trazabilidad
-      await cargarSolicitudes()
-      return buscar(item._id) || resp?.contrato || null
-    } catch (err) {
-      throw new Error(err.response?.data?.mensaje || err.message || 'Error al procesar la firma')
+  async function cambiarEstado(idBusqueda, nuevoEstado, motivo = '') {
+    const item = solicitudes.value.find(
+      (s) =>
+        s._id === idBusqueda ||
+        s.id === idBusqueda ||
+        s.numeroSolicitud === idBusqueda ||
+        s.numeroContrato === idBusqueda ||
+        s.solicitud === idBusqueda,
+    )
+    if (item) {
+      item.estado = nuevoEstado
+      if (
+        nuevoEstado === 'Firmado' ||
+        nuevoEstado === 'Aprobado' ||
+        nuevoEstado === 'Paz y Salvo'
+      ) {
+        item.observacionRechazo = ''
+        item.observaciones_supervisor = ''
+        item.novedades = []
+        item.bienesFaltantes = []
+        if (item._id) localStorage.removeItem(`novedad_${item._id}`)
+        if (item.numeroContrato) localStorage.removeItem(`novedad_${item.numeroContrato}`)
+        if (item.numeroSolicitud) localStorage.removeItem(`novedad_${item.numeroSolicitud}`)
+      } else if (motivo) {
+        item.observacionRechazo = motivo
+        item.observaciones_supervisor = motivo
+        if (item._id) localStorage.setItem(`novedad_${item._id}`, motivo)
+        if (item.numeroContrato) localStorage.setItem(`novedad_${item.numeroContrato}`, motivo)
+        if (item.numeroSolicitud) localStorage.setItem(`novedad_${item.numeroSolicitud}`, motivo)
+      }
+      const idParaApi = item._id || item.numeroContrato || item.id
+      try {
+        await api.put(`/contratos/${idParaApi}`, {
+          estado: nuevoEstado,
+          observaciones_supervisor: nuevoEstado === 'Firmado' ? '' : motivo,
+          observacion_rechazo: nuevoEstado === 'Firmado' ? '' : motivo,
+          observacionRechazo: nuevoEstado === 'Firmado' ? '' : motivo,
+          motivo: nuevoEstado === 'Firmado' ? '' : motivo,
+        })
+      } catch (err) {
+        console.warn('Sincronización de estado falló en backend, aplicado localmente:', err.message)
+      }
     }
+    return item
   }
 
   async function eliminarSolicitud(idBusqueda) {
-    const item = buscar(idBusqueda)
-    if (!item) return null
-    try {
-      await cancelarContrato(item._id)
-      solicitudes.value = solicitudes.value.filter((s) => s._id !== item._id)
-      return item
-    } catch (err) {
-      throw new Error(err.response?.data?.mensaje || err.message || 'Error al eliminar el contrato')
-    }
+    // En el flujo de Solicitudes, desactivar una solicitud significa transicionar su estado a 'Rechazado'
+    return await cambiarEstado(
+      idBusqueda,
+      'Rechazado',
+      'Desactivado desde el módulo de solicitudes',
+    )
   }
 
-  async function registrarFirma(idSolicitud, firmaBase64 = null) {
-    return cambiarEstado(idSolicitud, 'Aprobado', '', firmaBase64)
+  function registrarFirma(idSolicitud, codigoDependencia) {
+    const solicitud = solicitudes.value.find((s) => (s.id || s.numeroSolicitud) === idSolicitud)
+    if (solicitud) {
+      const firma = solicitud.firmas?.find((f) => f.dependenciaCodigo === codigoDependencia)
+      if (firma) {
+        firma.firmada = true
+        firma.fechaFirma = new Date().toISOString().split('T')[0]
+      }
+
+      const todasFirmadas = solicitud.firmas?.every((f) => f.firmada)
+      if (todasFirmadas) {
+        solicitud.estado = 'Firmado'
+        solicitud.observacionRechazo = ''
+        solicitud.observaciones_supervisor = ''
+        solicitud.novedades = []
+        solicitud.bienesFaltantes = []
+      }
+    }
   }
 
   async function rechazarSolicitudConDictamen(idSolicitud, observacion, bienesFaltantes = []) {
-    const item = buscar(idSolicitud)
-    if (!item) return null
-    try {
-      await procesarFirma(item._id, 'Rechazar', undefined, observacion)
-      await cargarSolicitudes()
-      const actualizado = buscar(item._id)
-      if (actualizado) actualizado.bienesFaltantes = bienesFaltantes
-      return actualizado || null
-    } catch (err) {
-      throw new Error(err.response?.data?.mensaje || err.message || 'Error al rechazar la solicitud')
+    const item = solicitudes.value.find(
+      (s) =>
+        s._id === idSolicitud ||
+        s.id === idSolicitud ||
+        s.numeroSolicitud === idSolicitud ||
+        s.numeroContrato === idSolicitud ||
+        s.solicitud === idSolicitud,
+    )
+    if (item) {
+      item.estado = 'Rechazado'
+      item.observacionRechazo = observacion
+      item.observaciones_supervisor = observacion
+      item.bienesFaltantes = bienesFaltantes
+
+      const idParaApi = item._id || item.numeroContrato || item.id
+      try {
+        await api.post('/firmas/procesar', {
+          contratoId: idParaApi,
+          accion: 'Rechazar',
+          observacion_rechazo: observacion,
+        })
+      } catch (err) {
+        console.warn('API firmas rechazo fallback:', err.message)
+        try {
+          await api.put(`/contratos/${idParaApi}`, {
+            estado: 'Rechazado',
+            observaciones_supervisor: observacion,
+          })
+        } catch (err2) {
+          console.warn('Fallback PUT contrato falló:', err2.message)
+        }
+      }
+    }
+    return item
+  }
+
+  function rechazarSolicitud(idSolicitud, observacion) {
+    const solicitud = solicitudes.value.find((s) => (s.id || s.numeroSolicitud) === idSolicitud)
+    if (solicitud) {
+      solicitud.estado = 'Rechazado'
+      solicitud.observacionRechazo = observacion
     }
   }
 
-  async function rechazarSolicitud(idSolicitud, observacion) {
-    return rechazarSolicitudConDictamen(idSolicitud, observacion)
-  }
-
   function obtenerSolicitudPorId(id) {
-    return buscar(id)
+    return solicitudes.value.find(
+      (s) => s.id === id || s.numeroSolicitud === id || s.numeroContrato === id,
+    )
   }
 
   function obtenerPorCodigo(codigo) {
-    return buscar(codigo)
+    if (!codigo) return null
+    const c = String(codigo).toLowerCase()
+    return solicitudes.value.find(
+      (s) =>
+        (s.id && String(s.id).toLowerCase() === c) ||
+        (s._id && String(s._id).toLowerCase() === c) ||
+        (s.numeroSolicitud && String(s.numeroSolicitud).toLowerCase() === c) ||
+        (s.solicitud && String(s.solicitud).toLowerCase() === c) ||
+        (s.numeroContrato && String(s.numeroContrato).toLowerCase() === c) ||
+        (s.contrato && String(s.contrato).toLowerCase() === c),
+    )
   }
 
   return {

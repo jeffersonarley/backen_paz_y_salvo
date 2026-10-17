@@ -26,16 +26,16 @@ export default defineRouter(() => {
       .trim()
       .toUpperCase()
       .replace(/[\s_-]+/g, '')
-    if (v.includes('ADMIN')) return 'Administrador'
-    if (v.includes('SUPER')) return 'Supervisor'
-    if (v.includes('RESPONSABLE')) return 'ResponsableArea'
-    if (v.includes('CONTRAT')) return 'Contratista'
+    if (v.includes('ADMIN')) return 'ADMINISTRADOR'
+    if (v.includes('SUPER')) return 'SUPERVISOR'
+    if (v.includes('RESPONSABLE')) return 'RESPONSABLE_AREA'
+    if (v.includes('CONTRAT')) return 'CONTRATISTA'
     return v
   }
 
   // Navigation Guard moderno (retornos directos sin callbacks next)
   Router.beforeEach((to) => {
-    const usuarioRaw = localStorage.getItem('fond_usuario')
+    const usuarioRaw = localStorage.getItem('gccon_user')
     const usuario = usuarioRaw ? JSON.parse(usuarioRaw) : null
 
     if (to.meta && to.meta.titulo) {
@@ -46,7 +46,7 @@ export default defineRouter(() => {
       return true
     }
 
-    if (!usuario) {
+    if (!usuario && to.path.startsWith('/app')) {
       return { name: 'login' }
     }
 

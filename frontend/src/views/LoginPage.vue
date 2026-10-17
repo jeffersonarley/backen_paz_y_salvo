@@ -3,7 +3,7 @@
     <q-card class="login-card">
       <img :src="logoSena" class="logo" alt="Logo SENA" />
 
-      <q-form @submit.prevent="ingresar" class="login-form">
+      <q-form @submit.prevent="ingresar" class="q-gutter-y-xs">
         <!-- Selector de Rol -->
         <q-select
           v-model="rolSeleccionado"
@@ -12,7 +12,8 @@
           outlined
           dense
           label="Seleccionar Tipo de Usuario / Rol *"
-          bottom-slots
+          class="q-mb-md"
+          @update:model-value="alCambiarRol"
         >
           <template #prepend>
             <q-icon
@@ -37,9 +38,16 @@
         <!-- Campo Credencial -->
         <q-input
           v-model="credencial"
+          id="email"
+          for="email"
+          name="email"
+          type="text"
+          autocomplete="username"
+          data-testid="username-input"
           outlined
           dense
           label="Correo o Documento de Identidad *"
+          class="q-mb-md"
           :rules="[(val) => !!val || 'El correo o documento es requerido']"
         >
           <template #prepend>
@@ -50,10 +58,16 @@
         <!-- Campo Contraseña -->
         <q-input
           v-model="password"
+          id="password"
+          for="password"
+          name="password"
+          :type="verPassword ? 'text' : 'password'"
+          autocomplete="current-password"
+          data-testid="password-input"
           outlined
           dense
-          :type="verPassword ? 'text' : 'password'"
           label="Contraseña *"
+          class="q-mb-lg"
           :rules="[(val) => !!val || 'La contraseña es requerida']"
         >
           <template #prepend>
@@ -69,10 +83,13 @@
         </q-input>
 
         <q-btn
+          id="btn-login"
+          name="submit"
+          data-testid="login-button"
           type="submit"
           color="positive"
           label="Iniciar sesión"
-          class="full-width boton q-mt-md"
+          class="full-width boton"
           unelevated
           :loading="cargando"
         />
@@ -114,28 +131,43 @@ const opcionesRoles = [
   {
     label: 'Administrador',
     value: 'ADMINISTRADOR',
+    correo: 'admin@gccon.com',
+    pass: 'admin',
     icon: 'admin_panel_settings',
     descripcion: 'Gestión global y supervisores',
   },
   {
     label: 'Supervisor',
     value: 'SUPERVISOR',
+    correo: 'supervisor@gccon.com',
+    pass: 'super',
     icon: 'supervisor_account',
     descripcion: 'Gestión de contratistas y dependencias',
   },
   {
     label: 'Contratista',
     value: 'CONTRATISTA',
+    correo: 'carlos.mendoza@email.com',
+    pass: '123',
     icon: 'person',
     descripcion: 'Registro de contrato y solicitud',
   },
   {
     label: 'Responsable de Área',
     value: 'RESPONSABLE_AREA',
+    correo: 'responsable@gccon.com',
+    pass: '123',
     icon: 'draw',
-    descripcion: 'Aprobación y firma electrónica',
+    descripcion: 'Gestión de TIC — Franklin Rolando Chacón',
   },
 ]
+
+function alCambiarRol(opcion) {
+  if (opcion) {
+    credencial.value = opcion.correo
+    password.value = opcion.pass
+  }
+}
 
 const normalizarRol = (valor) => {
   const v = String(valor || '')
@@ -185,9 +217,9 @@ async function ingresar() {
   }
 
   try {
-    await router.push({ name: 'solicitudes' })
+    await router.push('/app/solicitudes')
   } catch {
-    window.location.href = '/solicitudes'
+    window.location.hash = '#/app/solicitudes'
   }
 
   cargando.value = false
@@ -214,14 +246,6 @@ async function ingresar() {
   text-align: center;
   background: #ffffff;
   box-shadow: 0 15px 40px rgba(0, 0, 0, 0.35);
-}
-
-/* Todos los campos reservan el mismo espacio inferior (mensaje de validación)
-   y se separan con el mismo gap, para que queden equidistantes. */
-.login-form {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
 }
 
 .logo {

@@ -71,6 +71,7 @@ export const useDependenciasStore = defineStore('dependencias', () => {
           codigo: d.codigo || `DEP-${String(idx + 1).padStart(2, '0')}`,
           nombre: d.nombre_dependencia || d.nombre || 'Área Dependencia',
           responsable: d.responsable_id?.nombre_completo || d.responsable || 'Responsable Asignado',
+          responsable_id: d.responsable_id?._id || d.responsable_id?.id || d.responsable_id || null,
           correo: d.correo || d.responsable_id?.correo_institucional || 'dependencia@sena.edu.co',
           estado: d.activo === false ? 'Inactiva' : 'Activa',
         }))
@@ -105,6 +106,7 @@ export const useDependenciasStore = defineStore('dependencias', () => {
       await api.post('/dependencias', {
         nombre_dependencia: nuevaDependencia.nombre,
         codigo: nuevaDependencia.codigo,
+        responsable_id: nuevaDependencia.responsable_id || null,
         correo: nuevaDependencia.correo,
         activo: nuevaDependencia.estado !== 'Inactivo' && nuevaDependencia.estado !== 'Inactiva',
       })
@@ -124,6 +126,7 @@ export const useDependenciasStore = defineStore('dependencias', () => {
         try {
           await api.put(`/dependencias/${idAtlas}`, {
             nombre_dependencia: datosActualizados.nombre,
+            responsable_id: datosActualizados.responsable_id || null,
             activo:
               datosActualizados.estado !== 'Inactivo' && datosActualizados.estado !== 'Inactiva',
           })

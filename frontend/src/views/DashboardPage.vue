@@ -89,10 +89,12 @@
 import { ref, computed, onMounted } from 'vue'
 import DashboardCard from '../components/DashboardCard.vue'
 import api from '../services/api'
-import { useAuthStore } from '../stores/authStore.js'
+import { useAuthStore } from '../stores/authStore'
 
 const auth = useAuthStore()
-const puedeCrearSolicitud = computed(() => auth.tienePermiso(['Contratista']))
+
+// Solo el Contratista puede crear solicitudes
+const puedeCrearSolicitud = computed(() => auth.tienePermiso(['CONTRATISTA']))
 
 // Contadores
 const totalUsuarios = ref(0)

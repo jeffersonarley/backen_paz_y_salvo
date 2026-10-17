@@ -125,7 +125,7 @@
               ]"
             />
 
-            <q-input v-model="usuario.telefono" label="Teléfono" outlined dense bottom-slots />
+            <q-input v-model="usuario.telefono" label="Teléfono" outlined dense />
 
             <q-select
               v-model="usuario.rol"
@@ -142,7 +142,24 @@
               :type="mostrarPassword ? 'text' : 'password'"
               outlined
               dense
-              :rules="editando ? [] : [(val) => !!val || 'La contraseña es obligatoria']"
+              hint="Mínimo 8 caracteres, con mayúscula, minúscula y número"
+              @focus="avisarRequisitosPassword"
+              :rules="
+                editando
+                  ? [
+                      (val) => !val || val.length >= 8 || 'Mínimo 8 caracteres',
+                      (val) => !val || /[A-Z]/.test(val) || 'Debe incluir al menos una mayúscula',
+                      (val) => !val || /[a-z]/.test(val) || 'Debe incluir al menos una minúscula',
+                      (val) => !val || /[0-9]/.test(val) || 'Debe incluir al menos un número',
+                    ]
+                  : [
+                      (val) => !!val || 'La contraseña es obligatoria',
+                      (val) => (val && val.length >= 8) || 'Mínimo 8 caracteres',
+                      (val) => /[A-Z]/.test(val) || 'Debe incluir al menos una mayúscula',
+                      (val) => /[a-z]/.test(val) || 'Debe incluir al menos una minúscula',
+                      (val) => /[0-9]/.test(val) || 'Debe incluir al menos un número',
+                    ]
+              "
             >
               <template #append>
                 <q-icon
@@ -152,11 +169,21 @@
                 />
               </template>
             </q-input>
+
+            <!-- Banner de error si falla la validación en backend (sin cerrar planilla) -->
+            <div v-if="errorFormulario" class="q-mt-sm">
+              <q-banner rounded dense class="bg-red-1 text-negative text-caption">
+                <template #avatar>
+                  <q-icon name="error_outline" color="negative" />
+                </template>
+                {{ errorFormulario }}
+              </q-banner>
+            </div>
           </q-card-section>
 
           <q-card-actions align="right" class="q-pa-md">
-            <q-btn flat label="Cancelar" color="grey-8" @click="cancelar" />
-            <q-btn unelevated type="submit" color="positive" label="Guardar" />
+            <q-btn flat label="Cancelar" color="grey-8" @click="cancelar" :disable="guardando" />
+            <q-btn unelevated type="submit" color="positive" label="Guardar" :loading="guardando" />
           </q-card-actions>
         </q-form>
       </q-card>
@@ -170,9 +197,9 @@
           <span class="text-h6">Confirmar desactivación</span>
         </q-card-section>
 
-        <q-card-section class="q-pt-none">
-          ¿Está seguro de desactivar al usuario con documento
-          <strong>{{ documentoEliminar }}</strong
+        <q-card-section class="q-pt-none text-body1">
+          ¿Está seguro de desactivar al usuario
+          <strong>{{ usuarioEliminar?.nombre || documentoEliminar }}</strong
           >?
         </q-card-section>
 
@@ -189,10 +216,8 @@
 import { ref, onMounted } from 'vue'
 import { useQuasar } from 'quasar'
 import api from '../services/api'
-import { useAuthStore } from '../stores/authStore.js'
 
 const $q = useQuasar()
-const auth = useAuthStore()
 
 const columns = [
   {
@@ -240,6 +265,8 @@ const editando = ref(false)
 const indiceEditar = ref(null)
 const mostrarPassword = ref(false)
 const cargando = ref(false)
+const guardando = ref(false)
+const errorFormulario = ref('')
 
 const roles = ['Administrador', 'Supervisor', 'Responsable de Área', 'Contratista']
 
@@ -251,6 +278,17 @@ const usuario = ref({
   rol: '',
   password: '',
 })
+
+function avisarRequisitosPassword() {
+  $q.notify({
+    type: 'info',
+    icon: 'lock',
+    message:
+      'Requisitos de la contraseña: mínimo 8 caracteres, al menos una mayúscula, una minúscula y un número.',
+    position: 'top',
+    timeout: 4000,
+  })
+}
 
 function normalizarRolParaBackend(rolUI) {
   if (rolUI === 'Responsable de Área') return 'ResponsableArea'
@@ -295,6 +333,7 @@ onMounted(() => {
 })
 
 async function guardarUsuario() {
+  errorFormulario.value = ''
   const rolBackend = normalizarRolParaBackend(usuario.value.rol)
 
   if (!editando.value) {
@@ -302,14 +341,76 @@ async function guardarUsuario() {
     const existeDocumento = doc && rows.value.some((item) => item.documento === doc)
 
     if (existeDocumento) {
+      errorFormulario.value = 'Ya existe un usuario registrado con ese documento.'
       $q.notify({
         type: 'negative',
         message: 'Ya existe un usuario registrado con ese documento.',
       })
       return
     }
+
+    if (!usuario.value.password) {
+      const msg = 'La contraseña es obligatoria.'
+      errorFormulario.value = msg
+      $q.notify({
+        type: 'warning',
+        message: msg,
+        position: 'top',
+        timeout: 4000,
+      })
+      return
+    }
+
+    if (usuario.value.password.length < 8) {
+      const msg = 'La contraseña debe tener mínimo 8 caracteres.'
+      errorFormulario.value = msg
+      $q.notify({
+        type: 'warning',
+        message: msg,
+        position: 'top',
+        timeout: 4000,
+      })
+      return
+    }
+
+    if (!/[A-Z]/.test(usuario.value.password)) {
+      const msg = 'La contraseña debe incluir al menos una letra mayúscula.'
+      errorFormulario.value = msg
+      $q.notify({
+        type: 'warning',
+        message: msg,
+        position: 'top',
+        timeout: 4000,
+      })
+      return
+    }
+
+    if (!/[a-z]/.test(usuario.value.password)) {
+      const msg = 'La contraseña debe incluir al menos una letra minúscula.'
+      errorFormulario.value = msg
+      $q.notify({
+        type: 'warning',
+        message: msg,
+        position: 'top',
+        timeout: 4000,
+      })
+      return
+    }
+
+    if (!/[0-9]/.test(usuario.value.password)) {
+      const msg = 'La contraseña debe incluir al menos un número.'
+      errorFormulario.value = msg
+      $q.notify({
+        type: 'warning',
+        message: msg,
+        position: 'top',
+        timeout: 4000,
+      })
+      return
+    }
   }
 
+  guardando.value = true
   try {
     if (editando.value) {
       const uEditado = rows.value[indiceEditar.value]
@@ -318,11 +419,12 @@ async function guardarUsuario() {
           nombre_completo: usuario.value.nombre,
           telefono: usuario.value.telefono,
           rol: rolBackend,
+          ...(usuario.value.password ? { password: usuario.value.password } : {}),
         })
       }
       $q.notify({
         type: 'positive',
-        message: 'Usuario actualizado correctamente en MongoDB Atlas.',
+        message: 'Usuario actualizado correctamente.',
       })
     } else {
       // Guardar en MongoDB Atlas
@@ -334,32 +436,31 @@ async function guardarUsuario() {
         documento: usuario.value.documento,
         telefono: usuario.value.telefono,
         rol: rolBackend,
-        password: usuario.value.password || '12345678',
-      })
-
-      // Registrar para inicio de sesión local también
-      auth.registrarUsuarioLocal({
-        nombre: usuario.value.nombre,
-        correo: usuario.value.correo,
-        password: usuario.value.password || '123',
-        rol: rolBackend.toUpperCase(),
+        password: usuario.value.password,
       })
 
       $q.notify({
         type: 'positive',
-        message: 'Usuario registrado exitosamente en MongoDB Atlas.',
+        message: 'Usuario registrado exitosamente.',
       })
     }
+
     await cargarUsuarios()
+    // Solo cerramos la planilla si la operación fue 100% exitosa
+    limpiarFormulario()
   } catch (err) {
     console.error('Error al guardar en MongoDB Atlas:', err)
+    const mensajeError =
+      err.response?.data?.mensaje || err.mensaje || 'Error al guardar usuario en base de datos.'
+    errorFormulario.value = mensajeError
     $q.notify({
       type: 'negative',
-      message: err.response?.data?.mensaje || 'Error al guardar usuario en base de datos.',
+      message: mensajeError,
     })
+    // No se limpia el formulario: los datos permanecen en pantalla para que el usuario los ajuste
+  } finally {
+    guardando.value = false
   }
-
-  limpiarFormulario()
 }
 
 function nuevoUsuario() {
@@ -371,12 +472,13 @@ function editarUsuario(fila) {
   usuario.value = { ...fila, password: '' }
   indiceEditar.value = rows.value.findIndex((item) => item.id === fila.id)
   editando.value = true
+  errorFormulario.value = ''
   dialogo.value = true
 }
 
 function eliminarUsuario(fila) {
   usuarioEliminar.value = fila
-  documentoEliminar.value = fila.nombre || fila.documento
+  documentoEliminar.value = fila.documento || fila.nombre || ''
   dialogoEliminar.value = true
 }
 
@@ -384,10 +486,11 @@ async function confirmarEliminar() {
   try {
     const idParaBorrar =
       usuarioEliminar.value?.id || usuarioEliminar.value?._id || documentoEliminar.value
+    const nom = usuarioEliminar.value?.nombre || 'Usuario'
     await api.delete(`/usuarios/${idParaBorrar}`)
     $q.notify({
       type: 'info',
-      message: 'Usuario desactivado correctamente.',
+      message: `Usuario "${nom}" desactivado correctamente.`,
     })
     await cargarUsuarios()
   } catch (err) {
@@ -413,6 +516,7 @@ function limpiarFormulario() {
     rol: '',
     password: '',
   }
+  errorFormulario.value = ''
   dialogo.value = false
   editando.value = false
   indiceEditar.value = null
