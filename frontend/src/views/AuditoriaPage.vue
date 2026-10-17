@@ -173,12 +173,6 @@
                 {{ formatearHora(eventoSeleccionado.createdAt) }}
               </div>
             </div>
-            <q-separator class="q-my-sm" />
-            <div class="text-weight-bold text-grey-8 q-mb-xs">Datos adicionales (JSON):</div>
-            <pre
-              class="bg-grey-9 text-white q-pa-md rounded-borders"
-              style="max-height: 250px; overflow: auto"
-              >{{ JSON.stringify(eventoSeleccionado.detalles || {}, null, 2) }}</pre>
           </div>
         </q-card-section>
 
