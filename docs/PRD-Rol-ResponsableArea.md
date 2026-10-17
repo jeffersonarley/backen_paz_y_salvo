@@ -9,8 +9,8 @@
 |-------------------|-----------------------------------------------------------------------|
 | Rol bajo prueba   | Responsable de Área (`ResponsableArea`)                                |
 | Herramienta       | TestSprite (MCP: UI + API + E2E)                                       |
-| Versión           | 1.0                                                                   |
-| Fecha             | 2026-10-16                                                            |
+| Versión           | 1.1                                                                   |
+| Fecha             | 2026-10-17                                                            |
 | Frontend          | Vue 3 + Quasar + Vite (SPA) — `http://localhost:9000`                 |
 | Backend           | Node.js + Express + MongoDB — `http://localhost:3000/api`             |
 | Estado            | Listo para importar en TestSprite                                     |
@@ -50,13 +50,14 @@ contrato en `Pendiente de Firmas`.
 | Ruta                          | Uso para el Responsable de Área                    |
 |-------------------------------|----------------------------------------------------|
 | `/login`                      | Inicio de sesión                                   |
-| `/dashboard`                  | Panel general                                      |
-| `/solicitudes`                | Contratos de su área (con casillero)               |
-| `/solicitudes/certificado`    | Certificado (solo lectura)                         |
-| `/firmas`                     | Aprobar / Rechazar sus casilleros pendientes       |
-| `/perfil`                     | Perfil y cambio de contraseña                      |
-| `/notificaciones`             | Notificaciones                                     |
+| `/app/dashboard`              | Panel general                                      |
+| `/app/solicitudes`            | Contratos de su área (con casillero)               |
+| `/app/solicitudes/certificado`| Certificado (solo lectura)                         |
+| `/app/firmas`                 | Aprobar / Rechazar sus casilleros pendientes       |
+| `/app/perfil`                 | Perfil y cambio de contraseña                      |
+| `/app/notificaciones`         | Notificaciones                                     |
 | `/recuperar`                  | Solicitar recuperación de contraseña               |
+| `/restablecer`                | Restablecer contraseña con token (público)         |
 
 ---
 
@@ -92,7 +93,7 @@ Prefijo de IDs: **RA-AC-xx**.
 
 ### RF-RA-01 — Autenticación
 - **RA-AC-01.1** Credenciales válidas -> `200`, `usuario.rol = "ResponsableArea"`.
-- **RA-AC-01.2** `/dashboard` carga sin errores visibles.
+- **RA-AC-01.2** `/app/dashboard` carga sin errores visibles.
 
 ### RF-RA-02 — Solicitudes de firma
 - **RA-AC-02.1** `GET /api/firmas/pendientes` -> `200` con **solo** los casilleros de **su**
@@ -123,9 +124,9 @@ Prefijo de IDs: **RA-AC-xx**.
 - **RA-AC-04.6** `GET /api/auditoria` y `PUT /api/formatos/actualizar` -> `403`.
 
 ### RF-RA-05 — UI de firmas
-- **RA-AC-05.1** En `/firmas` se listan sus pendientes y se puede firmar con el canvas (dibujar/png).
+- **RA-AC-05.1** En `/app/firmas` se listan sus pendientes y se puede firmar con el canvas (dibujar/png).
 - **RA-AC-05.2** Tras firmar, la solicitud desaparece de pendientes y aparece en historial.
-- **RA-AC-05.3** El contrato finalizado es visible como `Finalizado` en `/solicitudes`.
+- **RA-AC-05.3** El contrato finalizado es visible como `Finalizado` en `/app/solicitudes`.
 
 ---
 
@@ -154,22 +155,26 @@ Prefijo de IDs: **RA-AC-xx**.
 
 ---
 
-## 6. Brechas conocidas (a verificar contra la implementación actual)
+## 6. Brechas conocidas (estado 2026-10-17)
 
-1. **RA-AC-03.8 falla si la cuenta no tiene dependencia:** al crear un `ResponsableArea` desde la
-   UI no se asigna `dependencia_id` (el formulario `UsuariosPage.vue:98-154` no lo incluye y
-   `dependenciaService.asignarResponsable` — `frontend/src/services/dependenciaService.js:29` —
-   no se invoca). El backend responde `403` en `/firmas/procesar`.
-   (`backend/src/controllers/firmasController.js:38-41`)
-2. **Certificado estático:** `CertificadoPdfPage.vue` no valida estado ni usa el PDF real del
-   backend (`GET /contratos/:id/pdf` está además restringido y NO disponible para este rol).
-3. **Perfil en blanco:** `PerfilPage.vue` usa campos inexistentes del store (`auth.id`...) y rutas
-   con `/api` duplicado.
-7. **Dashboard:** `DashboardPage.vue` usa `/usuarios` (rol no autorizado) -> `403` silencioso y
-   contadores en 0.
-8. **Registro/firmas del contratista confundido con firma de área:** en `/firmas` el contratista
-   tiene una firma que solo se guarda en `localStorage` (`FirmasPage.vue`); no confundirla con el
-   dictamen del área.
+### Pendientes
+
+1. **RA-AC-03.8 falla si la cuenta no tiene dependencia (PENDIENTE):** al crear un
+   `ResponsableArea` desde `/app/usuarios` no se asigna `dependencia_id` (el formulario no lo
+   incluye y `dependenciaService.asignarResponsable` no se invoca). El backend responde `403` en
+   `/firmas/procesar` (`backend/src/controllers/firmasController.js`).
+2. **Certificado estático (PENDIENTE):** `CertificadoPdfPage.vue` no valida estado ni usa el PDF
+   real del backend (`GET /contratos/:id/pdf` no está disponible para este rol).
+3. **Dashboard 403 silencioso (PENDIENTE):** `DashboardPage.vue` usa `/usuarios` (no autorizado
+   para este rol) -> `403` ignorado y contadores en 0.
+
+### Resueltas en la migración (2026-10-17)
+
+- **Perfil:** `PerfilPage` quedó funcional (campos correctos, sin `/api` duplicado).
+- **Recuperación:** `/recuperar` y `/restablecer` existen y funcionan.
+- **Firmas:** `/app/firmas` es exclusiva de `ResponsableArea` y la firma **sí persiste** en el
+  backend (`POST /firmas/procesar`). La antigua firma del contratista en `localStorage` ya no
+  aplica (el Contratista no accede a `/app/firmas`).
 
 ---
 

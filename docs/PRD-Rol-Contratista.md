@@ -8,8 +8,8 @@
 |-------------------|-----------------------------------------------------------------------|
 | Rol bajo prueba   | Contratista                                                            |
 | Herramienta       | TestSprite (MCP: UI + API + E2E)                                       |
-| Versión           | 1.0                                                                   |
-| Fecha             | 2026-10-16                                                            |
+| Versión           | 1.1                                                                   |
+| Fecha             | 2026-10-17                                                            |
 | Frontend          | Vue 3 + Quasar + Vite (SPA) — `http://localhost:9000`                 |
 | Backend           | Node.js + Express + MongoDB — `http://localhost:3000/api`             |
 | Estado            | Listo para importar en TestSprite                                     |
@@ -42,14 +42,17 @@ Creada por `backend/scripts/seedDev.js`. Bloqueo: 3 intentos -> 15 min.
 | Ruta                          | Uso para el Contratista                             |
 |-------------------------------|-----------------------------------------------------|
 | `/login`                      | Inicio de sesión                                    |
-| `/dashboard`                  | Panel / resumen de sus solicitudes                  |
-| `/solicitudes`                | Sus contratos y su estado                           |
-| `/solicitudes/nueva`          | **Crear** contrato + inventario                     |
-| `/solicitudes/certificado`    | Ver/descargar el certificado PDF (si `Finalizado`)  |
-| `/firmas`                     | Vista de su firma (no persiste en backend, ver brechas) |
-| `/perfil`                     | Perfil y cambio de contraseña                       |
-| `/notificaciones`             | Notificaciones                                      |
+| `/app/dashboard`              | Panel / resumen de sus solicitudes                  |
+| `/app/solicitudes`            | Sus contratos y su estado                           |
+| `/app/solicitudes/nueva`      | **Crear** contrato + inventario (ruta exclusiva)    |
+| `/app/solicitudes/certificado`| Ver/descargar el certificado PDF (si `Finalizado`)  |
+| `/app/perfil`                 | Perfil y cambio de contraseña                       |
+| `/app/notificaciones`         | Notificaciones                                      |
 | `/recuperar`                  | Solicitar recuperación de contraseña                |
+| `/restablecer`                | Restablecer contraseña con token (público)          |
+
+> El Contratista **no** tiene acceso a `/app/firmas` (exclusiva de `ResponsableArea`). Su firma,
+> cuando aplica, se captura dentro de `/app/solicitudes/certificado`.
 
 ---
 
@@ -80,7 +83,7 @@ Prefijo de IDs: **CON-AC-xx**.
 
 ### RF-CON-01 — Autenticación
 - **CON-AC-01.1** Credenciales válidas -> `200`, `usuario.rol = "Contratista"`.
-- **CON-AC-01.2** `/dashboard` carga sin errores visibles de permisos.
+- **CON-AC-01.2** `/app/dashboard` carga sin errores visibles de permisos.
 
 ### RF-CON-02 — Registro contractual e inventario
 - **CON-AC-02.1** Crea contrato con ≥1 bien (`POST /api/contratos/nuevo`) -> `201`, estado `Borrador`.
@@ -90,8 +93,8 @@ Prefijo de IDs: **CON-AC-xx**.
 - **CON-AC-02.5** `fecha_fin` anterior a `fecha_inicio` -> `400`.
 - **CON-AC-02.6** Número de contrato duplicado -> `400` (no `500`).
 - **CON-AC-02.7** El contrato hereda la versión vigente del formato (`version_formato`).
-- **CON-AC-02.8** Desde la UI `/solicitudes/nueva` se puede crear el contrato y este aparece en
-  `/solicitudes` con estado `Borrador`.
+- **CON-AC-02.8** Desde la UI `/app/solicitudes/nueva` se puede crear el contrato y este aparece en
+  `/app/solicitudes` con estado `Borrador`.
 
 ### RF-CON-03 — Consulta y edición
 - **CON-AC-03.1** `GET /api/contratos/mis-solicitudes` -> `200` (array solo con sus contratos).
@@ -156,20 +159,25 @@ Prefijo de IDs: **CON-AC-xx**.
 
 ---
 
-## 7. Brechas conocidas (a verificar contra la implementación actual)
+## 7. Brechas conocidas (estado 2026-10-17)
 
-1. **`NuevaSolicitudPage` con datos hardcodeados:** el teléfono va fijo (`'3001234567'`) y los
-   bienes son un ítem genérico sin UI real de captura; el supervisor seleccionado se ignora
-   (el backend lo deriva del `supervisor_id` del contratista). La creación puede no reflejar lo
-   que el usuario cree que envía.
-2. **`/firmas` del contratista no persiste:** la firma del contratista (`FirmasPage.vue`) solo se
-   guarda en `localStorage`; no llama al backend.
-3. **`CertificadoPdfPage` estático:** no usa `GET /contratos/:id/pdf`, no valida `Finalizado` y usa
-   dependencias hardcodeadas.
-4. **Perfil en blanco:** `PerfilPage.vue` usa campos inexistentes del store y rutas con `/api` duplicado.
-5. **Dashboard:** `DashboardPage.vue` llama `GET /api/usuarios` (no permitido para Contratista)
-   -> `403` silencioso y métricas en 0.
-6. **Recuperación de contraseña rota (UI):** sin página/ruta `/restablecer` y con `/api` duplicado.
+### Pendientes
+
+1. **`NuevaSolicitudPage` con datos hardcodeados (PENDIENTE):** el formulario **no tiene campo de
+   teléfono** y el store envía uno fijo (`'3001234567'`) en `useSolicitudesStore.js`
+   (~`:522`); además los bienes se envían como **un único ítem genérico** (`INV-<timestamp>`) sin
+   UI real de captura. La selección de supervisor sí consulta `GET /usuarios?rol=Supervisor`.
+2. **`CertificadoPdfPage` estático (PENDIENTE):** no usa `GET /contratos/:id/pdf`; renderiza su
+   propio documento desde `GET /contratos` y `GET /usuarios?rol=Contratista`.
+3. **Dashboard 403 silencioso (PENDIENTE):** `DashboardPage.vue` llama `/usuarios` (no permitido
+   para Contratista); el fallo se ignora (`allSettled`) y algunos contadores quedan en 0.
+
+### Resueltas en la migración (2026-10-17)
+
+- **Perfil:** `PerfilPage` quedó funcional (campos correctos, sin `/api` duplicado).
+- **Recuperación:** `/recuperar` y `/restablecer` existen y funcionan.
+- **`/app/firmas` sin acceso:** el Contratista ya no ve el ítem "Firmas"; la ruta es exclusiva de
+  `ResponsableArea`. La antigua firma en `localStorage` dejó de ser el mecanismo del contratista.
 
 ---
 

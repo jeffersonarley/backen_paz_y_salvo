@@ -10,8 +10,8 @@
 | Producto          | Paz y Salvo Contractual SENA — Formato institucional GCCON-F-088      |
 | Tipo de documento | PRD de pruebas (QA / E2E)                                             |
 | Herramienta       | TestSprite (MCP: UI + API + E2E)                                      |
-| Versión           | 1.0                                                                   |
-| Fecha             | 2026-10-06                                                            |
+| Versión           | 1.1                                                                   |
+| Fecha             | 2026-10-17                                                            |
 | Frontend          | Vue 3 + Quasar + Vite (SPA)                                           |
 | Backend           | Node.js + Express + MongoDB (Mongoose)                                |
 | Autenticación     | JWT (Bearer) + cadena jerárquica de roles                             |
@@ -25,7 +25,8 @@ El sistema gestiona el **paz y salvo contractual** del SENA bajo el formato **GC
 Un **Contratista** registra un contrato con su inventario de bienes; un **Supervisor** evalúa
 y aprueba o rechaza; las **dependencias (áreas)** emiten su dictamen de firma con trazabilidad
 criptográfica (SHA-256/HMAC); al completarse todas las firmas el contrato pasa a **Finalizado**
-y se genera un **PDF** en memoria. Un **Administrador** administra usuarios, plantilla y auditoría.
+y se genera un **PDF** en memoria. Un **Administrador** administra usuarios y auditoría
+(la **plantilla del formato es fija**: el paz y salvo no se edita).
 
 El objetivo de este PRD es servir de **spec** para TestSprite: éste normaliza los requisitos y
 los convierte en un plan de pruebas priorizado, los ejecuta en sandbox (navegador real para UI y
@@ -57,7 +58,7 @@ llamadas reales para API) y devuelve bundles de fallo con pasos, capturas y caus
 - Generación y descarga de PDF.
 - Verificación pública de firma por hash.
 - Recuperación / restablecimiento / cambio de contraseña.
-- Gestión de plantilla del formato y auditoría.
+- Auditoría (la plantilla del formato GCCON-F-088 es fija).
 - Deshabilitación de cuentas en tiempo real.
 
 ### 3.2 Fuera del alcance
@@ -133,10 +134,15 @@ La jerarquía se valida con `verificarJerarquia`: un rol **no puede crear** un r
 | Crear/gestionar dependencias                | No*           | Sí         | No              | No          |
 | Registrar contrato + bienes                 | No            | No         | No              | Sí          |
 | Evaluar contrato                            | No            | Sí         | No              | No          |
-| Firmar (aprobar/rechazar)                   | Sí            | No         | Sí              | No          |
+| Firmar (aprobar/rechazar)                   | No†           | No         | Sí              | No          |
 | Descargar PDF                               | Sí            | No         | No              | Sí (dueño)  |
-| Actualizar plantilla del formato            | Sí            | No         | No              | No          |
+| Actualizar plantilla del formato            | No aplica     | No         | No              | No          |
 | Ver auditoría                               | Sí            | No         | No              | No          |
+
+\* El Administrador queda restringido por la jerarquía en esos endpoints (la API responde 403).
+† La UI no muestra "Firmar" al Admin y `/app/firmas` es exclusiva de `ResponsableArea`; a nivel
+API la ruta permite el rol, pero responde `403` porque el Admin no tiene dependencia asignada.
+`Evaluar contrato` permite hoy a `Administrador` en la API (brecha conocida, ver PRD del rol).
 
 \* El Administrador queda restringido por la jerarquía en esos endpoints (la API responde 403).
 
@@ -253,12 +259,13 @@ Formato de criterios: **Dado / Cuando / Entonces** (Gherkin simplificado). IDs `
 - **AC-10.7** El token anterior al cambio queda invalidado (`401`).
 - **AC-10.8** Nueva contraseña que no cumple política o igual a la actual -> `400`.
 
-### RF-11 — Plantilla del formato y auditoría (Flujo 6, RF-004, RNF-003)
+### RF-11 — Auditoría (y plantilla del formato, fuera de alcance de la UI)
 
-- **AC-11.1** Administrador actualiza la plantilla (`PUT /api/formatos/actualizar`) -> `200`
-  (`upsert` + limpieza de caché).
+- **AC-11.1** **No aplica a la UI:** la plantilla del formato GCCON-F-088 es **fija** y se retiró
+  la pantalla "Plantilla GCCON-F-088". `PUT /api/formatos/actualizar` sigue existiendo en la API,
+  pero no forma parte de los flujos de UI a probar.
 - **AC-11.2** `GET /api/formatos/vigente` es público -> `200` con la versión vigente.
-- **AC-11.3** Solo Administrador actualiza la plantilla; otro rol -> `403`.
+- **AC-11.3** Solo Administrador actualiza la plantilla (`PUT /api/formatos/actualizar`); otro rol -> `403`.
 - **AC-11.4** `GET /api/auditoria` lista acciones de trazabilidad; solo Administrador -> `200`.
 - **AC-11.5** Tras firmar/finalizar existen registros de auditoría de las acciones correspondientes.
 
@@ -355,7 +362,7 @@ Errores estándar: `400` validación, `401` no autenticado, `403` sin permiso, `
 
 | Método | Ruta                          | Acceso   | Notas |
 |--------|-------------------------------|----------|-------|
-| PUT    | `/api/formatos/actualizar`    | Admin    | actualiza plantilla (upsert) |
+| PUT    | `/api/formatos/actualizar`    | Admin    | actualiza plantilla (upsert; sin UI, formato fijo) |
 | GET    | `/api/formatos/vigente`       | público  | versión vigente |
 | GET    | `/api/auditoria`              | Admin    | trazabilidad |
 
@@ -413,12 +420,16 @@ Errores estándar: `400` validación, `401` no autenticado, `403` sin permiso, `
 | RF-08 PDF                      | Sí (Certificado) | Sí | Alta |
 | RF-09 Verificación por hash    | No | Sí | Media |
 | RF-10 Cuentas y contraseñas    | Sí (Recuperar/Perfil) | Sí | Alta |
-| RF-11 Plantilla y auditoría    | Parcial | Sí | Media |
+| RF-11 Auditoría               | Sí | Sí | Media |
 | RF-12 Deshabilitar cuenta      | Sí (Usuarios) | Sí | Media |
 
-**Rutas UI relevantes:** `/login`, `/dashboard`, `/usuarios`, `/supervisores`, `/contratistas`,
-`/dependencias`, `/solicitudes`, `/solicitudes/nueva`, `/solicitudes/certificado`, `/firmas`,
-`/perfil`, `/reportes`, `/notificaciones`, `/recuperar`.
+**Rutas UI relevantes** (actualizadas 2026-10-17; la SPA privada vive bajo el prefijo `/app`):
+públicas `/login`, `/recuperar`, `/restablecer`; privadas `/app/dashboard`, `/app/usuarios`,
+`/app/supervisores`, `/app/contratistas`, `/app/dependencias`, `/app/solicitudes`,
+`/app/solicitudes/nueva` (solo Contratista), `/app/solicitudes/certificado`, `/app/firmas`
+(solo ResponsableArea), `/app/auditoria` (Admin), `/app/perfil`, `/app/reportes`,
+`/app/notificaciones`. Hay redirecciones de compatibilidad para `/solicitudes`,
+`/solicitudes/certificado` y `/certificado`. Ya **no existe** la ruta `plantilla`.
 
 ---
 

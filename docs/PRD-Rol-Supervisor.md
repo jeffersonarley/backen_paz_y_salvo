@@ -8,8 +8,8 @@
 |-------------------|-----------------------------------------------------------------------|
 | Rol bajo prueba   | Supervisor                                                             |
 | Herramienta       | TestSprite (MCP: UI + API + E2E)                                       |
-| Versión           | 1.0                                                                   |
-| Fecha             | 2026-10-16                                                            |
+| Versión           | 1.1                                                                   |
+| Fecha             | 2026-10-17                                                            |
 | Frontend          | Vue 3 + Quasar + Vite (SPA) — `http://localhost:9000`                 |
 | Backend           | Node.js + Express + MongoDB — `http://localhost:3000/api`             |
 | Estado            | Listo para importar en TestSprite                                     |
@@ -50,18 +50,19 @@ Creada por `backend/scripts/seedDev.js`. Bloqueo: 3 intentos -> 15 min.
 | Ruta                          | Uso para el Supervisor                              |
 |-------------------------------|-----------------------------------------------------|
 | `/login`                      | Inicio de sesión                                    |
-| `/dashboard`                  | Panel general                                       |
-| `/contratistas`               | Gestión de contratistas que él creó                 |
-| `/dependencias`               | Crear / editar / desactivar dependencias y asignar responsables |
-| `/solicitudes`                | Contratos asignados: evaluar, devolver a corrección, ver observaciones |
-| `/solicitudes/certificado`    | Certificado (solo lectura)                          |
-| `/perfil`                     | Perfil y cambio de contraseña                       |
-| `/reportes`                   | Métricas                                            |
-| `/notificaciones`             | Notificaciones                                      |
+| `/app/dashboard`              | Panel general                                       |
+| `/app/contratistas`           | Gestión de contratistas que él creó                 |
+| `/app/dependencias`           | Crear / editar / desactivar dependencias y asignar responsables |
+| `/app/solicitudes`            | Contratos asignados: evaluar, devolver a corrección, ver observaciones |
+| `/app/solicitudes/certificado`| Certificado (solo lectura)                          |
+| `/app/perfil`                 | Perfil y cambio de contraseña                       |
+| `/app/reportes`               | Métricas                                            |
+| `/app/notificaciones`         | Notificaciones                                      |
 | `/recuperar`                  | Solicitar recuperación de contraseña                |
+| `/restablecer`                | Restablecer contraseña con token (público)          |
 
-> El ítem **"Firmas"** aparece en el menú del Supervisor, pero la ruta `/firmas` está
-> restringida a otros roles (ver brecha SUP-04).
+> El Supervisor **no** ve el ítem "Firmas" ni `/app/solicitudes/nueva`: la ruta `/app/firmas` es
+> exclusiva de `ResponsableArea` y `/app/solicitudes/nueva` de `Contratista`.
 
 ---
 
@@ -93,7 +94,7 @@ Prefijo de IDs: **SUP-AC-xx**.
 
 ### RF-SUP-01 — Autenticación
 - **SUP-AC-01.1** Credenciales válidas -> `200`, `usuario.rol = "Supervisor"`.
-- **SUP-AC-01.2** `/dashboard` carga sin errores de red ni `403` visible.
+- **SUP-AC-01.2** `/app/dashboard` carga sin errores de red ni `403` visible.
 
 ### RF-SUP-02 — Alta de usuarios (jerarquía)
 - **SUP-AC-02.1** Crea **Contratista** (`POST /api/usuarios`, `rol:"Contratista"`) -> `201`;
@@ -156,18 +157,24 @@ Prefijo de IDs: **SUP-AC-xx**.
 
 ---
 
-## 6b. Brechas conocidas (a verificar contra la implementación actual)
+## 6b. Brechas conocidas (estado 2026-10-17)
 
-1. **SUP-AC-04.x / permisos:** `PUT /api/contratos/evaluar/:id` permite también
+1. **SUP-AC-04.x / permisos (PENDIENTE, API):** `PUT /api/contratos/evaluar/:id` permite también
    `Administrador` (`backend/src/routes/supervisionRoutes.js:7`); se espera **solo Supervisor**.
-2. **SUP-04 (UI):** el menú muestra "Firmas" al Supervisor, pero la ruta `/firmas` lo excluye
-   (`frontend/src/router/routes.js:97`) -> redirección a `/no-permisos`.
-3. **Alta de ResponsableArea sin dependencia:** el formulario de `/usuarios` no incluye
-   dependencia (`frontend/src/pages/UsuariosPage.vue:98-154`); un ResponsableArea creado así
+   *(Backend fuera de alcance: se documenta como brecha.)*
+2. **Alta de ResponsableArea sin dependencia (PENDIENTE):** el formulario de `/app/usuarios` no
+   incluye dependencia (`frontend/src/views/UsuariosPage.vue`); un ResponsableArea creado así
    **no podrá firmar** (`403` en `/firmas/procesar`). El backend tampoco la exige.
-4. **`/solicitudes/nueva` visible** al Supervisor (`routes.js:79`) -> `403` al enviar.
-5. **Perfil en blanco:** `PerfilPage.vue` usa campos inexistentes del store y rutas con `/api` duplicado.
-6. **Supervisor sin acceso a PDF:** `GET /contratos/:id/pdf` solo permite Contratista/Admin -> `403`.
+3. **Supervisor sin acceso a PDF (POR DISEÑO):** `GET /contratos/:id/pdf` solo permite
+   Contratista/Admin -> `403`.
+
+### Resueltas en la migración (2026-10-17)
+
+- **SUP-04 (UI):** el menú ya no muestra "Firmas" al Supervisor y `/app/firmas` es exclusiva de
+  `ResponsableArea`.
+- **`/app/solicitudes/nueva`:** la ruta y el menú están restringidos a `Contratista`; el
+  Supervisor no la ve.
+- **Perfil:** `PerfilPage` quedó funcional.
 
 ---
 

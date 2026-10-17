@@ -23,8 +23,15 @@ Contratista crea el contrato (Borrador)
             -> Contratista descarga el PDF
 ```
 
-De forma transversal: **Administrador** solo administra (usuarios, formato, auditoría) y
+De forma transversal: **Administrador** solo administra (usuarios y auditoría) y
 **no** participa en evaluación ni firma.
+La **plantilla del formato GCCON-F-088 es fija**: el paz y salvo no se edita, por lo que ya
+no existe la pantalla "Plantilla GCCON-F-088".
+
+> **Rutas UI (actualizadas 2026-10-17):** la SPA quedó montada bajo el prefijo `/app`
+> (p. ej. `/app/dashboard`, `/app/solicitudes`, `/app/auditoria`). Rutas públicas:
+> `/login`, `/recuperar`, `/restablecer`. Existen redirecciones de compatibilidad para
+> `/solicitudes`, `/solicitudes/certificado` y `/certificado`.
 
 ## Entorno
 
