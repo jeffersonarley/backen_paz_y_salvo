@@ -294,14 +294,6 @@ const menuBase = [
     roles: ['ADMINISTRADOR', 'SUPERVISOR'],
   },
   {
-    name: 'plantilla',
-    label: 'Plantilla GCCON-F-088',
-    to: { name: 'plantilla' },
-    icon: 'edit_document',
-    exact: false,
-    roles: ['ADMINISTRADOR'],
-  },
-  {
     name: 'auditoria',
     label: 'Auditoría',
     to: { name: 'auditoria' },

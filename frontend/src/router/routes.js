@@ -137,16 +137,7 @@ const routes = [
           roles: ['ADMINISTRADOR', 'SUPERVISOR', 'CONTRATISTA', 'RESPONSABLE_AREA'],
         },
       },
-      // Gestión de la plantilla institucional GCCON-F-088 y trazabilidad (Admin)
-      {
-        path: 'plantilla',
-        name: 'plantilla',
-        component: () => import('@/views/FormatoConfigPage.vue'),
-        meta: {
-          titulo: 'Plantilla GCCON-F-088',
-          roles: ['ADMINISTRADOR'],
-        },
-      },
+      // Trazabilidad del sistema (Admin)
       {
         path: 'auditoria',
         name: 'auditoria',
