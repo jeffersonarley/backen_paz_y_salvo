@@ -121,11 +121,11 @@ const $q = useQuasar()
 const auth = useAuthStore()
 
 const perfil = ref({
-  nombre: auth.nombre,
-  correo: auth.correo,
-  documento: auth.documento,
+  nombre: auth.usuario?.nombre || '',
+  correo: auth.usuario?.correo || '',
+  documento: '',
   telefono: '',
-  rol: auth.rol,
+  rol: auth.usuario?.rol || '',
 })
 
 const claves = ref({ actual: '', nueva: '', confirmar: '' })
@@ -135,15 +135,16 @@ const visibles = ref({ a: false, n: false, c: false })
 onMounted(cargarPerfil)
 
 async function cargarPerfil() {
-  if (!auth.id) return
+  const id = auth.usuario?.id
+  if (!id) return
   try {
-    const { data } = await api.get(`/api/usuarios/${auth.id}`)
+    const { data } = await api.get(`/usuarios/${id}`)
     perfil.value = {
-      nombre: data.nombre_completo,
-      correo: data.correo_institucional,
+      nombre: data.nombre_completo || '',
+      correo: data.correo_institucional || '',
       documento: data.documento || '',
       telefono: data.telefono || '',
-      rol: data.rol,
+      rol: data.rol || '',
     }
   } catch (error) {
     $q.notify({ type: 'negative', message: error.mensaje || 'No se pudo cargar su perfil.' })
@@ -174,7 +175,7 @@ async function actualizarPassword() {
 
   procesando.value = true
   try {
-    const { data } = await api.put('/api/auth/cambiar-password', {
+    const { data } = await api.put('/auth/cambiar-password', {
       password_actual: claves.value.actual,
       nueva_password: claves.value.nueva,
     })
