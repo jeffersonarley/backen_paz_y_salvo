@@ -76,7 +76,7 @@ const routes = [
         component: () => import('@/pages/NuevaSolicitudPage.vue'),
         meta: {
           titulo: 'Nueva Solicitud GCCON-F-088',
-          roles: ['Administrador', 'Supervisor', 'Contratista'],
+          roles: ['Contratista'],
         },
       },
       {

@@ -12,11 +12,12 @@
       </div>
 
       <q-btn
+        v-if="puedeCrearSolicitud"
         color="primary"
         icon="add"
         label="Nueva Solicitud"
         unelevated
-        :to="{ name: 'solicitudes' }"
+        :to="{ name: 'nueva-solicitud' }"
       />
     </div>
 
@@ -88,6 +89,10 @@
 import { ref, computed, onMounted } from 'vue'
 import DashboardCard from '../components/DashboardCard.vue'
 import api from '../services/api'
+import { useAuthStore } from '../stores/authStore.js'
+
+const auth = useAuthStore()
+const puedeCrearSolicitud = computed(() => auth.tienePermiso(['Contratista']))
 
 // Contadores
 const totalUsuarios = ref(0)

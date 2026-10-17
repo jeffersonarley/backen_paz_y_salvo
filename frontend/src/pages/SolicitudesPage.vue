@@ -8,6 +8,7 @@
       </div>
 
       <q-btn
+        v-if="puedeCrearSolicitud"
         color="positive"
         icon="add"
         label="Nueva Solicitud"
@@ -248,6 +249,7 @@ const auth = useAuthStore()
 
 const cargando = ref(false)
 const procesandoEstado = ref(false)
+const puedeCrearSolicitud = computed(() => auth.tienePermiso(['Contratista']))
 const puedeFirmar = computed(() => auth.tienePermiso(['ResponsableArea', 'Administrador']))
 const puedeGestionarEstado = computed(() =>
   auth.tienePermiso(['Supervisor', 'Administrador']),
