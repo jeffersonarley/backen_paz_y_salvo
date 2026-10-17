@@ -3,7 +3,7 @@
     <q-card class="login-card">
       <img :src="logoSena" class="logo" alt="Logo SENA" />
 
-      <q-form @submit.prevent="ingresar" class="q-gutter-y-xs">
+      <q-form @submit.prevent="ingresar" class="q-gutter-y-sm">
         <!-- Selector de Rol -->
         <q-select
           v-model="rolSeleccionado"

@@ -17,7 +17,7 @@
 
         <!-- Formulario Principal -->
         <q-card flat bordered class="q-pa-lg rounded-borders bg-white">
-          <q-form @submit.prevent="guardarSolicitud" class="q-gutter-y-md">
+          <q-form @submit.prevent="guardarSolicitud" class="q-gutter-y-sm">
             <!-- Datos del Contrato -->
             <div class="text-subtitle1 text-weight-bold text-grey-8 border-bottom q-pb-xs">
               1. Información del Contrato

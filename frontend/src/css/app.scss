@@ -31,3 +31,10 @@ body {
 .page-shell {
   min-height: calc(100vh - 56px);
 }
+
+// Uniforma el espaciado vertical entre campos de formulario.
+// Quasar solo reserva 20px inferiores cuando el campo tiene hint/error;
+// esto lo reserva siempre para que todos los huecos midan igual.
+.q-form .q-field {
+  padding-bottom: 20px;
+}
