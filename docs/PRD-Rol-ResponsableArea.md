@@ -7,10 +7,10 @@
 
 | Campo             | Valor                                                                 |
 |-------------------|-----------------------------------------------------------------------|
-| Rol bajo prueba   | Responsable de Área (`ResponsableArea`)                                |
+| Rol bajo prueba   | Responsable de Área                                                   |
 | Herramienta       | TestSprite (MCP: UI + API + E2E)                                       |
-| Versión           | 1.1                                                                   |
-| Fecha             | 2026-10-17                                                            |
+| Versión           | 2.0                                                                   |
+| Fecha             | 2026-10-28                                                            |
 | Frontend          | Vue 3 + Quasar + Vite (SPA) — `http://localhost:9000`                 |
 | Backend           | Node.js + Express + MongoDB — `http://localhost:3000/api`             |
 | Estado            | Listo para importar en TestSprite                                     |
@@ -37,9 +37,9 @@ Requisito clave: el usuario `ResponsableArea` **debe tener `dependencia_id`** (e
 
 | Correo                              | Contraseña         |
 |-------------------------------------|--------------------|
-| `responsable.demo@sena.edu.co`      | `Responsable123!`  |
+| `franklin.chacon@gccon.com`         | `franklin`         |
 
-Creada por `backend/scripts/seedDev.js`. Bloqueo: 3 intentos -> 15 min.
+Carga con `backend/scripts/cargarUsuariosGccon.js`. Bloqueo: 3 intentos -> 15 min. **Solo firma su casillero exacto** asignado por la plantilla/dependencia activa.
 Precondición: esta cuenta debe estar **asignada a una dependencia activa** con al menos un
 contrato en `Pendiente de Firmas`.
 
@@ -81,9 +81,7 @@ contrato en `Pendiente de Firmas`.
 | Ver observaciones del trámite                      | **No**    | `403`                             |
 | Formato / auditoría                                | **No**    | `403`                             |
 
-> **Nota / decisión pendiente:** definir si el Responsable de Área debe poder llamar además a
-> `PUT /api/contratos/evaluar/:id`. En el diseño actual su evaluación es la **firma**
-> (`/firmas/procesar`). El endpoint `/evaluar` hoy exige ser el **supervisor asignado**.
+> **Nota:** La evaluación del Responsable de Área es **la firma** (`/firmas/procesar`) en su **casillero exacto**. El endpoint `/contratos/evaluar/:id` es exclusivo del **Coordinador/Supervisor** asignado. Las firmas deben enviarse al casillero exacto (`dependencia_id`), ya que un usuario puede tener acceso a varias dependencias.
 
 ---
 

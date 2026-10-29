@@ -7,10 +7,10 @@
 
 | Campo             | Valor                                                                 |
 |-------------------|-----------------------------------------------------------------------|
-| Rol bajo prueba   | Administrador                                                          |
+| Rol bajo prueba   | Administrador                                                         |
 | Herramienta       | TestSprite (MCP: UI + API + E2E)                                       |
-| Versión           | 1.1                                                                   |
-| Fecha             | 2026-10-17                                                            |
+| Versión           | 2.0                                                                   |
+| Fecha             | 2026-10-28                                                            |
 | Frontend          | Vue 3 + Quasar + Vite (SPA) — `http://localhost:9000`                 |
 | Backend           | Node.js + Express + MongoDB — `http://localhost:3000/api`             |
 | Estado            | Listo para importar en TestSprite                                     |
@@ -37,10 +37,9 @@ El Administrador **solo puede crear Supervisores**.
 
 | Correo                          | Contraseña         |
 |---------------------------------|--------------------|
-| `admin@institucion.edu.co`      | `AdminSeguro123!`  |
+| `admin@gccon.com`      | `admin`  |
 
-Creada por `backend/scripts/seedDev.js` (idempotente y desbloqueante).
-Bloqueo: 3 intentos fallidos bloquean 15 min.
+Carga con `backend/scripts/cargarUsuariosGccon.js`. Bloqueo: 3 intentos fallidos bloquean 15 min.
 
 ---
 
@@ -51,9 +50,10 @@ Bloqueo: 3 intentos fallidos bloquean 15 min.
 | `/login`                      | Inicio de sesión                                   |
 | `/app/dashboard`              | Panel general                                      |
 | `/app/usuarios`               | Gestión de usuarios (todas las cuentas)            |
-| `/app/supervisores`           | Listado/gestión de supervisores                    |
-| `/app/contratistas`           | Listado de contratistas (solo lectura para Admin)  |
-| `/app/dependencias`           | Consulta de dependencias                           |
+| `/app/supervisores`           | Coordinadores/Supervisores, **dependencia propia**, **apoyo de supervisión** |
+| `/app/contratistas`           | Listado de contratistas                            |
+| `/app/dependencias`           | Gestión de dependencias/áreas (**multi-responsables**, activar/desactivar) |
+| `/app/plantillas`            | Plantillas por contrato                           |
 | `/app/solicitudes`            | Consulta global de contratos y observaciones       |
 | `/app/solicitudes/certificado`| Descarga de certificado (solo contratos finalizados) |
 | `/app/auditoria`              | Registro de trazabilidad del sistema (solo lectura) |
@@ -65,8 +65,8 @@ Bloqueo: 3 intentos fallidos bloquean 15 min.
 
 > **NO** debe operar `/app/solicitudes/nueva` (crear solicitud): es exclusivo del Contratista;
 > la ruta responde `no-permisos` y el botón no se muestra.
-> **NO** tiene acceso a `/app/firmas` (solo `ResponsableArea`). La UI de `/app/dependencias`
-> puede mostrar botones de escritura, pero la API responde `403` (ver brecha ADM-AC-03.2).
+> **NO** tiene acceso a `/app/firmas` (solo `ResponsableArea`).
+> **Plantillas y firmantes no aparece en el certificado/PDF.** Los casilleros solo se generan para dependencias **activas**.
 
 ---
 
@@ -119,12 +119,14 @@ Prefijo de IDs: **ADM-AC-xx**.
 - **ADM-AC-02.6** Dado un usuario creado por un Supervisor, cuando el Administrador lo
   actualiza o cambia su rol a Supervisor, entonces `200`.
 
-### RF-ADM-03 — Dependencias (solo lectura)
+### RF-ADM-03 — Dependencias
 - **ADM-AC-03.1** Dado el Administrador, cuando abre `/app/dependencias`, entonces ve el listado
   de dependencias.
-- **ADM-AC-03.2** Dado el Administrador, cuando intenta crear/editar/desactivar una dependencia
-  o asignar un responsable (`POST/PUT/DELETE /api/dependencias*`), entonces `403` (la UI puede
-  mostrar los botones de escritura: ver brecha ADM-AC-03.2).
+- **ADM-AC-03.2** Dado el Administrador, puede crear/editar/activar/desactivar una dependencia y asignar
+  **múltiples responsables** (`POST/PUT/DELETE /api/dependencias*`).
+- **ADM-AC-03.3** El cambio de estado (activar/desactivar) debe reflejarse inmediatamente usando el **`_id` real** de la dependencia.
+- **ADM-AC-03.4** **Las dependencias desactivadas NO generan casilleros** ni aparecen como firmantes.
+- **ADM-AC-03.5** Al remover responsables, estos pierden acceso al casillero correspondiente.
 
 ### RF-ADM-04 — Supervisión de contratos (solo lectura)
 - **ADM-AC-04.1** Dado el Administrador, cuando abre `/app/solicitudes`, entonces ve **todos** los
@@ -146,13 +148,12 @@ Prefijo de IDs: **ADM-AC-xx**.
   ya **no** muestra el botón "Firmar" al Admin (`SolicitudesPage.vue`); la ruta `/app/firmas` es
   exclusiva de `ResponsableArea`.
 
-### RF-ADM-06 — Formato y auditoría
-- **ADM-AC-06.1** **No aplica:** la plantilla del formato GCCON-F-088 es **fija** (el paz y salvo
-  no se edita) y se retiró la pantalla "Plantilla GCCON-F-088". `PUT /api/formatos/actualizar`
-  sigue existiendo en el backend, pero queda fuera del alcance funcional de la UI.
-- **ADM-AC-06.2** Dado el Administrador, cuando consulta `GET /api/auditoria`, entonces `200`
-  con las acciones de trazabilidad (login, creación de usuarios, contratos, evaluaciones, firmas).
-- **ADM-AC-06.3** Dado otro rol, cuando consulta `GET /api/auditoria`, entonces `403`.
+### RF-ADM-06 — Plantillas, formato y auditoría
+- **ADM-AC-06.1** El Admin puede acceder a **Plantillas** (`/app/plantillas`) para configurar la plantilla por contrato.
+- **ADM-AC-06.2** La plantilla es **editable por fila** con responsables visibles al frente de cada dependencia (multi-select). **"Plantillas y firmantes" no aparece en el certificado/PDF.**
+- **ADM-AC-06.3** Dado el Administrador, cuando consulta `GET /api/auditoria`, entonces `200` con las acciones de trazabilidad (login, creación de usuarios, contratos, evaluaciones, firmas).
+- **ADM-AC-06.4** Dado otro rol, cuando consulta `GET /api/auditoria`, entonces `403`.
+- **ADM-AC-06.5** El coordinador debe tener **dependencia propia** y puede tener **apoyo de supervisión** (visible desde Coordinadores/Supervisores).
 - **ADM-AC-06.4 (UI)** Dado el Administrador, cuando abre `/app/auditoria`, entonces ve el listado
   de acciones con filtros y detalle (sin bloque JSON de datos adicionales).
 
@@ -182,6 +183,14 @@ Prefijo de IDs: **ADM-AC-xx**.
 | PATCH  | `/api/usuarios/estado/:id`            | Admin | `200` |
 | DELETE | `/api/usuarios/:id`                   | Admin | `200` |
 | GET    | `/api/dependencias`                   | autenticado | `200` |
+| POST   | `/api/dependencias`                   | Admin/Supervisor      | `201` |
+| PUT    | `/api/dependencias/:id`               | Admin/Supervisor      | `200` |
+| DELETE | `/api/dependencias/:id`               | Admin/Supervisor      | `200` (toggle) |
+| PUT    | `/api/dependencias/:id/responsables`  | Admin/Supervisor      | `200` |
+| GET    | `/api/plantillas/filas`               | autenticado           | `200` |
+| GET    | `/api/contratos/:id/plantilla`        | autenticado           | `200` |
+| PUT    | `/api/contratos/:id/plantilla`        | Admin/Supervisor      | `200` |
+| PUT    | `/api/plantillas/predeterminada`      | Admin/Supervisor      | `200` |
 | GET    | `/api/contratos`                      | autenticado (roles del flujo) | `200` (Admin: todos) |
 | GET    | `/api/contratos/:id`                  | autenticado | `200` |
 | GET    | `/api/contratos/:id/pdf`              | Contratista dueño / Admin | `200` `application/pdf` |

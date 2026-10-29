@@ -6,10 +6,10 @@
 
 | Campo             | Valor                                                                 |
 |-------------------|-----------------------------------------------------------------------|
-| Rol bajo prueba   | Contratista                                                            |
+| Rol bajo prueba   | Contratista                                                           |
 | Herramienta       | TestSprite (MCP: UI + API + E2E)                                       |
-| Versión           | 1.1                                                                   |
-| Fecha             | 2026-10-17                                                            |
+| Versión           | 2.0                                                                   |
+| Fecha             | 2026-10-28                                                            |
 | Frontend          | Vue 3 + Quasar + Vite (SPA) — `http://localhost:9000`                 |
 | Backend           | Node.js + Express + MongoDB — `http://localhost:3000/api`             |
 | Estado            | Listo para importar en TestSprite                                     |
@@ -31,9 +31,9 @@ El Contratista queda vinculado a un Supervisor (`supervisor_id`) que será quien
 
 | Correo                              | Contraseña         |
 |-------------------------------------|--------------------|
-| `contratista.demo@sena.edu.co`      | `Contratista123!`  |
+| `proyecto.gas@gccon.com`            | `gas123`           |
 
-Creada por `backend/scripts/seedDev.js`. Bloqueo: 3 intentos -> 15 min.
+Carga con `backend/scripts/cargarUsuariosGccon.js`. Bloqueo: 3 intentos -> 15 min.
 
 ---
 
@@ -96,7 +96,7 @@ Prefijo de IDs: **CON-AC-xx**.
 - **CON-AC-02.8** Desde la UI `/app/solicitudes/nueva` se puede crear el contrato y este aparece en
   `/app/solicitudes` con estado `Borrador`.
 
-### RF-CON-03 — Consulta y edición
+### RF-CON-03 — Consulta, plantilla y edición
 - **CON-AC-03.1** `GET /api/contratos/mis-solicitudes` -> `200` (array solo con sus contratos).
 - **CON-AC-03.2** `GET /api/contratos` -> `200` (solo los suyos).
 - **CON-AC-03.3** `GET /api/contratos/:id` de un contrato **ajeno** -> `403` (IDOR).
@@ -105,6 +105,9 @@ Prefijo de IDs: **CON-AC-xx**.
 - **CON-AC-03.6** Cancela su contrato en `Borrador` (`DELETE /api/contratos/:id`) -> `200`.
 - **CON-AC-03.7** Elimina un bien estando en `Borrador` (`DELETE /api/contratos/:id/bienes/:bienId`)
   -> `200`; si dejaría el inventario vacío -> `400`.
+- **CON-AC-03.8** **Consulta la plantilla del coordinador** (`GET /api/contratos/:id/plantilla`) y ve **quién firma cada fila** (responsables visibles). Las filas no aplicables muestran **N/A**.
+- **CON-AC-03.9** **No puede editar la plantilla** (`PUT /api/contratos/:id/plantilla`) -> `403`.
+- **CON-AC-03.10** En el certificado debe verse claramente **quién firma esa fila** ("Firma reservada exclusivamente para...") para saber cómo identificarse al firmar. **"Plantillas y firmantes" no aparece en el PDF/certificado.**
 
 ### RF-CON-04 — Documento PDF
 - **CON-AC-04.1** Con el contrato en `Finalizado`, `GET /api/contratos/:id/pdf` -> `200`,
