@@ -1,0 +1,1 @@
+import{U as e}from"./render-BrXqqj7j.js";function t(){return e(`_q_`)}export{t};

@@ -164,8 +164,9 @@ const opcionesRoles = [
 
 function alCambiarRol(opcion) {
   if (opcion) {
-    credencial.value = opcion.correo
-    password.value = opcion.pass
+    // No autocompletar credenciales de prueba/demostración
+    credencial.value = ''
+    password.value = ''
   }
 }
 

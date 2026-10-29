@@ -1,0 +1,1 @@
+var e=`/assets/logo-sena-C1V6vzZT.png`;export{e as t};
