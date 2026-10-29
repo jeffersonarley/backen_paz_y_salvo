@@ -7,9 +7,65 @@ const AppError = require('../utils/AppError');
 
 const usuarioIdActual = (req) => req.usuario?.id;
 
-// RF-012: Crear dependencia (Supervisor)
+// Roles que pueden quedar a cargo de una dependencia y firmar en su casillero.
+// El Supervisor (Coordinador) también puede coordinar/firmar la dependencia que lidera.
+const ROLES_RESPONSABLE = ['ResponsableArea', 'Supervisor'];
+
+const normalizarListaIds = (valor) => {
+    if (valor === undefined || valor === null) return null;
+    const lista = Array.isArray(valor) ? valor : [valor];
+    const ids = lista
+        .filter((id) => typeof id === 'string' && mongoose.isValidObjectId(id))
+        .map((id) => String(id));
+    return [...new Set(ids)];
+};
+
+// Valida que los usuarios existan y puedan ser responsables de una dependencia
+async function validarResponsables(ids) {
+    if (!ids.length) return [];
+    const usuarios = await Usuario.find({ _id: { $in: ids } });
+    if (usuarios.length !== ids.length) {
+        throw new AppError('Uno o varios responsables no existen.', 404);
+    }
+    const invalido = usuarios.find((u) => !ROLES_RESPONSABLE.includes(u.rol));
+    if (invalido) {
+        throw new AppError(
+            `El usuario ${invalido.nombre_completo} no puede ser responsable de una dependencia (rol ${invalido.rol}).`,
+            400
+        );
+    }
+    return usuarios;
+}
+
+// Sincroniza el vínculo "usuario -> dependencia principal" con la lista de responsables
+async function sincronizarVinculos(dependencia, ids, responsablePrincipalAnterior, responsablesPrevios = null) {
+    const previos = (responsablesPrevios || dependencia.responsables_ids || []).map((id) => String(id));
+
+    // El responsable principal siempre es el primero de la lista
+    if (responsablePrincipalAnterior && !ids.includes(String(responsablePrincipalAnterior))) {
+        await Usuario.updateOne(
+            { _id: responsablePrincipalAnterior, dependencia_id: dependencia._id },
+            { $set: { dependencia_id: null } }
+        );
+    }
+
+    if (ids.length > 0) {
+        await Usuario.updateOne({ _id: ids[0] }, { $set: { dependencia_id: dependencia._id } });
+    }
+
+    // Usuarios que quedaron fuera y solo tenían esta dependencia como principal
+    const removidos = previos.filter((id) => !ids.includes(id));
+    if (removidos.length > 0) {
+        await Usuario.updateMany(
+            { _id: { $in: removidos }, dependencia_id: dependencia._id },
+            { $set: { dependencia_id: null } }
+        );
+    }
+}
+
+// RF-012: Crear dependencia (Supervisor / Coordinador)
 exports.crearDependencia = asyncHandler(async (req, res) => {
-    const { nombre_dependencia } = req.body;
+    const { nombre_dependencia, responsable_id, responsable_ids } = req.body;
 
     if (typeof nombre_dependencia !== 'string' || !nombre_dependencia.trim()) {
         throw new AppError('El nombre de la dependencia es obligatorio.', 400);
@@ -20,21 +76,47 @@ exports.crearDependencia = asyncHandler(async (req, res) => {
         throw new AppError('La dependencia ya se encuentra creada.', 400);
     }
 
-    const nueva = await DependenciaArea.create({ nombre_dependencia: nombre_dependencia.trim(), activo: true });
+    const ids = normalizarListaIds(responsable_ids) || normalizarListaIds(responsable_id) || [];
+    const responsables = await validarResponsables(ids);
+
+    const nueva = await DependenciaArea.create({
+        nombre_dependencia: nombre_dependencia.trim(),
+        activo: true,
+        responsable_id: responsables.length ? responsables[0]._id : null,
+        responsables_ids: responsables.map((r) => r._id)
+    });
+
+    if (responsables.length) {
+        await Usuario.updateOne(
+            { _id: responsables[0]._id },
+            { $set: { dependencia_id: nueva._id } }
+        );
+    }
 
     await registrar({
         usuario_id: usuarioIdActual(req),
         accion: 'CREAR_DEPENDENCIA',
         entidad_afectada: 'dependencias_areas',
-        detalles: { dependencia_id: nueva._id, nombre_dependencia }
+        detalles: {
+            dependencia_id: nueva._id,
+            nombre_dependencia: nueva.nombre_dependencia,
+            responsables: responsables.map((r) => r._id)
+        }
     });
 
-    res.status(201).json({ mensaje: 'Dependencia creada exitosamente.', dependencia: nueva });
+    const dependencia = await DependenciaArea.findById(nueva._id)
+        .populate('responsable_id', 'nombre_completo correo_institucional rol')
+        .populate('responsables_ids', 'nombre_completo correo_institucional rol');
+
+    res.status(201).json({ mensaje: 'Dependencia creada exitosamente.', dependencia });
 });
 
 // RF-012: Listar dependencias
 exports.obtenerDependencias = asyncHandler(async (req, res) => {
-    const dependencias = await DependenciaArea.find().populate('responsable_id', 'nombre_completo correo_institucional');
+    const dependencias = await DependenciaArea.find()
+        .populate('responsable_id', 'nombre_completo correo_institucional rol')
+        .populate('responsables_ids', 'nombre_completo correo_institucional rol')
+        .sort({ nombre_dependencia: 1 });
     res.status(200).json(dependencias);
 });
 
@@ -60,13 +142,17 @@ exports.actualizarDependencia = asyncHandler(async (req, res) => {
         usuario_id: usuarioIdActual(req),
         accion: 'ACTUALIZAR_DEPENDENCIA',
         entidad_afectada: 'dependencias_areas',
-        detalles: { dependencia_id: dependencia._id }
+        detalles: { dependencia_id: dependencia._id, activo: dependencia.activo }
     });
 
-    res.status(200).json({ mensaje: 'Dependencia actualizada exitosamente.', dependencia });
+    const actualizada = await DependenciaArea.findById(dependencia._id)
+        .populate('responsable_id', 'nombre_completo correo_institucional rol')
+        .populate('responsables_ids', 'nombre_completo correo_institucional rol');
+
+    res.status(200).json({ mensaje: 'Dependencia actualizada exitosamente.', dependencia: actualizada });
 });
 
-// RF-012: Asignar responsable de área a una dependencia
+// RF-012: Asignar (o agregar) responsable de área a una dependencia
 exports.asignarResponsable = asyncHandler(async (req, res) => {
     const dependencia = await DependenciaArea.findById(req.params.id);
     if (!dependencia) {
@@ -78,35 +164,17 @@ exports.asignarResponsable = asyncHandler(async (req, res) => {
         throw new AppError('Debe indicar un responsable_id válido.', 400);
     }
 
-    const responsable = await Usuario.findById(responsable_id);
-    if (!responsable) {
-        throw new AppError('Responsable no encontrado.', 404);
-    }
+    const [responsable] = await validarResponsables([responsable_id]);
 
-    if (responsable.rol !== 'ResponsableArea') {
-        throw new AppError('El usuario asignado debe tener rol ResponsableArea.', 400);
-    }
+    const actuales = (dependencia.responsables_ids || []).map((id) => String(id));
+    const ids = actuales.includes(String(responsable._id))
+        ? actuales
+        : [...actuales, String(responsable._id)];
 
-    // Limpieza de vínculos anteriores para no dejar dos responsables "activos" en una misma dependencia
-    const responsableAnteriorId = dependencia.responsable_id;
-    if (responsableAnteriorId && String(responsableAnteriorId) !== String(responsable._id)) {
-        await Usuario.updateOne(
-            { _id: responsableAnteriorId, dependencia_id: dependencia._id },
-            { $set: { dependencia_id: null } }
-        );
-    }
-    // Si el nuevo responsable venía de otra dependencia, esa dependencia queda sin responsable
-    if (responsable.dependencia_id && String(responsable.dependencia_id) !== String(dependencia._id)) {
-        await DependenciaArea.updateOne(
-            { _id: responsable.dependencia_id, responsable_id: responsable._id },
-            { $set: { responsable_id: null } }
-        );
-    }
-
-    dependencia.responsable_id = responsable._id;
-    responsable.dependencia_id = dependencia._id;
+    dependencia.responsable_id = dependencia.responsable_id || responsable._id;
+    dependencia.responsables_ids = ids;
     await dependencia.save();
-    await responsable.save();
+    await sincronizarVinculos(dependencia, ids, null);
 
     await registrar({
         usuario_id: usuarioIdActual(req),
@@ -115,13 +183,59 @@ exports.asignarResponsable = asyncHandler(async (req, res) => {
         detalles: { dependencia_id: dependencia._id, responsable_id: responsable._id }
     });
 
+    const actualizada = await DependenciaArea.findById(dependencia._id)
+        .populate('responsable_id', 'nombre_completo correo_institucional rol')
+        .populate('responsables_ids', 'nombre_completo correo_institucional rol');
+
     res.status(200).json({
         mensaje: 'Responsable asignado a la dependencia exitosamente.',
-        dependencia
+        dependencia: actualizada
     });
 });
 
-// Toggle estado (activar/desactivar) - usado por frontend Paula
+// RF-012: Reemplazar la lista de responsables de una dependencia (varios por dependencia)
+exports.actualizarResponsables = asyncHandler(async (req, res) => {
+    const dependencia = await DependenciaArea.findById(req.params.id);
+    if (!dependencia) {
+        throw new AppError('Dependencia no encontrada.', 404);
+    }
+
+    const ids = normalizarListaIds(req.body.responsable_ids);
+    if (ids === null) {
+        throw new AppError('Debe indicar la lista de responsables (responsable_ids).', 400);
+    }
+
+    const responsables = await validarResponsables(ids);
+    const responsablePrincipalAnterior = dependencia.responsable_id
+        ? String(dependencia.responsable_id)
+        : null;
+    // Se guarda la lista previa antes de sobrescribir para poder quitar el vínculo
+    // "dependencia principal" de quienes quedan fuera de la nueva lista.
+    const responsablesPrevios = (dependencia.responsables_ids || []).map((id) => String(id));
+
+    dependencia.responsables_ids = responsables.map((r) => r._id);
+    dependencia.responsable_id = responsables.length ? responsables[0]._id : null;
+    await dependencia.save();
+    await sincronizarVinculos(dependencia, ids, responsablePrincipalAnterior, responsablesPrevios);
+
+    await registrar({
+        usuario_id: usuarioIdActual(req),
+        accion: 'ACTUALIZAR_RESPONSABLES_DEPENDENCIA',
+        entidad_afectada: 'dependencias_areas',
+        detalles: { dependencia_id: dependencia._id, responsables: ids }
+    });
+
+    const actualizada = await DependenciaArea.findById(dependencia._id)
+        .populate('responsable_id', 'nombre_completo correo_institucional rol')
+        .populate('responsables_ids', 'nombre_completo correo_institucional rol');
+
+    res.status(200).json({
+        mensaje: 'Responsables actualizados exitosamente.',
+        dependencia: actualizada
+    });
+});
+
+// Toggle estado (activar/desactivar)
 exports.toggleEstado = asyncHandler(async (req, res) => {
     const dependencia = await DependenciaArea.findById(req.params.id);
     if (!dependencia) {
@@ -138,8 +252,12 @@ exports.toggleEstado = asyncHandler(async (req, res) => {
         detalles: { dependencia_id: dependencia._id, nuevo_estado: dependencia.activo }
     });
 
+    const actualizada = await DependenciaArea.findById(dependencia._id)
+        .populate('responsable_id', 'nombre_completo correo_institucional rol')
+        .populate('responsables_ids', 'nombre_completo correo_institucional rol');
+
     res.status(200).json({
-        mensaje: `Dependencia ${dependencia.activo ? 'activada' : 'desactivada'} correctamente.`,
-        dependencia
+        mensaje: `Dependencia ${actualizada.activo ? 'activada' : 'desactivada'} correctamente.`,
+        dependencia: actualizada
     });
 });

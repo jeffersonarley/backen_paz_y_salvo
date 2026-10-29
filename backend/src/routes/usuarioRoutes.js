@@ -27,6 +27,8 @@ router.patch('/estado/:id', verificarToken, verificarRol('Administrador'), usuar
 // Consultar y actualizar un usuario específico
 router.get('/:id', verificarToken, usuarioController.obtenerUsuario);
 router.patch('/:id', verificarToken, verificarRol('Administrador', 'Supervisor'), usuarioController.actualizarUsuario);
+// Alias PUT: el frontend actualiza usuarios con PUT
+router.put('/:id', verificarToken, verificarRol('Administrador', 'Supervisor'), usuarioController.actualizarUsuario);
 router.delete('/:id', verificarToken, verificarRol('Administrador'), usuarioController.eliminarUsuario);
 
 module.exports = router;

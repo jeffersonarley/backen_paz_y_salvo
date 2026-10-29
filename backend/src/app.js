@@ -100,6 +100,9 @@ app.use('/api/dependencias', require('./routes/dependenciaRoutes'));
 // Rutas del Módulo de Formato GCCON-F-088 (Diagrama 6 / RF-004)
 app.use('/api/formatos', require('./routes/formatoRoutes'));
 
+// Rutas del Módulo de Plantillas de dependencias y firmantes
+app.use('/api/plantillas', require('./routes/plantillaRoutes'));
+
 // Rutas del Módulo de Auditoría (RNF-003)
 app.use('/api/auditoria', require('./routes/auditoriaRoutes'));
 

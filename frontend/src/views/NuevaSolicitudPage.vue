@@ -189,25 +189,21 @@
               </template>
             </q-select>
 
-            <!-- Plantilla de Formato GCCON-F-088 -->
+            <!-- Plantilla de Formato GCCON-F-088: la asigna el Supervisor (Coordinador) -->
             <div class="text-subtitle1 text-weight-bold text-grey-8 border-bottom q-pb-xs q-mt-lg">
               3. Plantilla de Dependencias (GCCON-F-088)
             </div>
 
-            <q-select
-              v-model="form.plantillaTipo"
-              outlined
-              dense
-              label="Plantilla de Firmas y Dependencias *"
-              :options="opcionesPlantillas"
-              emit-value
-              map-options
-              hint="Define qué dependencias firman de acuerdo al tipo de contrato (las no aplicables se marcan como N/A)"
-            >
-              <template #prepend>
+            <q-banner dense rounded class="bg-blue-1 text-primary">
+              <template #avatar>
                 <q-icon name="tune" color="primary" />
               </template>
-            </q-select>
+              <div class="text-caption">
+                <strong>Plantilla de firmas y dependencias:</strong> es asignada por tu
+                Supervisor (Coordinador) y aparecerá automáticamente en tu certificado GCCON-F-088
+                con las dependencias que apliquen y sus responsables.
+              </div>
+            </q-banner>
 
             <!-- Documentos adjuntos -->
             <div class="text-subtitle1 text-weight-bold text-grey-8 border-bottom q-pb-xs q-mt-lg">
@@ -278,20 +274,6 @@ const form = ref({
   adjunto: null,
 })
 
-const opcionesPlantillas = ref([
-  {
-    label: 'Plantilla Completa Institucional (14 Dependencias SENA)',
-    value: 'COMPLETA',
-  },
-  {
-    label: 'Prestación de Servicios Profesionales / Apoyo a la Gestión (7 Dependencias)',
-    value: 'SERVICIOS_PROFESIONALES',
-  },
-  {
-    label: 'Instructores y Formación Profesional (7 Dependencias)',
-    value: 'INSTRUCTORES',
-  },
-])
 
 function alCambiarVigencia(nuevoAnio) {
   form.value.vigencia = String(nuevoAnio)

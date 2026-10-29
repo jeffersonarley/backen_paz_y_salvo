@@ -51,22 +51,19 @@ export const useSupervisoresStore = defineStore('supervisores', () => {
           nombre: u.nombre_completo || u.nombre,
           correo: u.correo_institucional || u.correo,
           telefono: u.telefono || '3100000000',
-          cargo: u.cargo || 'Supervisor de Contratos',
+          cargo: u.cargo || 'Coordinador de Contratos',
           dependencia:
-            u.dependencia || u.dependencia_id?.nombre_dependencia || 'Gestión Tecnológica (TIC)',
+            u.dependencia_id?.nombre_dependencia || u.dependencia || 'Sin dependencia asignada',
           dependencia_id: u.dependencia_id?._id || u.dependencia_id || null,
+          apoyo_supervision_id:
+            u.apoyo_supervision_id?._id || u.apoyo_supervision_id || null,
+          apoyo_supervision: u.apoyo_supervision_id?.nombre_completo || '',
+          plantilla_predeterminada: u.plantilla_predeterminada || 'COMPLETA',
           password: '123',
         }))
 
-        const mapa = new Map()
-        // MongoDB Atlas primero para que los nuevos queden arriba
-        desdeAtlas.forEach((s) => mapa.set(s.correo.toLowerCase(), s))
-        supervisoresBase.forEach((s) => {
-          if (!mapa.has(s.correo.toLowerCase())) {
-            mapa.set(s.correo.toLowerCase(), s)
-          }
-        })
-        supervisores.value = Array.from(mapa.values())
+        // Solo los supervisores reales de la base de datos
+        supervisores.value = desdeAtlas
       }
     } catch (err) {
       console.warn('Cargando supervisores locales:', err.message)
@@ -87,9 +84,10 @@ export const useSupervisoresStore = defineStore('supervisores', () => {
         correo_institucional: nuevo.correo,
         documento: nuevo.documento,
         telefono: nuevo.telefono,
-        cargo: nuevo.cargo || 'Supervisor de Contratos',
-        dependencia: nuevo.dependencia,
-        dependencia_id: nuevo.dependencia_id,
+        cargo: nuevo.cargo || 'Coordinador de Contratos',
+        dependencia: nuevo.dependencia_nombre || nuevo.dependencia,
+        dependencia_id: nuevo.dependencia_id || nuevo.dependencia || null,
+        apoyo_supervision_id: nuevo.apoyo_supervision_id || null,
         password: nuevo.password,
         rol: 'Supervisor',
       })
@@ -110,8 +108,9 @@ export const useSupervisoresStore = defineStore('supervisores', () => {
             nombre_completo: datos.nombre,
             telefono: datos.telefono,
             cargo: datos.cargo,
-            dependencia: datos.dependencia,
-            dependencia_id: datos.dependencia_id,
+            dependencia: datos.dependencia_nombre || datos.dependencia,
+            dependencia_id: datos.dependencia_id || datos.dependencia || null,
+            apoyo_supervision_id: datos.apoyo_supervision_id || null,
           })
         }
       } catch (err) {

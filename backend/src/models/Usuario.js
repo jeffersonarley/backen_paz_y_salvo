@@ -38,6 +38,18 @@ const usuarioSchema = new mongoose.Schema({
         ref: 'Usuario',
         default: null
     },
+    // Apoyo a la supervisión: persona que apoya al coordinador (Supervisor) en la gestión
+    apoyo_supervision_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Usuario',
+        default: null
+    },
+    // Plantilla de dependencias y firmantes predeterminada del coordinador
+    plantilla_predeterminada: {
+        type: String,
+        default: 'COMPLETA',
+        trim: true
+    },
     cargo: {
         type: String,
         trim: true

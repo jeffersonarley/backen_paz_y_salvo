@@ -6,84 +6,113 @@ export const useDependenciasStore = defineStore('dependencias', () => {
   const dependencias = ref([])
   const cargando = ref(false)
 
+  // Respaldo local (solo se usa si la API no responde). No incluye responsables ficticios.
   const dependenciasBase = [
     {
       _id: 'DEP-01',
       codigo: 'DEP-01',
       nombre: 'Gestión Tecnológica (TIC)',
-      responsable: 'Ing. Roberto TIC',
-      correo: 'area.tic@gccon.com',
+      responsables: [],
+      responsable: 'Sin responsable asignado',
+      correo: '',
       estado: 'Activa',
     },
     {
       _id: 'DEP-02',
       codigo: 'DEP-02',
       nombre: 'Almacén e Inventarios',
-      responsable: 'Lic. Martha Almacén',
-      correo: 'area.almacen@gccon.com',
+      responsables: [],
+      responsable: 'Sin responsable asignado',
+      correo: '',
       estado: 'Activa',
     },
     {
       _id: 'DEP-03',
       codigo: 'DEP-03',
       nombre: 'Recursos Humanos / Talento Humano',
-      responsable: 'Dra. Claudia Ramos',
-      correo: 'rrhh@sena.edu.co',
+      responsables: [],
+      responsable: 'Sin responsable asignado',
+      correo: '',
       estado: 'Activa',
     },
     {
       _id: 'DEP-04',
       codigo: 'DEP-04',
       nombre: 'Infraestructura y Servicios Generales',
-      responsable: 'Ing. Fernando Ramírez',
-      correo: 'infraestructura@sena.edu.co',
+      responsables: [],
+      responsable: 'Sin responsable asignado',
+      correo: '',
       estado: 'Activa',
     },
     {
       _id: 'DEP-05',
       codigo: 'DEP-05',
       nombre: 'Biblioteca y Archivo',
-      responsable: 'Lic. Jorge Biblioteca',
-      correo: 'biblioteca@sena.edu.co',
+      responsables: [],
+      responsable: 'Sin responsable asignado',
+      correo: '',
       estado: 'Activa',
     },
     {
       _id: 'DEP-06',
       codigo: 'DEP-06',
       nombre: 'Bienestar al Aprendiz y Comunidad',
-      responsable: 'Dra. Patricia Valenzuela',
-      correo: 'bienestar@sena.edu.co',
+      responsables: [],
+      responsable: 'Sin responsable asignado',
+      correo: '',
+      estado: 'Activa',
+    },
+    {
+      _id: 'DEP-07',
+      codigo: 'DEP-07',
+      nombre: 'Coordinación Académica y Formación',
+      responsables: [],
+      responsable: 'Sin responsable asignado',
+      correo: '',
       estado: 'Activa',
     },
   ]
 
   dependencias.value = [...dependenciasBase]
 
+  const normalizarResponsable = (r) => ({
+    id: String(r?._id || r?.id || ''),
+    nombre: r?.nombre_completo || r?.nombre || 'Responsable',
+    correo: r?.correo_institucional || r?.correo || '',
+    rol: r?.rol || '',
+  })
+
   async function cargarDependencias() {
     cargando.value = true
     try {
       const resp = await api.get('/dependencias')
       const lista = Array.isArray(resp.data) ? resp.data : resp.data?.dependencias || []
-      if (Array.isArray(lista) && lista.length > 0) {
-        const desdeAtlas = lista.map((d, idx) => ({
-          _id: d._id?.toString() || `dep_${idx}`,
-          id: d._id?.toString() || `dep_${idx}`,
-          codigo: d.codigo || `DEP-${String(idx + 1).padStart(2, '0')}`,
-          nombre: d.nombre_dependencia || d.nombre || 'Área Dependencia',
-          responsable: d.responsable_id?.nombre_completo || d.responsable || 'Responsable Asignado',
-          responsable_id: d.responsable_id?._id || d.responsable_id?.id || d.responsable_id || null,
-          correo: d.correo || d.responsable_id?.correo_institucional || 'dependencia@sena.edu.co',
-          estado: d.activo === false ? 'Inactiva' : 'Activa',
-        }))
-
-        const mapa = new Map()
-        desdeAtlas.forEach((d) => mapa.set(d.nombre.toLowerCase().trim(), d))
-        dependenciasBase.forEach((d) => {
-          if (!mapa.has(d.nombre.toLowerCase().trim())) {
-            mapa.set(d.nombre.toLowerCase().trim(), d)
+      if (Array.isArray(lista)) {
+        const desdeAtlas = lista.map((d, idx) => {
+          const responsables = Array.isArray(d.responsables_ids)
+            ? d.responsables_ids.map(normalizarResponsable).filter((r) => r.id)
+            : []
+          const principal = d.responsable_id ? normalizarResponsable(d.responsable_id) : null
+          const todos = [...responsables]
+          if (principal && !todos.some((r) => r.id === principal.id)) {
+            todos.unshift(principal)
+          }
+          return {
+            _id: d._id?.toString() || `dep_${idx}`,
+            id: d._id?.toString() || `dep_${idx}`,
+            _idReal: d._id?.toString() || null,
+            codigo: d.codigo || `DEP-${String(idx + 1).padStart(2, '0')}`,
+            nombre: d.nombre_dependencia || d.nombre || 'Área Dependencia',
+            responsables: todos,
+            responsable: todos[0]?.nombre || 'Sin responsable asignado',
+            responsable_id: todos[0]?.id || null,
+            correo: todos[0]?.correo || '',
+            estado: d.activo === false ? 'Inactiva' : 'Activa',
           }
         })
-        dependencias.value = Array.from(mapa.values())
+
+        // Si la API responde, se muestran solo las dependencias reales (sin datos de ejemplo)
+        dependencias.value = desdeAtlas
       }
     } catch (err) {
       console.warn('Cargando dependencias locales en fallback:', err.message)
@@ -96,23 +125,28 @@ export const useDependenciasStore = defineStore('dependencias', () => {
   cargarDependencias()
 
   async function agregar(nuevaDependencia) {
-    const itemAInsertar = {
-      ...nuevaDependencia,
-      _id: `dep_${Date.now()}`,
-    }
-    dependencias.value.unshift(itemAInsertar)
+    const idsResponsables = (nuevaDependencia.responsables || [])
+      .map((r) => r?.id || r)
+      .filter(Boolean)
 
     try {
       await api.post('/dependencias', {
-        nombre_dependencia: nuevaDependencia.nombre,
+        nombre_dependencia: nuevaDependencia.nombre || nuevaDependencia.nombre_dependencia,
         codigo: nuevaDependencia.codigo,
-        responsable_id: nuevaDependencia.responsable_id || null,
+        responsable_ids: idsResponsables,
         correo: nuevaDependencia.correo,
         activo: nuevaDependencia.estado !== 'Inactivo' && nuevaDependencia.estado !== 'Inactiva',
       })
       await cargarDependencias()
+      return { ok: true }
     } catch (err) {
       console.warn('Registro de dependencia en fallback local:', err.message)
+      const itemAInsertar = {
+        ...nuevaDependencia,
+        _id: `dep_${Date.now()}`,
+      }
+      dependencias.value.unshift(itemAInsertar)
+      return { ok: false, mensaje: err.response?.data?.mensaje || err.message }
     }
   }
 
@@ -121,41 +155,75 @@ export const useDependenciasStore = defineStore('dependencias', () => {
       const actual = dependencias.value[indice]
       dependencias.value[indice] = { ...actual, ...datosActualizados }
 
-      const idAtlas = actual?._id || actual?.id
+      const idAtlas = actual?._idReal || actual?._id || actual?.id
       if (idAtlas && idAtlas.length === 24) {
         try {
           await api.put(`/dependencias/${idAtlas}`, {
-            nombre_dependencia: datosActualizados.nombre,
-            responsable_id: datosActualizados.responsable_id || null,
+            nombre_dependencia:
+              datosActualizados.nombre || datosActualizados.nombre_dependencia || actual.nombre,
             activo:
               datosActualizados.estado !== 'Inactivo' && datosActualizados.estado !== 'Inactiva',
           })
+
+          const idsResponsables = (datosActualizados.responsables || [])
+            .map((r) => r?.id || r)
+            .filter(Boolean)
+
+          await api.put(`/dependencias/${idAtlas}/responsables`, {
+            responsable_ids: idsResponsables,
+          })
+
           await cargarDependencias()
+          return { ok: true }
         } catch (err) {
           console.warn('Error al editar dependencia en Atlas:', err.message)
+          await cargarDependencias()
+          return { ok: false, mensaje: err.response?.data?.mensaje || err.message }
         }
       }
+      return { ok: true }
     }
+    return { ok: false }
   }
 
   async function eliminar(codigoOId) {
+    // Se busca primero por el id real de la base de datos: el "codigo" es un indice
+    // de la tabla y puede cambiar de posicion al recargar (podria alternar otra dependencia)
     const dep = dependencias.value.find(
-      (item) => item.codigo === codigoOId || item._id === codigoOId || item.id === codigoOId,
+      (item) =>
+        item._id === codigoOId ||
+        item.id === codigoOId ||
+        (codigoOId && item._id?.toString() === String(codigoOId)) ||
+        item.codigo === codigoOId,
     )
-    if (dep) {
-      dep.estado = dep.estado === 'Inactiva' || dep.estado === 'Inactivo' ? 'Activa' : 'Inactiva'
-      const idAtlas = dep?._id || dep?.id
-      if (idAtlas && idAtlas.length === 24) {
+    if (!dep) return { ok: false, mensaje: 'No se encontró la dependencia a actualizar.' }
+
+    const nuevoEstado =
+      dep.estado === 'Inactiva' || dep.estado === 'Inactivo' ? 'Activa' : 'Inactiva'
+    dep.estado = nuevoEstado
+    const idAtlas = dep?._idReal || dep?._id || dep?.id
+
+    if (idAtlas && idAtlas.length === 24) {
+      try {
         try {
+          await api.delete(`/dependencias/${idAtlas}`)
+        } catch {
           await api.put(`/dependencias/${idAtlas}`, {
-            nombre_dependencia: dep.nombre,
-            activo: dep.estado === 'Activa',
+            nombre_dependencia: dep.nombre || dep.nombre_dependencia,
+            activo: nuevoEstado === 'Activa',
           })
-        } catch (err) {
-          console.warn('Error al actualizar estado de dependencia en Atlas:', err.message)
         }
+        await cargarDependencias()
+        return { ok: true }
+      } catch (err) {
+        console.warn('Error al actualizar estado de dependencia en Atlas:', err.message)
+        await cargarDependencias()
+        return { ok: false, mensaje: err.response?.data?.mensaje || err.message }
       }
     }
+
+    await cargarDependencias()
+    return { ok: true }
   }
 
   return {

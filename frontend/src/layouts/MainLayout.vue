@@ -204,7 +204,7 @@ watch(
 const rolLegible = computed(() => {
   const r = normalizarRol(auth.usuario?.rol || auth.rolUsuario)
   if (r === 'ADMINISTRADOR') return 'Administrador General'
-  if (r === 'SUPERVISOR') return 'Supervisor'
+  if (r === 'SUPERVISOR') return 'Coordinador (Supervisor de Contrato)'
   if (r === 'RESPONSABLE_AREA') return 'Responsable de Área'
   if (r === 'CONTRATISTA') return 'Contratista'
   return auth.usuario?.rol || 'Usuario'
@@ -266,6 +266,14 @@ const menuBase = [
     label: 'Dependencias',
     to: { name: 'dependencias' },
     icon: 'business',
+    exact: false,
+    roles: ['ADMINISTRADOR', 'SUPERVISOR'],
+  },
+  {
+    name: 'plantillas',
+    label: 'Plantillas',
+    to: { name: 'plantillas' },
+    icon: 'tune',
     exact: false,
     roles: ['ADMINISTRADOR', 'SUPERVISOR'],
   },

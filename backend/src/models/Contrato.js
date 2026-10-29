@@ -67,7 +67,22 @@ const contratoSchema = new mongoose.Schema({
     version_formato: {
         type: Number,
         default: 1
-    }
+    },
+    // Plantilla de dependencias y firmantes seleccionada por el Supervisor (Coordinador)
+    plantilla_tipo: {
+        type: String,
+        default: 'COMPLETA',
+        trim: true
+    },
+    plantilla_firmantes: [{
+        id_fila: { type: Number, default: null },
+        dependencia_id: { type: mongoose.Schema.Types.ObjectId, ref: 'DependenciaArea', default: null },
+        dependencia_nombre: { type: String, default: '', trim: true },
+        responsables: { type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' }], default: [] },
+        nombres: { type: [String], default: [] },
+        aplica: { type: Boolean, default: true },
+        marca: { type: String, default: 'X' }
+    }]
 }, {
     timestamps: true,
     collection: 'contratos_gccon_f088'

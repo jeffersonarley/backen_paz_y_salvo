@@ -4,3 +4,6 @@ tmp/
 .vercel
 .env*
 frontend-backup-main/
+
+# Cobertura de pruebas unitarias
+backend/coverage/

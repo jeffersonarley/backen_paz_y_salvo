@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 const Contrato = require('../models/Contrato');
+const DependenciaArea = require('../models/DependenciaArea');
 const TrazabilidadFirma = require('../models/TrazabilidadFirma');
+const Usuario = require('../models/Usuario');
 const BienEntregado = require('../models/BienEntregado');
 const { enviarCorreo } = require('../services/emailService');
 const { generarPdf } = require('../services/pdfService');
@@ -12,9 +14,25 @@ const AppError = require('../utils/AppError');
 
 const ACCIONES = { aprobar: 'Aprobar', rechazar: 'Rechazar' };
 
+// Dependencias vinculadas a un usuario: su dependencia principal y las dependencias
+// donde está asignado como responsable (una persona puede tener varias).
+async function obtenerIdsDependenciasVinculadas(usuarioId, dependenciaId) {
+    const dependencias = await DependenciaArea.find({
+        $or: [{ responsable_id: usuarioId }, { responsables_ids: usuarioId }]
+    }).select('_id');
+
+    return [
+        ...new Set(
+            [dependenciaId, ...dependencias.map((d) => String(d._id))]
+                .filter(Boolean)
+                .map((id) => String(id))
+        )
+    ];
+}
+
 // Diagrama 4: Dictamen de área, sello criptográfico y motor PDF
 exports.procesarFirma = asyncHandler(async (req, res) => {
-    const { contratoId, accion, firma_base64, observacion_rechazo } = req.body;
+    const { contratoId, accion, firma_base64, observacion_rechazo, dependencia_id } = req.body;
 
     if (typeof contratoId !== 'string' || !mongoose.isValidObjectId(contratoId) || typeof accion !== 'string') {
         throw new AppError('Faltan campos obligatorios: contratoId o accion.', 400);
@@ -35,10 +53,14 @@ exports.procesarFirma = asyncHandler(async (req, res) => {
         throw new AppError('Contrato no encontrado.', 404);
     }
 
-    const areaId = req.usuario?.dependencia_id;
-    if (!areaId) {
-        throw new AppError('No se pudo identificar el área del usuario.', 403);
-    }
+    const usuarioId = req.usuario.id;
+
+    // Dependencias que puede firmar el usuario: su dependencia principal y todas
+    // las dependencias donde está asignado como responsable (pueden ser varias).
+    const idsDependencias = await obtenerIdsDependenciasVinculadas(
+        usuarioId,
+        req.usuario?.dependencia_id
+    );
 
     // Solo se puede firmar mientras el trámite espera firmas. Esto impide, por ejemplo,
     // seguir aprobando un contrato que otra área ya rechazó.
@@ -46,16 +68,66 @@ exports.procesarFirma = asyncHandler(async (req, res) => {
         throw new AppError(`El contrato no está pendiente de firmas (estado actual: ${contrato.estado}).`, 409);
     }
 
-    const traz = await TrazabilidadFirma.findOne({ contrato_id: contrato._id, area_id: areaId });
+    // Si se indica la dependencia se apunta a ese casillero puntual; si no, se busca
+    // cualquier casillero del usuario (dependencia vinculada o firmante autorizado).
+    const dependenciaObjetivo = dependencia_id && mongoose.isValidObjectId(dependencia_id)
+        ? String(dependencia_id)
+        : null;
+
+    const filtroCasillero = dependenciaObjetivo
+        ? { contrato_id: contrato._id, area_id: dependenciaObjetivo }
+        : {
+            contrato_id: contrato._id,
+            $or: [
+                { area_id: { $in: idsDependencias } },
+                { firmantes_autorizados: usuarioId }
+            ]
+        };
+
+    const traz = await TrazabilidadFirma.findOne(filtroCasillero);
     if (!traz) {
+        if (idsDependencias.length === 0) {
+            // Se informa quiénes están autorizados a firmar en este contrato
+            const casilleros = await TrazabilidadFirma.find({
+                contrato_id: contrato._id,
+                estado: 'Pendiente'
+            });
+            const idsAutorizados = [
+                ...new Set(casilleros.flatMap((c) => (c.firmantes_autorizados || []).map((id) => String(id))))
+            ];
+            if (idsAutorizados.length) {
+                const usuarios = await Usuario.find({ _id: { $in: idsAutorizados } }).select('nombre_completo');
+                const nombres = usuarios.map((u) => u.nombre_completo).filter(Boolean);
+                throw new AppError(
+                    nombres.length
+                        ? `No tienes una casilla asignada. Este contrato solo puede firmarlo: ${nombres.join(', ')}.`
+                        : 'No tienes una casilla de firma asignada en este contrato.',
+                    403
+                );
+            }
+            throw new AppError('No se pudo identificar el área del usuario.', 403);
+        }
         throw new AppError('No existe un registro de firma para esta área y contrato.', 400);
+    }
+
+    const areaId = traz.area_id;
+
+    // Si el casillero tiene firmantes autorizados, solo ellos pueden firmar
+    const autorizados = (traz.firmantes_autorizados || []).map((id) => String(id));
+    if (autorizados.length > 0 && !autorizados.includes(String(usuarioId))) {
+        const usuarios = await Usuario.find({ _id: { $in: autorizados } }).select('nombre_completo');
+        const nombres = usuarios.map((u) => u.nombre_completo).filter(Boolean);
+        throw new AppError(
+            nombres.length
+                ? `Esta casilla solo puede firmarla: ${nombres.join(', ')}.`
+                : 'Esta casilla tiene firmantes autorizados y tu usuario no está entre ellos.',
+            403
+        );
     }
 
     if (traz.estado !== 'Pendiente') {
         throw new AppError(`Esta área ya realizó su acción: ${traz.estado}`, 400);
     }
-
-    const usuarioId = req.usuario.id;
 
     // ---------------- RECHAZO ----------------
     if (accionNormalizada === 'Rechazar') {
@@ -219,10 +291,17 @@ exports.listarPendientes = asyncHandler(async (req, res) => {
     const filtro = { estado: 'Pendiente' };
 
     if (rol !== 'Administrador') {
-        if (!req.usuario?.dependencia_id) {
-            throw new AppError('No se pudo identificar el área del usuario.', 403);
+        const ids = await obtenerIdsDependenciasVinculadas(
+            req.usuario?.id,
+            req.usuario?.dependencia_id
+        );
+        if (ids.length === 0) {
+            throw new AppError(
+                'No tienes ninguna dependencia asignada. Solicita que te asignen una dependencia para ver tus casilleros de firma.',
+                403
+            );
         }
-        filtro.area_id = req.usuario.dependencia_id;
+        filtro.area_id = { $in: ids };
     }
 
     const pendientes = await TrazabilidadFirma.find(filtro)
@@ -238,10 +317,17 @@ exports.listarHistorial = asyncHandler(async (req, res) => {
     const filtro = { estado: { $ne: 'Pendiente' } };
 
     if (rol !== 'Administrador') {
-        if (!req.usuario?.dependencia_id) {
-            throw new AppError('No se pudo identificar el área del usuario.', 403);
+        const ids = await obtenerIdsDependenciasVinculadas(
+            req.usuario?.id,
+            req.usuario?.dependencia_id
+        );
+        if (ids.length === 0) {
+            throw new AppError(
+                'No tienes ninguna dependencia asignada. Solicita que te asignen una dependencia para ver tus casilleros de firma.',
+                403
+            );
         }
-        filtro.area_id = req.usuario.dependencia_id;
+        filtro.area_id = { $in: ids };
     }
 
     const historial = await TrazabilidadFirma.find(filtro)

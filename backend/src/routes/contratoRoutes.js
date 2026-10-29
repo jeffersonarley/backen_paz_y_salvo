@@ -3,6 +3,7 @@ const { body } = require('express-validator');
 const router = express.Router();
 const contratoController = require('../controllers/contratoController');
 const reporteController = require('../controllers/reporteController');
+const plantillaController = require('../controllers/plantillaController');
 
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware');
 const validarCampos = require('../middlewares/validarCampos');
@@ -58,6 +59,10 @@ router.get('/:id/pdf', verificarToken, verificarRol('Contratista', 'Administrado
 
 // RF-014: consultar observaciones del trámite
 router.get('/:id/observaciones', verificarToken, contratoController.obtenerObservaciones);
+
+// Plantilla de dependencias y firmantes del contrato (la elige el Supervisor/Coordinador)
+router.get('/:id/plantilla', verificarToken, plantillaController.obtenerPlantilla);
+router.put('/:id/plantilla', verificarToken, verificarRol('Supervisor', 'Administrador'), plantillaController.actualizarPlantilla);
 
 // RF-003: eliminar un bien del inventario (Contratista, en Borrador)
 router.delete('/:id/bienes/:bienId', verificarToken, verificarRol('Contratista'), contratoController.eliminarBien);

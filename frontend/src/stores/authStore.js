@@ -91,6 +91,14 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  // Actualiza parte del usuario en sesion (por ejemplo, la plantilla predeterminada)
+  function actualizarUsuario(parcial) {
+    usuario.value = { ...(usuario.value || {}), ...parcial }
+    const serializado = JSON.stringify(usuario.value)
+    localStorage.setItem('gccon_user', serializado)
+    sessionStorage.setItem('gccon_user', serializado)
+  }
+
   function logout() {
     usuario.value = null
     localStorage.removeItem('gccon_user')
@@ -124,5 +132,6 @@ export const useAuthStore = defineStore('auth', () => {
     tienePermiso,
     login,
     logout,
+    actualizarUsuario,
   }
 })

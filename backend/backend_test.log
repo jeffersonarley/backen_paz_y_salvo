@@ -1,0 +1,5 @@
+◇ injected env (5) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+◇ injected env (0) from .env // tip: ⌘ enable debugging { debug: true }
+⚠ EMAIL_USER/EMAIL_PASS no configurados: los correos (recuperación y notificaciones) no se enviarán.
+✅ Conexión exitosa a MongoDB: pazysalvo_sena
+🚀 Servidor ejecutándose en http://localhost:3000

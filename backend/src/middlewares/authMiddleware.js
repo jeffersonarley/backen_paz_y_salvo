@@ -67,7 +67,9 @@ const verificarToken = async (req, res, next) => {
             correo_institucional: usuarioBD.correo_institucional,
             rol: usuarioBD.rol,
             dependencia_id: idComoTexto(usuarioBD.dependencia_id),
-            supervisor_id: idComoTexto(usuarioBD.supervisor_id)
+            supervisor_id: idComoTexto(usuarioBD.supervisor_id),
+            apoyo_supervision_id: idComoTexto(usuarioBD.apoyo_supervision_id),
+            plantilla_predeterminada: usuarioBD.plantilla_predeterminada || 'COMPLETA'
         };
 
         return next();

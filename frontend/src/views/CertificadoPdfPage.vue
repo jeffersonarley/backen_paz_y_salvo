@@ -26,22 +26,6 @@
 
       <!-- Lado Derecho: Acciones principales con estilo homogéneo, espaciadas y legibles -->
       <div class="toolbar-right row items-center q-gutter-md no-wrap">
-        <!-- Botón Plantilla y Firmantes: Alta visibilidad, exclusivo para Supervisor y Admin -->
-        <q-btn
-          v-if="!esContratista"
-          unelevated
-          dense
-          color="teal-8"
-          icon="tune"
-          label="Plantilla y Firmantes"
-          class="q-px-md text-weight-bold shadow-1"
-          @click="abrirModalPlantillaFirmas"
-        >
-          <q-tooltip
-            >Configurar qué dependencias aplican para este contrato y asignar sus firmantes autorizados</q-tooltip
-          >
-        </q-btn>
-
         <!-- Botón Editar Formato -->
         <q-btn
           outline
@@ -673,237 +657,6 @@
       </q-card>
     </q-dialog>
 
-    <!-- Diálogo para Seleccionar Plantilla y Asignar Firmantes por Dependencia (GCCON-F-088) -->
-    <q-dialog v-model="dialogoPlantillaFirmas" persistent>
-      <q-card style="min-width: 820px; max-width: 95vw; border-radius: 12px">
-        <q-card-section class="bg-teal-8 text-white row items-center justify-between q-py-md">
-          <div>
-            <div class="text-h6 text-weight-bold">
-              <q-icon name="tune" class="q-mr-sm" />
-              Plantilla de Paz y Salvo y Asignación de Firmantes (GCCON-F-088)
-            </div>
-            <div class="text-caption text-teal-1">
-              Configure qué dependencias aplican para este contrato y asigne quiénes firmarán en cada área.
-            </div>
-          </div>
-          <q-btn icon="close" flat round dense v-close-popup />
-        </q-card-section>
-
-        <q-separator />
-
-        <q-card-section class="q-pa-lg scroll" style="max-height: 75vh">
-          <!-- 1. Selección de Plantilla Rápida -->
-          <div class="text-subtitle2 text-weight-bold text-dark q-mb-xs">
-            1. Seleccionar Plantilla según el Tipo de Contrato:
-          </div>
-          <div class="text-caption text-grey-7 q-mb-md">
-            Al seleccionar una plantilla se configuran automáticamente las dependencias que aplican y las que no aplican (N/A).
-          </div>
-
-          <div class="row q-col-gutter-sm q-mb-lg">
-            <div
-              v-for="(plan, k) in plantillasPredefinidas"
-              :key="k"
-              class="col-12 col-md-6"
-            >
-              <q-card
-                flat
-                bordered
-                class="cursor-pointer p-card full-height"
-                :class="{
-                  'bg-green-1 border-primary-active': plantillaSeleccionada === k,
-                  'bg-grey-1': plantillaSeleccionada !== k,
-                }"
-                @click="seleccionarPlantilla(k)"
-              >
-                <q-card-section class="q-pa-sm row items-start no-wrap">
-                  <q-radio
-                    v-model="plantillaSeleccionada"
-                    :val="k"
-                    color="teal-8"
-                    dense
-                    class="q-mr-sm"
-                    @update:model-value="seleccionarPlantilla(k)"
-                  />
-                  <div>
-                    <div class="text-weight-bold text-caption text-dark">
-                      {{ plan.nombre }}
-                    </div>
-                    <div class="text-caption text-grey-7" style="font-size: 11px; line-height: 1.25">
-                      {{ plan.descripcion }}
-                    </div>
-                  </div>
-                </q-card-section>
-              </q-card>
-            </div>
-          </div>
-
-          <q-separator class="q-my-md" />
-
-          <!-- 2. Tabla Interactiva de Dependencias y Firmantes -->
-          <div class="row items-center justify-between q-mb-sm">
-            <div>
-              <div class="text-subtitle2 text-weight-bold text-dark">
-                2. Dependencias Oficiales y Firmantes Asignados (14 Áreas GCCON-F-088):
-              </div>
-              <div class="text-caption text-grey-7">
-                Use los interruptores para activar/desactivar dependencias y defina los firmantes autorizados.
-              </div>
-            </div>
-            <q-badge color="grey-8" class="q-pa-xs">
-              {{ contarDependenciasActivas }} de 14 dependencias aplican
-            </q-badge>
-          </div>
-
-          <div class="tabla-config-firmas">
-            <div
-              v-for="fila in configFilasTemporal"
-              :key="fila.id"
-              class="fila-config-item row items-center q-py-xs q-px-sm q-mb-xs"
-              :class="{
-                'bg-green-1': fila.aplica,
-                'bg-grey-2 opacity-75': !fila.aplica,
-              }"
-            >
-              <!-- Switch Aplica / N/A -->
-              <div class="col-auto q-mr-sm">
-                <q-toggle
-                  v-model="fila.aplica"
-                  color="positive"
-                  dense
-                  @update:model-value="alCambiarSwitchFila"
-                >
-                  <q-tooltip>{{ fila.aplica ? 'Aplica en este contrato (Marcar con X)' : 'No Aplica en este contrato (N/A)' }}</q-tooltip>
-                </q-toggle>
-              </div>
-
-              <!-- Nombre Dependencia -->
-              <div class="col-12 col-sm-4 q-pr-sm">
-                <div class="row items-center no-wrap">
-                  <q-badge
-                    :color="fila.aplica ? 'teal-8' : 'grey-6'"
-                    :label="fila.aplica ? fila.id + ' [X]' : fila.id + ' [N/A]'"
-                    class="q-mr-xs text-weight-bold"
-                  />
-                  <span
-                    class="text-caption text-weight-medium"
-                    :class="{ 'text-grey-6 text-strike': !fila.aplica }"
-                    v-html="fila.dependenciaSimple || fila.dependencia.replace(/<[^>]*>/g, ' ')"
-                  ></span>
-                </div>
-              </div>
-
-              <!-- Firmante Asignado -->
-              <div class="col-12 col-sm-7">
-                <template v-if="!fila.aplica">
-                  <div class="text-caption text-italic text-grey-6 q-pa-xs">
-                    — No Aplica (Trámite no requerido para este tipo de contrato) —
-                  </div>
-                </template>
-                <template v-else>
-                  <!-- Fila 14 (SUPERVISOR DE CONTRATO) -->
-                  <q-select
-                    v-if="fila.id === 14"
-                    v-model="fila.nombres"
-                    :options="opcionesFirmantesSupervisor"
-                    dense
-                    outlined
-                    use-input
-                    new-value-mode="add-unique"
-                    label="Supervisor del Contrato Asignado *"
-                    bg-color="white"
-                    hint="Seleccione de la lista o ingrese el nombre del supervisor asignado"
-                  >
-                    <template #prepend>
-                      <q-icon name="engineering" color="primary" />
-                    </template>
-                  </q-select>
-
-                  <!-- Fila 3 (ENTREGA CARNÉ) -->
-                  <q-select
-                    v-else-if="fila.id === 3"
-                    v-model="fila.nombres"
-                    :options="opcionesFirmantesCarne"
-                    dense
-                    outlined
-                    use-input
-                    new-value-mode="add-unique"
-                    label="Responsable Entrega Carné (Supervisor / Secretaría)"
-                    bg-color="white"
-                  >
-                    <template #prepend>
-                      <q-icon name="badge" color="primary" />
-                    </template>
-                  </q-select>
-
-                  <!-- Fila 9 (BIBLIOTECA) -->
-                  <q-select
-                    v-else-if="fila.id === 9"
-                    v-model="fila.nombres"
-                    :options="opcionesFirmantesBiblioteca"
-                    dense
-                    outlined
-                    use-input
-                    new-value-mode="add-unique"
-                    label="Firmante(s) Autorizado(s) Biblioteca *"
-                    bg-color="white"
-                    hint="Puede seleccionar cualquiera de los autorizados o ambas personas"
-                  >
-                    <template #prepend>
-                      <q-icon name="local_library" color="teal-8" />
-                    </template>
-                  </q-select>
-
-                  <!-- Fila 12 (NOVEDADES) -->
-                  <q-select
-                    v-else-if="fila.id === 12"
-                    v-model="fila.nombres"
-                    :options="opcionesFirmantesNovedades"
-                    dense
-                    outlined
-                    use-input
-                    new-value-mode="add-unique"
-                    label="Firmante(s) Novedades Administrativas"
-                    bg-color="white"
-                  >
-                    <template #prepend>
-                      <q-icon name="people" color="primary" />
-                    </template>
-                  </q-select>
-
-                  <!-- Otras dependencias -->
-                  <q-input
-                    v-else
-                    v-model="fila.nombres"
-                    dense
-                    outlined
-                    bg-color="white"
-                    label="Nombre y Apellidos del Responsable"
-                  >
-                    <template #prepend>
-                      <q-icon name="person" color="primary" />
-                    </template>
-                  </q-input>
-                </template>
-              </div>
-            </div>
-          </div>
-        </q-card-section>
-
-        <q-separator />
-
-        <q-card-actions align="right" class="q-pa-md bg-grey-1">
-          <q-btn flat label="Cancelar" color="grey-8" v-close-popup />
-          <q-btn
-            unelevated
-            icon="save"
-            label="Guardar y Aplicar Plantilla"
-            color="teal-8"
-            @click="guardarPlantillaFirmas"
-          />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
   </q-page>
 </template>
 
@@ -935,157 +688,114 @@ const filaParaFirmar = ref(null)
 
 const firmasTabla = ref({})
 
-const plantillasPredefinidas = {
-  COMPLETA: {
-    id: 'COMPLETA',
-    nombre: 'Plantilla Completa Institucional (14 Dependencias)',
-    descripcion: 'Aplica para contratos que requieren validación de todas las 14 dependencias del Centro.',
-    filasAplica: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
-  },
-  SERVICIOS_PROFESIONALES: {
-    id: 'SERVICIOS_PROFESIONALES',
-    nombre: 'Servicios Profesionales / Apoyo a la Gestión (7 Dependencias)',
-    descripcion: 'Aplica para contratos administrativos y de apoyo (TIC, Carné, Almacén, Contabilidad, Tesorería, Supervisor). Las áreas académicas quedan en N/A.',
-    filasAplica: [1, 2, 3, 4, 6, 7, 14],
-  },
-  INSTRUCTORES: {
-    id: 'INSTRUCTORES',
-    nombre: 'Instructores y Formación Profesional (7 Dependencias)',
-    descripcion: 'Aplica para instructores y formación (TIC, Carné, Almacén, Académica, Biblioteca, Etapa Productiva, Supervisor). Trámites administrativos en N/A.',
-    filasAplica: [1, 3, 4, 8, 9, 13, 14],
-  },
-  PERSONALIZADA: {
-    id: 'PERSONALIZADA',
-    nombre: 'Plantilla Personalizada (Configuración a Medida)',
-    descripcion: 'El supervisor activa o desactiva libremente las dependencias que aplican y asigna los firmantes para este contrato.',
-    filasAplica: null,
-  },
+const plantillaSeleccionada = ref('COMPLETA')
+
+// Las filas del formato se obtienen del backend (dependencias reales + responsables)
+// El Supervisor/Coordinador las define en el menú "Plantillas"; el Contratista solo las consulta.
+const filasDependencias = ref([])
+
+// Normaliza la respuesta del backend al formato que usa la tabla del certificado
+function normalizarFilasPlantilla(filas) {
+  return (filas || []).map((fila) => {
+    const responsables = (fila.responsables || []).map((r) => ({
+      id: String(r.id || r._id || ''),
+      nombre: r.nombre || r.nombre_completo || '',
+      correo: r.correo || r.correo_institucional || '',
+    }))
+    const nombres = Array.isArray(fila.nombres)
+      ? fila.nombres.filter(Boolean).join(' / ')
+      : fila.nombres || responsables.map((r) => r.nombre).filter(Boolean).join(' / ')
+
+    return {
+      id: Number(fila.id_fila ?? fila.id),
+      id_fila: Number(fila.id_fila ?? fila.id),
+      dependencia: fila.dependencia || fila.dependenciaSimple || '',
+      dependenciaSimple: fila.dependenciaSimple || fila.dependencia_nombre || '',
+      dependencia_id: fila.dependencia_id || null,
+      dependencia_nombre: fila.dependencia_nombre || '',
+      aplica: fila.aplica !== false,
+      marca: fila.aplica !== false ? fila.marca || 'X' : 'N/A',
+      nombres,
+      responsables,
+    }
+  })
 }
 
-const plantillaSeleccionada = ref('COMPLETA')
-const dialogoPlantillaFirmas = ref(false)
-const configFilasTemporal = ref([])
-
-const filasDependencias = ref([
-  {
-    id: 1,
-    dependencia: 'GESTIÓN DE TIC',
-    dependenciaSimple: 'Gestión de TIC',
-    aplica: true,
-    marca: 'X',
-    nombres: 'Franklin Rolando Chacon Lopez',
-  },
-  {
-    id: 2,
-    dependencia: 'ADMINISTRACIÓN DE DOCUMENTOS',
-    dependenciaSimple: 'Administración de Documentos',
-    aplica: true,
-    marca: 'X',
-    nombres: 'Hilda Lucia Ramirez Alvarado',
-  },
+// Respaldo mínimo: las 14 filas oficiales (sin responsables) cuando la API no responde
+const filasRespaldo = [
+  { id: 1, dependencia: 'GESTIÓN DE TIC', dependenciaSimple: 'Gestión de TIC' },
+  { id: 2, dependencia: 'ADMINISTRACIÓN DE DOCUMENTOS', dependenciaSimple: 'Administración de Documentos' },
   {
     id: 3,
     dependencia:
       'ENTREGA CARNÉ (Al Supervisor del Contrato en las Regionales y Centros de Formación)<br>SECRETARÍA GENERAL',
     dependenciaSimple: 'Entrega Carné (Al Supervisor del Contrato) / Secretaría General',
-    aplica: true,
-    marca: 'X',
-    nombres: 'Ing. Carlos Supervisor',
   },
-  {
-    id: 4,
-    dependencia: 'ALMACÉN E INVENTARIOS',
-    dependenciaSimple: 'Almacén e Inventarios',
-    aplica: true,
-    marca: 'X',
-    nombres:
-      'Generar reporte de https://miinventario.sena.edu.co/Inicio.aspx y anexar al formato, garantizando que no tiene elementos a su cargo.',
-  },
+  { id: 4, dependencia: 'ALMACÉN E INVENTARIOS', dependenciaSimple: 'Almacén e Inventarios' },
   {
     id: 5,
-    dependencia: 'SERVICIOS GENERALES, ADQUISICIONES<br>(Administración de edificio; Contratación)',
+    dependencia:
+      'SERVICIOS GENERALES, ADQUISICIONES<br>(Administración de edificio; Contratación)',
     dependenciaSimple: 'Servicios Generales, Adquisiciones',
-    aplica: true,
-    marca: 'X',
-    nombres: 'Juan David Silva Guierrez',
   },
-  {
-    id: 6,
-    dependencia: 'CONTABILIDAD',
-    dependenciaSimple: 'Contabilidad',
-    aplica: true,
-    marca: 'X',
-    nombres: 'Zaida Leny Melgarejo Ballesteros',
-  },
-  {
-    id: 7,
-    dependencia: 'TESORERIA',
-    dependenciaSimple: 'Tesorería',
-    aplica: true,
-    marca: 'X',
-    nombres: 'Nelcy Mabel Mayorga Pinto',
-  },
+  { id: 6, dependencia: 'CONTABILIDAD', dependenciaSimple: 'Contabilidad' },
+  { id: 7, dependencia: 'TESORERIA', dependenciaSimple: 'Tesorería' },
   {
     id: 8,
     dependencia: 'COORDINACIÓN DE:<br>ÁREA/GRUPO/ ACADEMICA',
     dependenciaSimple: 'Coordinación Académica',
-    aplica: true,
-    marca: 'X',
-    nombres: 'Johon Fredy Sanabria Muñoz',
   },
-  {
-    id: 9,
-    dependencia: 'BIBLIOTECA',
-    dependenciaSimple: 'Biblioteca',
-    aplica: true,
-    marca: 'X',
-    nombres: 'Andrea Juliana Celis Camacho / Yudith Milagros Martinez Bautista',
-  },
-  {
-    id: 10,
-    dependencia: 'OTRO (LIDER SIGA)',
-    dependenciaSimple: 'Líder SIGA',
-    aplica: true,
-    marca: 'X',
-    nombres: 'Zaida Jeleidy Garcia Jaimes',
-  },
+  { id: 9, dependencia: 'BIBLIOTECA', dependenciaSimple: 'Biblioteca' },
+  { id: 10, dependencia: 'OTRO (LIDER SIGA)', dependenciaSimple: 'Líder SIGA' },
   {
     id: 11,
-    dependencia: 'OTRO (AMINISTRACION EDUCATIVA)',
+    dependencia: 'OTRO (ADMINISTRACION EDUCATIVA)',
     dependenciaSimple: 'Administración Educativa',
-    aplica: true,
-    marca: 'X',
-    nombres: 'Erika Johana Gómez Verdugo',
   },
   {
     id: 12,
     dependencia: 'APOYO AL SEGUIMIENTO DE LOS PROCESOS ADMINISTRATIVOS Y NOVEDADES',
     dependenciaSimple: 'Apoyo a Procesos Administrativos y Novedades',
-    aplica: true,
-    marca: 'X',
-    nombres: 'Nelson Fabian Duarte Peñaloza / Eileen Erlensi Hurtado Ariza',
   },
-  {
-    id: 13,
-    dependencia: 'APOYO ETAPA PRODUCTIVA',
-    dependenciaSimple: 'Apoyo Etapa Productiva',
-    aplica: true,
-    marca: 'X',
-    nombres: 'Karen Andrea Garcia Carreño',
-  },
-  {
-    id: 14,
-    dependencia: 'SUPERVISOR DE CONTRATO',
-    dependenciaSimple: 'Supervisor de Contrato',
-    aplica: true,
-    marca: 'X',
-    nombres: 'Ing. Carlos Supervisor',
-  },
-])
+  { id: 13, dependencia: 'APOYO ETAPA PRODUCTIVA', dependenciaSimple: 'Apoyo Etapa Productiva' },
+  { id: 14, dependencia: 'SUPERVISOR DE CONTRATO', dependenciaSimple: 'Supervisor de Contrato' },
+].map((f) => ({
+  ...f,
+  id_fila: f.id,
+  dependencia_id: null,
+  dependencia_nombre: '',
+  aplica: true,
+  marca: 'X',
+  nombres: '',
+  responsables: [],
+}))
 
-const contarDependenciasActivas = computed(() => {
-  return configFilasTemporal.value.filter((f) => f.aplica).length
-})
+// Carga la plantilla del contrato; si no hay contrato, carga la plantilla general
+async function cargarPlantillaDesdeBackend(contratoId) {
+  try {
+    let resp = null
+    if (contratoId) {
+      resp = await api.get(`/contratos/${contratoId}/plantilla`)
+    }
+    if (!resp) {
+      resp = await api.get('/plantillas/filas')
+    }
+
+    const tipo = resp.data?.tipo || resp.data?.plantilla_tipo || 'COMPLETA'
+    plantillaSeleccionada.value = tipo
+    const filas = normalizarFilasPlantilla(resp.data?.filas)
+    if (filas.length) {
+      filasDependencias.value = filas
+      return true
+    }
+  } catch (err) {
+    console.warn('No se pudo cargar la plantilla desde el backend:', err.message)
+    if (!filasDependencias.value.length) {
+      filasDependencias.value = filasRespaldo.map((f) => ({ ...f }))
+    }
+  }
+  return false
+}
 
 const opcionesFirmantesSupervisor = computed(() => {
   const sups = [
@@ -1098,34 +808,14 @@ const opcionesFirmantesSupervisor = computed(() => {
   return Array.from(new Set(sups))
 })
 
-const opcionesFirmantesCarne = computed(() => {
-  const carnes = [
-    datosSolicitud.value.responsable || 'Ing. Carlos Supervisor',
-    'Secretaría General - Johon Fredy Sanabria Muñoz',
-    'Johon Fredy Sanabria Muñoz',
-    'Ing. Carlos Supervisor',
-  ].filter(Boolean)
-  return Array.from(new Set(carnes))
-})
-
-const opcionesFirmantesBiblioteca = [
-  'Andrea Juliana Celis Camacho / Yudith Milagros Martinez Bautista',
-  'Andrea Juliana Celis Camacho',
-  'Yudith Milagros Martinez Bautista',
-  'Lic. Jorge Biblioteca',
-]
-
-const opcionesFirmantesNovedades = [
-  'Nelson Fabian Duarte Peñaloza / Eileen Erlensi Hurtado Ariza',
-  'Nelson Fabian Duarte Peñaloza',
-  'Eileen Erlensi Hurtado Ariza',
-]
-
 function sincronizarSupervisorConFilas(forzar = false) {
+  const responsable = datosSolicitud.value.responsable
   const supReal =
-    datosSolicitud.value.responsable ||
+    (typeof responsable === 'string'
+      ? responsable
+      : responsable?.nombre_completo || responsable?.nombre || '') ||
     (auth.rolUsuario === 'SUPERVISOR' ? auth.usuario?.nombre : null) ||
-    'Ing. Carlos Supervisor'
+    ''
 
   const f14 = filasDependencias.value.find((f) => f.id === 14)
   if (f14) {
@@ -1140,136 +830,6 @@ function sincronizarSupervisorConFilas(forzar = false) {
       f3.nombres = supReal
     }
   }
-}
-
-function abrirModalPlantillaFirmas() {
-  if (esContratista.value) {
-    $q.notify({
-      type: 'warning',
-      message: 'La configuración de plantilla y firmantes es exclusiva del Supervisor o Administrador.',
-      icon: 'lock',
-    })
-    return
-  }
-
-  const codigo = route.query.codigo || route.params.id || datosSolicitud.value.contratista
-  const tipoGuardado =
-    localStorage.getItem(`plantilla_tipo_${codigo}`) ||
-    datosSolicitud.value.plantillaTipo ||
-    'COMPLETA'
-
-  plantillaSeleccionada.value = tipoGuardado
-
-  configFilasTemporal.value = filasDependencias.value.map((f) => ({
-    ...f,
-    aplica: f.aplica !== false,
-    nombres: f.nombres || '',
-  }))
-
-  dialogoPlantillaFirmas.value = true
-}
-
-function seleccionarPlantilla(tipo) {
-  plantillaSeleccionada.value = tipo
-  if (tipo === 'PERSONALIZADA') return
-
-  const preset = plantillasPredefinidas[tipo]
-  if (!preset || !Array.isArray(preset.filasAplica)) return
-
-  configFilasTemporal.value.forEach((fila) => {
-    fila.aplica = preset.filasAplica.includes(fila.id)
-    fila.marca = fila.aplica ? 'X' : 'N/A'
-  })
-}
-
-function alCambiarSwitchFila() {
-  const activas = configFilasTemporal.value
-    .filter((f) => f.aplica)
-    .map((f) => f.id)
-    .sort((a, b) => a - b)
-
-  const compActivas = [...plantillasPredefinidas.COMPLETA.filasAplica].sort((a, b) => a - b)
-  const servActivas = [...plantillasPredefinidas.SERVICIOS_PROFESIONALES.filasAplica].sort(
-    (a, b) => a - b,
-  )
-  const instActivas = [...plantillasPredefinidas.INSTRUCTORES.filasAplica].sort((a, b) => a - b)
-
-  if (JSON.stringify(activas) === JSON.stringify(compActivas)) {
-    plantillaSeleccionada.value = 'COMPLETA'
-  } else if (JSON.stringify(activas) === JSON.stringify(servActivas)) {
-    plantillaSeleccionada.value = 'SERVICIOS_PROFESIONALES'
-  } else if (JSON.stringify(activas) === JSON.stringify(instActivas)) {
-    plantillaSeleccionada.value = 'INSTRUCTORES'
-  } else {
-    plantillaSeleccionada.value = 'PERSONALIZADA'
-  }
-}
-
-function guardarPlantillaFirmas() {
-  filasDependencias.value = configFilasTemporal.value.map((f) => ({
-    ...f,
-    marca: f.aplica ? 'X' : 'N/A',
-  }))
-
-  const codigo = route.query.codigo || route.params.id || datosSolicitud.value.contratista
-
-  if (codigo) {
-    localStorage.setItem(`plantilla_firmas_${codigo}`, JSON.stringify(filasDependencias.value))
-    localStorage.setItem(`plantilla_tipo_${codigo}`, plantillaSeleccionada.value)
-    localStorage.setItem(
-      `plantilla_firmas_${String(codigo).toLowerCase().trim()}`,
-      JSON.stringify(filasDependencias.value),
-    )
-  }
-  if (datosSolicitud.value.contratista) {
-    localStorage.setItem(
-      `plantilla_firmas_${datosSolicitud.value.contratista.toLowerCase().trim()}`,
-      JSON.stringify(filasDependencias.value),
-    )
-    localStorage.setItem(
-      `plantilla_tipo_${datosSolicitud.value.contratista.toLowerCase().trim()}`,
-      plantillaSeleccionada.value,
-    )
-  }
-  if (datosSolicitud.value.numeroContrato) {
-    localStorage.setItem(
-      `plantilla_firmas_${datosSolicitud.value.numeroContrato.toLowerCase().trim()}`,
-      JSON.stringify(filasDependencias.value),
-    )
-  }
-
-  // Sincronizar en store de solicitudes
-  if (Array.isArray(store.solicitudes)) {
-    const item = store.solicitudes.find(
-      (s) =>
-        s._id === codigo ||
-        s.id === codigo ||
-        s.numeroSolicitud === codigo ||
-        s.numeroContrato === codigo ||
-        (s.contratista &&
-          s.contratista.toLowerCase().trim() ===
-            datosSolicitud.value.contratista.toLowerCase().trim()),
-    )
-    if (item) {
-      item.plantillaTipo = plantillaSeleccionada.value
-      item.filasDependencias = filasDependencias.value
-      if (typeof store.actualizarSolicitud === 'function') {
-        store
-          .actualizarSolicitud(item._id || item.numeroContrato || codigo, {
-            plantillaTipo: plantillaSeleccionada.value,
-            filasDependencias: filasDependencias.value,
-          })
-          .catch((e) => console.warn('Error al sincronizar plantilla con backend:', e))
-      }
-    }
-  }
-
-  dialogoPlantillaFirmas.value = false
-  $q.notify({
-    type: 'positive',
-    message: `Plantilla de paz y salvo (${plantillasPredefinidas[plantillaSeleccionada.value]?.nombre || 'Personalizada'}) configurada exitosamente.`,
-    icon: 'assignment_turned_in',
-  })
 }
 
 function abrirModalFirma() {
@@ -1344,6 +904,29 @@ function puedeFirmarFila(fila) {
   const cargoUsuario = normalizarTexto(u.cargo)
   const nombresFila = normalizarTexto(fila.nombres)
   const responsableContratoNorm = normalizarTexto(datosSolicitud.value.responsable)
+
+  // Si la fila tiene responsables asignados (desde el backend), solo ellos pueden firmar
+  const responsablesFila = Array.isArray(fila.responsables) ? fila.responsables : []
+  if (responsablesFila.length) {
+    const idUsuario = String(u.id || '')
+    return responsablesFila.some((r) => {
+      const idResp = String(r.id || r._id || '')
+      if (idUsuario && idResp && idUsuario === idResp) return true
+
+      const nombreResp = normalizarTexto(r.nombre || r.nombre_completo || '')
+      if (nombreResp && nombreUsuario) {
+        if (nombreResp === nombreUsuario) return true
+        if (nombreResp.length >= 6 && nombreUsuario.length >= 6) {
+          if (nombreResp.includes(nombreUsuario) || nombreUsuario.includes(nombreResp)) return true
+        }
+      }
+
+      const correoResp = normalizarTexto(r.correo || r.correo_institucional || '')
+      if (correoResp && correoUsuario && correoResp === correoUsuario) return true
+
+      return false
+    })
+  }
 
   // 1. Fila 14 (SUPERVISOR DE CONTRATO)
   if (fila.id === 14) {
@@ -1622,17 +1205,58 @@ function abrirModalFirmaFila(fila) {
   }
 }
 
+// Registra la firma de una casilla de dependencia en el backend (casillero exacto)
+async function registrarFirmaCasillero(fila, dataUrl, codigo) {
+  if (esContratista.value) return
+  if (!fila?.dependencia_id) return
+
+  const contratoId =
+    datosSolicitud.value._id ||
+    datosSolicitud.value.contratoId ||
+    store.solicitudes?.find(
+      (s) =>
+        s._id === codigo ||
+        s.numeroContrato === codigo ||
+        s.numeroSolicitud === codigo,
+    )?._id
+  if (!contratoId) return
+
+  try {
+    const firmaBase64 = dataUrl.replace(/^data:image\/\w+;base64,/, '')
+    await api.post('/firmas/procesar', {
+      contratoId,
+      dependencia_id: fila.dependencia_id,
+      accion: 'Aprobar',
+      firma_base64: firmaBase64,
+    })
+    $q.notify({
+      type: 'positive',
+      message: `Firma registrada en ${fila.dependenciaSimple}.`,
+      icon: 'verified',
+    })
+  } catch (err) {
+    $q.notify({
+      type: 'warning',
+      message: err.response?.data?.mensaje || 'La firma se guardó localmente, pero no fue posible registrarla en el sistema.',
+    })
+  }
+}
+
 function guardarFirmaCertificado() {
   if (!canvasRef.value) return
   const dataUrl = canvasRef.value.exportarBase64()
   const codigo = route.query.codigo || route.params.id
 
   if (filaParaFirmar.value) {
-    firmasTabla.value[filaParaFirmar.value.id] = dataUrl
+    const fila = filaParaFirmar.value
+    firmasTabla.value[fila.id] = dataUrl
     if (codigo) {
       localStorage.setItem(`firmas_tabla_${codigo}`, JSON.stringify(firmasTabla.value))
     }
     filaParaFirmar.value = null
+
+    // La firma de la casilla se registra en el backend indicando la dependencia exacta
+    registrarFirmaCasillero(fila, dataUrl, codigo)
   } else {
     firmaGuardada.value = dataUrl
     if (codigo) {
@@ -2282,44 +1906,31 @@ onMounted(async () => {
       datosSolicitud.value.bienesFaltantes = []
     }
 
-    // Restaurar plantilla de dependencias y firmantes para este contrato si fue guardada
-    const clavePlantilla = `plantilla_firmas_${String(codigo).toLowerCase().trim()}`
-    const plantillaGuardada =
-      localStorage.getItem(`plantilla_firmas_${codigo}`) ||
-      localStorage.getItem(clavePlantilla) ||
-      (datosSolicitud.value.numeroContrato
-        ? localStorage.getItem(
-            `plantilla_firmas_${datosSolicitud.value.numeroContrato.toLowerCase().trim()}`,
-          )
-        : null)
+    // La plantilla y los firmantes se cargan desde el backend (la define el Supervisor)
+    const idContrato = encontrada?._id || encontrada?.id || null
+    const cargada = await cargarPlantillaDesdeBackend(idContrato)
 
-    const tipoPlantillaGuardada =
-      localStorage.getItem(`plantilla_tipo_${codigo}`) ||
-      localStorage.getItem(`plantilla_tipo_${String(codigo).toLowerCase().trim()}`) ||
-      (datosSolicitud.value.numeroContrato
-        ? localStorage.getItem(
-            `plantilla_tipo_${datosSolicitud.value.numeroContrato.toLowerCase().trim()}`,
-          )
-        : null) ||
-      datosSolicitud.value.plantillaTipo
+    if (!cargada) {
+      // Respaldo local si el backend no responde
+      const clavePlantilla = `plantilla_firmas_${String(codigo).toLowerCase().trim()}`
+      const plantillaGuardada =
+        localStorage.getItem(`plantilla_firmas_${codigo}`) ||
+        localStorage.getItem(clavePlantilla) ||
+        (datosSolicitud.value.numeroContrato
+          ? localStorage.getItem(
+              `plantilla_firmas_${datosSolicitud.value.numeroContrato.toLowerCase().trim()}`,
+            )
+          : null)
 
-    if (plantillaGuardada) {
-      try {
-        const parsedFilas = JSON.parse(plantillaGuardada)
-        if (Array.isArray(parsedFilas) && parsedFilas.length > 0) {
-          filasDependencias.value = parsedFilas
+      if (plantillaGuardada) {
+        try {
+          const parsedFilas = JSON.parse(plantillaGuardada)
+          if (Array.isArray(parsedFilas) && parsedFilas.length > 0) {
+            filasDependencias.value = parsedFilas
+          }
+        } catch (e) {
+          console.warn('Error al restaurar plantilla de firmas:', e)
         }
-      } catch (e) {
-        console.warn('Error al restaurar plantilla de firmas:', e)
-      }
-    } else if (tipoPlantillaGuardada && plantillasPredefinidas[tipoPlantillaGuardada]) {
-      plantillaSeleccionada.value = tipoPlantillaGuardada
-      const preset = plantillasPredefinidas[tipoPlantillaGuardada]
-      if (preset && Array.isArray(preset.filasAplica)) {
-        filasDependencias.value.forEach((fila) => {
-          fila.aplica = preset.filasAplica.includes(fila.id)
-          fila.marca = fila.aplica ? 'X' : 'N/A'
-        })
       }
     }
 
@@ -2328,6 +1939,7 @@ onMounted(async () => {
   } else {
     const f = localStorage.getItem('ultima_firma')
     if (f) firmaGuardada.value = f
+    await cargarPlantillaDesdeBackend(null)
     sincronizarSupervisorConFilas()
   }
 })

@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Contrato = require('../models/Contrato');
 const DependenciaArea = require('../models/DependenciaArea');
+const Usuario = require('../models/Usuario');
 const BienEntregado = require('../models/BienEntregado');
 const TrazabilidadFirma = require('../models/TrazabilidadFirma');
 const { getFormatoVigente } = require('../services/formatoCache');
@@ -28,6 +29,21 @@ async function resolverDependencia(valor) {
         throw new AppError('La dependencia indicada no existe.', 404);
     }
     return porNombre;
+}
+
+// Dependencias vinculadas a un usuario (principal + dependencias donde es responsable)
+async function obtenerIdsDependenciasVinculadas(usuarioId, dependenciaId) {
+    const dependencias = await DependenciaArea.find({
+        $or: [{ responsable_id: usuarioId }, { responsables_ids: usuarioId }]
+    }).select('_id');
+
+    return [
+        ...new Set(
+            [dependenciaId, ...dependencias.map((d) => String(d._id))]
+                .filter(Boolean)
+                .map((id) => String(id))
+        )
+    ];
 }
 
 // La fecha de fin no puede ser anterior a la de inicio
@@ -110,6 +126,15 @@ exports.crearContrato = asyncHandler(async (req, res) => {
         console.warn('No se pudo obtener la versión del formato, usando 1:', e.message);
     }
 
+    // La plantilla la define el Supervisor (Coordinador): se toma su predeterminada
+    let plantillaPredeterminada = 'COMPLETA';
+    if (req.usuario.supervisor_id) {
+        const supervisor = await Usuario.findById(req.usuario.supervisor_id).select('plantilla_predeterminada');
+        if (supervisor?.plantilla_predeterminada) {
+            plantillaPredeterminada = supervisor.plantilla_predeterminada;
+        }
+    }
+
     const nuevoContrato = new Contrato({
         numero_contrato: numero,
         nombre_contratista: req.usuario.nombre || req.usuario.nombre_completo || 'Contratista',
@@ -123,7 +148,8 @@ exports.crearContrato = asyncHandler(async (req, res) => {
         fecha_fin: fecha_fin || null,
         adjunto_nombre: adjunto_nombre || null,
         estado: 'Borrador',
-        version_formato: versionFormato
+        version_formato: versionFormato,
+        plantilla_tipo: plantillaPredeterminada
     });
 
     const bienesConContrato = bienes.map(bien => ({
@@ -213,11 +239,16 @@ exports.listarContratos = asyncHandler(async (req, res) => {
     } else if (rol === 'Supervisor') {
         filtro = { supervisor: usuarioId };
     } else if (rol === 'ResponsableArea') {
-        const dependencia_id = req.usuario?.dependencia_id;
-        if (!dependencia_id) {
+        const idsDependencias = await obtenerIdsDependenciasVinculadas(
+            usuarioId,
+            req.usuario?.dependencia_id
+        );
+        if (idsDependencias.length === 0) {
             throw new AppError('No se pudo identificar el área del usuario.', 403);
         }
-        const firmasPendientes = await TrazabilidadFirma.find({ area_id: dependencia_id }).distinct('contrato_id');
+        const firmasPendientes = await TrazabilidadFirma.find({
+            area_id: { $in: idsDependencias }
+        }).distinct('contrato_id');
         filtro = { _id: { $in: firmasPendientes } };
     } else if (rol !== 'Administrador') {
         throw new AppError('Acceso denegado.', 403);
@@ -260,9 +291,15 @@ exports.obtenerContrato = asyncHandler(async (req, res) => {
 
     // ResponsableArea: solo los contratos donde su dependencia tiene un casillero de firma
     if (rol === 'ResponsableArea') {
-        const dependenciaId = req.usuario?.dependencia_id;
-        const tieneCasillero = dependenciaId
-            && await TrazabilidadFirma.exists({ contrato_id: contrato._id, area_id: dependenciaId });
+        const idsDependencias = await obtenerIdsDependenciasVinculadas(
+            usuarioId,
+            req.usuario?.dependencia_id
+        );
+        const tieneCasillero = idsDependencias.length
+            && await TrazabilidadFirma.exists({
+                contrato_id: contrato._id,
+                area_id: { $in: idsDependencias }
+            });
         if (!tieneCasillero) {
             throw new AppError('Acceso denegado. Este contrato no está asignado a su área.', 403);
         }

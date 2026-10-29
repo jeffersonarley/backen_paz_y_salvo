@@ -754,6 +754,21 @@ function normalizarTexto(txt) {
     .trim()
 }
 
+// Devuelve el id de la dependencia del casillero pendiente que le corresponde al usuario
+async function obtenerCasilleroPropio(contratoId) {
+  try {
+    const resp = await api.get('/firmas/pendientes')
+    const lista = Array.isArray(resp.data) ? resp.data : resp.data?.pendientes || []
+    const casillero = lista.find(
+      (c) => String(c.contrato_id?._id || c.contrato_id) === String(contratoId),
+    )
+    const area = casillero?.area_id
+    return area?._id || area || null
+  } catch {
+    return null
+  }
+}
+
 const solicitudesParaBandeja = computed(() => {
   const lista = store.solicitudes || []
   if (!auth.usuario) return lista
@@ -1197,13 +1212,23 @@ async function confirmarFirma() {
     if (contratoId) {
       try {
         const firmaBase64 = dataUrl.replace(/^data:image\/\w+;base64,/, '')
+        // Se indica la dependencia exacta para no firmar un casillero equivocado
+        // (un responsable puede tener varias dependencias)
+        const dependenciaId = await obtenerCasilleroPropio(contratoId)
         await api.post('/firmas/procesar', {
           contratoId,
+          ...(dependenciaId ? { dependencia_id: dependenciaId } : {}),
           accion: 'Aprobar',
           firma_base64: firmaBase64,
         })
       } catch (errApi) {
         console.warn('Registro API de firma:', errApi.message)
+        $q.notify({
+          type: 'warning',
+          message:
+            errApi.response?.data?.mensaje ||
+            'No se pudo registrar la firma en el sistema.',
+        })
       }
     }
 

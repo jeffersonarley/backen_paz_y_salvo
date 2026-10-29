@@ -75,6 +75,12 @@ const routes = [
         meta: { titulo: 'Dependencias', roles: ['ADMINISTRADOR', 'SUPERVISOR'] },
       },
       {
+        path: 'plantillas',
+        name: 'plantillas',
+        component: () => import('@/views/PlantillasPage.vue'),
+        meta: { titulo: 'Plantillas y Firmantes', roles: ['ADMINISTRADOR', 'SUPERVISOR'] },
+      },
+      {
         path: 'solicitudes',
         name: 'solicitudes',
         component: () => import('@/views/SolicitudesPage.vue'),

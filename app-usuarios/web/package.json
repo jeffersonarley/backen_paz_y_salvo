@@ -1,0 +1,20 @@
+{
+  "name": "app-usuarios-web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Frontend Vue 3 con autenticación y CRUD de usuarios",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "vue": "^3.5.44",
+    "vue-router": "^5.4.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.10",
+    "vite": "^8.3.4"
+  }
+}

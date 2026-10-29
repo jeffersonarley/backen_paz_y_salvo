@@ -299,6 +299,8 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
             supervisor: sup,
             correoSupervisor: supCorreo,
             supervisor_id: supId,
+            plantilla_tipo: c.plantilla_tipo || 'COMPLETA',
+            plantillaTipo: c.plantilla_tipo || 'COMPLETA',
             fecha: fch,
             fechaSolicitud: fch,
             createdAt: c.createdAt || new Date().toISOString(),

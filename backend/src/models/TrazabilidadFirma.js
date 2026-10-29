@@ -13,6 +13,11 @@ const trazabilidadFirmaSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Usuario'
     },
+    // Copia de los usuarios autorizados a firmar en esta dependencia al abrir el casillero
+    firmantes_autorizados: {
+        type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' }],
+        default: []
+    },
     estado: {
         type: String,
         enum: ['Pendiente', 'Aprobado', 'Rechazado', 'Cancelado'],

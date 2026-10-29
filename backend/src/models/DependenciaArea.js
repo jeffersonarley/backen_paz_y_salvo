@@ -15,6 +15,11 @@ const dependenciaAreaSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Usuario',
         default: null
+    },
+    // Varios responsables pueden quedar a cargo de la misma dependencia (cualquiera puede firmar)
+    responsables_ids: {
+        type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' }],
+        default: []
     }
 }, {
     timestamps: true,

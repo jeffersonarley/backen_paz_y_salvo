@@ -1,4 +1,6 @@
+const mongoose = require('mongoose');
 const Usuario = require('../models/Usuario');
+const DependenciaArea = require('../models/DependenciaArea');
 const { hashPassword } = require('../utils/password');
 const normalizarRol = require('../utils/normalizarRol');
 const { registrar } = require('../services/auditoriaService');
@@ -9,9 +11,48 @@ const AppError = require('../utils/AppError');
 
 const usuarioIdActual = (req) => req.usuario?.id;
 
+// El Supervisor es el Coordinador del contrato y siempre debe tener una dependencia propia:
+// sin ella no puede figurar como responsable ni firmar su casilla (fila 14 del formato).
+// Si no se le asignó ninguna, se le crea/asocia una dependencia de supervisión.
+async function asegurarDependenciaPropia(usuario) {
+    if (usuario.rol !== 'Supervisor' || usuario.dependencia_id) return usuario.dependencia_id;
+
+    const nombreDependencia = `${usuario.nombre_completo} - Supervisión`;
+    let dependencia = await DependenciaArea.findOne({ nombre_dependencia: nombreDependencia });
+    if (!dependencia) {
+        dependencia = await DependenciaArea.create({
+            nombre_dependencia: nombreDependencia,
+            activo: true,
+            responsable_id: usuario._id,
+            responsables_ids: [usuario._id],
+        });
+    } else {
+        const ids = (dependencia.responsables_ids || []).map((id) => String(id));
+        if (!ids.includes(String(usuario._id))) {
+            ids.push(String(usuario._id));
+            dependencia.responsables_ids = ids.map((id) => new mongoose.Types.ObjectId(id));
+            if (!dependencia.responsable_id) dependencia.responsable_id = usuario._id;
+            await dependencia.save();
+        }
+    }
+
+    usuario.dependencia_id = dependencia._id;
+    await usuario.save();
+    return dependencia._id;
+}
+
 // Crear un usuario respetando la cadena jerárquica (RF-009, RF-011, RF-012)
 exports.crearUsuario = asyncHandler(async (req, res) => {
-    const { nombre_completo, correo_institucional, password, rol, dependencia_id, telefono, cargo } = req.body;
+    const {
+        nombre_completo,
+        correo_institucional,
+        password,
+        rol,
+        dependencia_id,
+        telefono,
+        cargo,
+        apoyo_supervision_id
+    } = req.body;
 
     if (!nombre_completo || !correo_institucional || !password || !rol) {
         throw new AppError('Faltan campos obligatorios: nombre_completo, correo_institucional, password, rol.', 400);
@@ -32,6 +73,10 @@ exports.crearUsuario = asyncHandler(async (req, res) => {
     const creadorId = usuarioIdActual(req);
     const supervisor_id = req.usuario.rol === 'Supervisor' ? creadorId : null;
 
+    if (apoyo_supervision_id && !mongoose.isValidObjectId(apoyo_supervision_id)) {
+        throw new AppError('El apoyo de supervisión indicado no es válido.', 400);
+    }
+
     const nuevoUsuario = new Usuario({
         nombre_completo,
         correo_institucional,
@@ -39,11 +84,31 @@ exports.crearUsuario = asyncHandler(async (req, res) => {
         rol,
         dependencia_id: dependencia_id || null,
         supervisor_id,
+        apoyo_supervision_id: apoyo_supervision_id || null,
         telefono,
         cargo
     });
 
     await nuevoUsuario.save();
+
+    // Si se asignó una dependencia, el usuario queda como responsable de ella
+    if (dependencia_id) {
+        const dependencia = await DependenciaArea.findById(dependencia_id);
+        if (!dependencia) {
+            throw new AppError('La dependencia indicada no existe.', 404);
+        }
+        const ids = (dependencia.responsables_ids || []).map((id) => String(id));
+        if (!ids.includes(String(nuevoUsuario._id))) {
+            dependencia.responsables_ids = [...dependencia.responsables_ids, nuevoUsuario._id];
+            if (!dependencia.responsable_id) dependencia.responsable_id = nuevoUsuario._id;
+            await dependencia.save();
+        }
+    }
+
+    // El Supervisor/Coordinador siempre queda con una dependencia propia
+    if (nuevoUsuario.rol === 'Supervisor') {
+        await asegurarDependenciaPropia(nuevoUsuario);
+    }
 
     await registrar({
         usuario_id: creadorId,
@@ -67,16 +132,31 @@ exports.crearUsuario = asyncHandler(async (req, res) => {
 exports.obtenerUsuarios = asyncHandler(async (req, res) => {
     const filtro = {};
 
-    if (req.usuario.rol === 'Supervisor') {
-        filtro.supervisor_id = usuarioIdActual(req);
-    }
-
     // Comparación exacta con el rol normalizado (antes se armaba una regex con texto del usuario: ReDoS/inyección)
     if (typeof req.query.rol === 'string' && req.query.rol.trim()) {
         filtro.rol = normalizarRol(req.query.rol);
     }
 
-    const usuarios = await Usuario.find(filtro, '-password_hash -token_recuperacion -token_expiracion');
+    if (req.usuario.rol === 'Supervisor') {
+        // El Supervisor sí puede ver el personal de la institución (Supervisores y
+        // Responsables de área) porque debe asignarlos a las dependencias y a las
+        // plantillas; los contratistas siguen siendo exclusivos de su jerarquía.
+        if (filtro.rol === 'Contratista') {
+            filtro.supervisor_id = usuarioIdActual(req);
+        } else if (filtro.rol) {
+            // sin filtro por supervisor_id
+        } else {
+            filtro.$or = [
+                { rol: { $in: ['Supervisor', 'ResponsableArea'] } },
+                { supervisor_id: usuarioIdActual(req) },
+            ];
+        }
+    }
+
+    const usuarios = await Usuario.find(filtro, '-password_hash -token_recuperacion -token_expiracion')
+        .populate('dependencia_id', 'nombre_dependencia')
+        .populate('apoyo_supervision_id', 'nombre_completo correo_institucional rol')
+        .populate('supervisor_id', 'nombre_completo correo_institucional rol');
     res.status(200).json(usuarios);
 });
 
@@ -95,7 +175,12 @@ exports.obtenerUsuario = asyncHandler(async (req, res) => {
         throw new AppError('Acceso denegado.', 403);
     }
 
-    if (!esPropio && rolActual === 'Supervisor' && String(usuario.supervisor_id) !== String(usuarioIdActual(req))) {
+    if (
+        !esPropio &&
+        rolActual === 'Supervisor' &&
+        usuario.rol === 'Contratista' &&
+        String(usuario.supervisor_id) !== String(usuarioIdActual(req))
+    ) {
         throw new AppError('Acceso denegado. Este usuario no te pertenece.', 403);
     }
 
@@ -133,11 +218,24 @@ exports.actualizarUsuario = asyncHandler(async (req, res) => {
         throw new AppError('Usuario no encontrado.', 404);
     }
 
-    if (req.usuario.rol === 'Supervisor' && String(usuario.supervisor_id) !== String(usuarioIdActual(req))) {
+    const esPropio = String(usuario._id) === String(usuarioIdActual(req));
+    if (
+        req.usuario.rol === 'Supervisor' &&
+        !esPropio &&
+        String(usuario.supervisor_id) !== String(usuarioIdActual(req))
+    ) {
         throw new AppError('Acceso denegado. Este usuario no te pertenece.', 403);
     }
 
-    const { nombre_completo, telefono, cargo, dependencia_id, rol } = req.body;
+    const {
+        nombre_completo,
+        telefono,
+        cargo,
+        dependencia_id,
+        rol,
+        apoyo_supervision_id,
+        plantilla_predeterminada
+    } = req.body;
 
     // Cambio de rol (RF-009 esc.2): re-validar con la jerarquía
     if (rol !== undefined && rol !== usuario.rol) {
@@ -154,9 +252,51 @@ exports.actualizarUsuario = asyncHandler(async (req, res) => {
     if (nombre_completo !== undefined) usuario.nombre_completo = nombre_completo;
     if (telefono !== undefined) usuario.telefono = telefono;
     if (cargo !== undefined) usuario.cargo = cargo;
-    if (dependencia_id !== undefined) usuario.dependencia_id = dependencia_id;
+    if (dependencia_id !== undefined) {
+        usuario.dependencia_id = dependencia_id || null;
+        // Al asignar una dependencia al responsable, se agrega a la lista de responsables
+        if (dependencia_id) {
+            const dependencia = await DependenciaArea.findById(dependencia_id);
+            if (!dependencia) {
+                throw new AppError('La dependencia indicada no existe.', 404);
+            }
+            const ids = (dependencia.responsables_ids || []).map((id) => String(id));
+            if (!ids.includes(String(usuario._id))) {
+                dependencia.responsables_ids = [...dependencia.responsables_ids, usuario._id];
+                if (!dependencia.responsable_id) dependencia.responsable_id = usuario._id;
+                await dependencia.save();
+            }
+        }
+    }
+
+    // Asignación de apoyo de supervisión (persona que apoya al coordinador)
+    if (apoyo_supervision_id !== undefined) {
+        const apoyoId = apoyo_supervision_id || null;
+        if (apoyoId) {
+            if (!mongoose.isValidObjectId(apoyoId)) {
+                throw new AppError('El apoyo de supervisión indicado no es válido.', 400);
+            }
+            if (String(apoyoId) === String(usuario._id)) {
+                throw new AppError('El apoyo de supervisión no puede ser el mismo coordinador.', 400);
+            }
+            const apoyo = await Usuario.findById(apoyoId);
+            if (!apoyo) {
+                throw new AppError('El apoyo de supervisión no existe.', 404);
+            }
+        }
+        usuario.apoyo_supervision_id = apoyoId;
+    }
+
+    if (plantilla_predeterminada !== undefined) {
+        usuario.plantilla_predeterminada = plantilla_predeterminada;
+    }
 
     await usuario.save();
+
+    // Si es Supervisor y se quedó sin dependencia, se le asigna una propia
+    if (usuario.rol === 'Supervisor') {
+        await asegurarDependenciaPropia(usuario);
+    }
 
     await registrar({
         usuario_id: usuarioIdActual(req),

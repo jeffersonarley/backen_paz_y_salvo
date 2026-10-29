@@ -1,6 +1,7 @@
 const Contrato = require('../models/Contrato');
 const DependenciaArea = require('../models/DependenciaArea');
 const TrazabilidadFirma = require('../models/TrazabilidadFirma');
+const { obtenerPlantillaContrato } = require('../services/plantillaService');
 const { enviarCorreo } = require('../services/emailService');
 const { registrar } = require('../services/auditoriaService');
 const asyncHandler = require('../utils/asyncHandler');
@@ -89,11 +90,46 @@ exports.evaluarContrato = asyncHandler(async (req, res) => {
     }
 
     // --- APROBADO ---
-    const areasActivas = await DependenciaArea.find({ activo: true });
+    // Las dependencias que firman son las de la plantilla aplicada por el Supervisor
+    // (si el contrato no tiene plantilla guardada, se usan todas las dependencias activas).
+    const plantilla = await obtenerPlantillaContrato(contrato);
+    const dependenciasFirmantes = plantilla.filas.filter((fila) => fila.aplica);
+
+    if (dependenciasFirmantes.length === 0) {
+        throw new AppError('La plantilla del contrato no tiene dependencias aplicables para firmar.', 409);
+    }
+
+    const idsDependencias = dependenciasFirmantes
+        .map((fila) => fila.dependencia_id)
+        .filter(Boolean)
+        .map((id) => String(id));
+
+    const areasActivas = idsDependencias.length
+        ? await DependenciaArea.find({ _id: { $in: idsDependencias }, activo: true })
+        : await DependenciaArea.find({ activo: true });
+
     if (areasActivas.length === 0) {
         // Sin áreas no habría quién firme y el contrato quedaría "Pendiente de Firmas" para siempre
         throw new AppError('No hay dependencias activas para abrir las firmas. Cree o active al menos una.', 409);
     }
+
+    // Responsables autorizados de cada dependencia (para saber quién puede firmar):
+    // unión de los asignados por el coordinador en la plantilla y los responsables de la dependencia.
+    const responsablesPorDependencia = new Map();
+    for (const area of areasActivas) {
+        const idsResponsables = (area.responsables_ids || []).map((id) => String(id));
+        if (area.responsable_id) idsResponsables.push(String(area.responsable_id));
+
+        const fila = dependenciasFirmantes.find(
+            (f) => f.dependencia_id && String(f.dependencia_id) === String(area._id)
+        );
+        if (fila?.responsables?.length) {
+            fila.responsables.forEach((r) => idsResponsables.push(String(r.id || r._id || r)));
+        }
+
+        responsablesPorDependencia.set(String(area._id), [...new Set(idsResponsables)]);
+    }
+
 
     const actualizado = await Contrato.findOneAndUpdate(
         { _id: contrato._id, estado: { $in: ESTADOS_EVALUABLES } },
@@ -113,7 +149,8 @@ exports.evaluarContrato = asyncHandler(async (req, res) => {
             contrato_id: contrato._id,
             area_id: area._id,
             estado: 'Pendiente',
-            hash_verificacion: ''
+            hash_verificacion: '',
+            firmantes_autorizados: responsablesPorDependencia.get(String(area._id)) || []
         })));
     } catch (error) {
         // Compensación: si no se pudieron abrir las firmas, el contrato vuelve a su estado anterior

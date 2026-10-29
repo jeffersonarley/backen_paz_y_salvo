@@ -3,16 +3,16 @@
     <!-- Encabezado -->
     <div class="row items-center justify-between q-mb-lg">
       <div>
-        <div class="text-h4 text-primary text-weight-bold">Supervisores</div>
+        <div class="text-h4 text-primary text-weight-bold">Coordinadores (Supervisores)</div>
         <div class="text-subtitle2 text-grey-7">
-          Gestión de supervisores encargados del formato GCCON-F-088
+          Gestión de coordinadores y su apoyo de supervisión para el formato GCCON-F-088
         </div>
       </div>
 
       <q-btn
         color="positive"
         icon="add"
-        label="Nuevo Supervisor"
+        label="Nuevo Coordinador"
         unelevated
         @click="nuevoSupervisor"
       />
@@ -54,6 +54,21 @@
             <q-icon name="apartment" class="q-mr-xs" />
             {{ props.row.dependencia || 'Gestión Tecnológica (TIC)' }}
           </q-badge>
+        </q-td>
+      </template>
+
+      <template #body-cell-apoyo_supervision="props">
+        <q-td :props="props">
+          <q-badge
+            v-if="props.row.apoyo_supervision"
+            color="indigo-1"
+            text-color="indigo-9"
+            class="q-pa-xs text-weight-bold"
+          >
+            <q-icon name="support_agent" class="q-mr-xs" />
+            {{ props.row.apoyo_supervision }}
+          </q-badge>
+          <span v-else class="text-caption text-grey-6">Sin apoyo asignado</span>
         </q-td>
       </template>
 
@@ -132,16 +147,34 @@
             <q-select
               v-model="supervisor.dependencia"
               :options="opcionesDependencias"
-              label="Dependencia por Defecto *"
+              option-label="label"
+              option-value="value"
+              label="Dependencia del Coordinador *"
               outlined
               dense
-              emit-value
-              map-options
               :rules="[(val) => !!val || 'La dependencia es obligatoria']"
-              hint="Área técnica o administrativa a cargo del supervisor"
+              hint="Área técnica o administrativa a cargo del coordinador"
             >
               <template #prepend>
                 <q-icon name="apartment" color="primary" />
+              </template>
+            </q-select>
+
+            <q-select
+              v-model="supervisor.apoyo_supervision_id"
+              :options="opcionesApoyo"
+              option-label="label"
+              option-value="value"
+              label="Asignación de apoyo de supervisión"
+              outlined
+              dense
+              clearable
+              emit-value
+              map-options
+              hint="Persona que apoya al coordinador en la gestión y firmas"
+            >
+              <template #prepend>
+                <q-icon name="support_agent" color="primary" />
               </template>
             </q-select>
 
@@ -226,6 +259,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useQuasar } from 'quasar'
 import { useSupervisoresStore } from '../stores/useSupervisoresStore.js'
 import { useDependenciasStore } from '../stores/useDependenciasStore.js'
+import api from '../services/api'
 
 const store = useSupervisoresStore()
 const dependenciasStore = useDependenciasStore()
@@ -235,6 +269,7 @@ onMounted(async () => {
   if (dependenciasStore.cargarDependencias) {
     await dependenciasStore.cargarDependencias()
   }
+  await cargarOpcionesApoyo()
 })
 
 const opcionesDependencias = computed(() => {
@@ -242,9 +277,36 @@ const opcionesDependencias = computed(() => {
     .filter((d) => d.estado !== 'Inactiva')
     .map((d) => ({
       label: d.nombre,
-      value: d.nombre,
+      value: d._id || d.id,
     }))
 })
+
+// Candidatos para el apoyo de supervisión (responsables de área y coordinadores)
+const opcionesApoyo = ref([])
+
+async function cargarOpcionesApoyo() {
+  const opciones = []
+  const vistos = new Set()
+  for (const rol of ['ResponsableArea', 'Supervisor']) {
+    try {
+      const resp = await api.get(`/usuarios?rol=${rol}`)
+      const lista = Array.isArray(resp.data) ? resp.data : resp.data?.usuarios || []
+      lista.forEach((u) => {
+        const id = String(u._id || u.id || '')
+        if (!id || vistos.has(id)) return
+        vistos.add(id)
+        const nombre = u.nombre_completo || u.nombre || 'Usuario'
+        opciones.push({
+          label: `${nombre} — ${rol === 'Supervisor' ? 'Coordinador' : 'Responsable de Área'}`,
+          value: id,
+        })
+      })
+    } catch {
+      // se continua con los roles disponibles
+    }
+  }
+  opcionesApoyo.value = opciones
+}
 
 const filtro = ref('')
 const dialogo = ref(false)
@@ -278,6 +340,8 @@ const supervisor = ref({
   correo: '',
   telefono: '',
   dependencia: '',
+  dependencia_id: null,
+  apoyo_supervision_id: null,
   password: '',
 })
 
@@ -311,6 +375,13 @@ const columns = [
     name: 'dependencia',
     label: 'Dependencia Asignada',
     field: (row) => row.dependencia || 'Gestión Tecnológica (TIC)',
+    align: 'left',
+    sortable: true,
+  },
+  {
+    name: 'apoyo_supervision',
+    label: 'Apoyo de Supervisión',
+    field: 'apoyo_supervision',
     align: 'left',
     sortable: true,
   },
@@ -427,14 +498,17 @@ async function guardarSupervisor() {
 function nuevoSupervisor() {
   limpiarFormulario()
   const primera = dependenciasStore.dependencias.find((d) => d.estado !== 'Inactiva')
-  supervisor.value.dependencia = primera ? primera.nombre : 'Gestión Tecnológica (TIC)'
+  supervisor.value.dependencia = primera ? primera._id || primera.id : null
+  supervisor.value.dependencia_id = primera ? primera._id || primera.id : null
   dialogo.value = true
 }
 
 function editarSupervisor(fila) {
   supervisor.value = {
     ...fila,
-    dependencia: fila.dependencia || 'Gestión Tecnológica (TIC)',
+    dependencia: fila.dependencia_id || fila.dependencia || null,
+    dependencia_id: fila.dependencia_id || null,
+    apoyo_supervision_id: fila.apoyo_supervision_id || null,
     password: fila.password || '',
   }
 
@@ -480,6 +554,8 @@ function limpiarFormulario() {
     correo: '',
     telefono: '',
     dependencia: '',
+    dependencia_id: null,
+    apoyo_supervision_id: null,
     password: '',
   }
   errorFormulario.value = ''
