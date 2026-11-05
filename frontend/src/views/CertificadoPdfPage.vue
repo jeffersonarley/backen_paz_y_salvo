@@ -1846,15 +1846,15 @@ onMounted(async () => {
           const depLimpia = (
             u.dependencia ||
             u.dependencia_id?.nombre_dependencia ||
-            'Bienestar al Aprendiz'
+            ''
           ).replace(/\s*\/\s*Contratista/i, '')
           const numCon =
-            u.numero_contrato || (codigo && !codigo.includes('/') ? codigo : 'CNT-2026-001')
+            u.numero_contrato || (codigo && !codigo.includes('/') ? codigo : '')
           const fchCon = u.createdAt
             ? new Date(u.createdAt).toLocaleDateString('es-CO')
             : codigo.includes('/')
               ? codigo
-              : '18/09/2026'
+              : ''
 
           datosSolicitud.value = {
             ...datosSolicitud.value,

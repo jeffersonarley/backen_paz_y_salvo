@@ -1107,7 +1107,7 @@ function verCertificado(fila) {
       ciudad: !fila.ciudad || fila.ciudad === 'Ibagué' ? 'San Gil' : fila.ciudad,
       regional: !fila.regional || fila.regional === 'Tolima' ? 'Santander' : fila.regional,
       fecha: fila.fecha || new Date().toLocaleDateString('es-CO'),
-      direccion: (fila.direccion || fila.dependencia || 'Bienestar al Aprendiz').replace(
+      direccion: (fila.direccion || fila.dependencia || '').replace(
         /\s*\/\s*Contratista/i,
         '',
       ),
@@ -1116,7 +1116,7 @@ function verCertificado(fila) {
       contrato: `${numCon} — ${fchCon}`,
       causalTerminacion: fila.causalTerminacion || 'LIQUIDACION_MUTUO_ACUERDO',
       clasificacion: fila.clasificacion || 'Publica',
-      responsable: fila.responsable || fila.supervisor || 'Ing. Carlos Supervisor',
+      responsable: fila.responsable || fila.supervisor || '',
       estado: fila.estado || 'En revisión',
       observacionRechazo: fila.observacionRechazo || fila.observaciones_supervisor || '',
     }

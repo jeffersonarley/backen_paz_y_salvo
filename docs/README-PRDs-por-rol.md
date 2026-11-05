@@ -38,4 +38,4 @@ De forma transversal: **Administrador** solo administra (usuarios, dependencias 
 - Frontend: `http://localhost:9000`
 - Backend: `http://localhost:3000/api`
 - Seed: `backend/scripts/seedDev.js` (idempotente).
-- Rate limit de login: 10 intentos / 15 min (`RATE_LIMIT_MAX`) — evita reintentos agresivos.
+- Rate limit de login: 10 intentos / 3 min (`RATE_LIMIT_MAX`) — evita reintentos agresivos.

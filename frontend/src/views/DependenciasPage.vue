@@ -344,59 +344,8 @@ const editando = ref(false)
 const indiceEditar = ref(null)
 const responsablesSeleccionados = ref([])
 
-const nombresDependenciasSugeridas = [
-  {
-    nombre: 'Gestión Tecnológica (TIC)',
-    descripcion: 'Equipos de cómputo, sistemas y accesos digitales',
-    icono: 'computer',
-    responsableSugerido: 'Ing. Roberto Gómez',
-    correoSugerido: 'area.tic@gccon.com',
-  },
-  {
-    nombre: 'Almacén e Inventarios',
-    descripcion: 'Herramientas, mobiliario y activos físicos',
-    icono: 'inventory_2',
-    responsableSugerido: 'Lic. Martha Almacén',
-    correoSugerido: 'area.almacen@gccon.com',
-  },
-  {
-    nombre: 'Recursos Humanos / Talento Humano',
-    descripcion: 'Carné institucional, aportes y paz y salvo laboral',
-    icono: 'badge',
-    responsableSugerido: 'Dra. Claudia Ramos',
-    correoSugerido: 'rrhh@sena.edu.co',
-  },
-  {
-    nombre: 'Infraestructura y Servicios Generales',
-    descripcion: 'Llaves, tarjetas de acceso y espacios físicos',
-    icono: 'domain',
-    responsableSugerido: 'Ing. Fernando Ramírez',
-    correoSugerido: 'infraestructura@sena.edu.co',
-  },
-  {
-    nombre: 'Biblioteca y Archivo',
-    descripcion: 'Préstamos bibliográficos y entrega de archivos',
-    icono: 'menu_book',
-    responsableSugerido: 'Lic. Jorge Biblioteca',
-    correoSugerido: 'biblioteca@sena.edu.co',
-  },
-  {
-    nombre: 'Bienestar al Aprendiz y Comunidad',
-    descripcion: 'Comunidad educativa y apoyos institucionales',
-    icono: 'volunteer_activism',
-    responsableSugerido: 'Dra. Patricia Valenzuela',
-    correoSugerido: 'bienestar@sena.edu.co',
-  },
-  {
-    nombre: 'Coordinación Académica y Formación',
-    descripcion: 'Calificaciones, fichas y reportes formativos',
-    icono: 'school',
-    responsableSugerido: 'Lic. Martha Almacén',
-    correoSugerido: 'area.almacen@gccon.com',
-  },
-]
-
-const filtroNombresDependencias = ref([...nombresDependenciasSugeridas])
+  const nombresDependenciasSugeridas = []
+  const filtroNombresDependencias = ref([])
 
 function filtrarNombresDependencias(val, update) {
   if (val === '') {

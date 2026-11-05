@@ -15,6 +15,7 @@ const apiLimiter = creadorLimite({
 });
 
 const authLimiter = creadorLimite({
+  windowMs: 3 * 60 * 1000,
   max: Number(process.env.RATE_LIMIT_MAX) || 10,
   message: { mensaje: 'Demasiados intentos. Intente de nuevo más tarde.' }
 });

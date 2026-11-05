@@ -155,7 +155,7 @@ const opcionesRoles = [
   {
     label: 'Responsable de Área',
     value: 'RESPONSABLE_AREA',
-    correo: 'responsable@gccon.com',
+    correo: 'franklin.chacon@sena.edu.co',
     pass: '123',
     icon: 'draw',
     descripcion: 'Gestión de TIC — Franklin Rolando Chacón',

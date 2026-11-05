@@ -1,29 +1,6 @@
 ﻿import { defineStore } from 'pinia'
 
-const certificadosIniciales = JSON.parse(localStorage.getItem('gccon_certificados')) || [
-  {
-    id: 'CERT-2026-001',
-    contratistaDocumento: '1098765432',
-    contratistaNombre: 'Paula Valentina Rache Fonseca',
-    numeroContrato: 'CT-2026-088',
-    dependenciaCodigo: 'DEP-001',
-    dependenciaNombre: 'Sistemas e Informática',
-    fechaSolicitud: '2026-08-15',
-    estado: 'Pendiente',
-    observaciones: 'Pendiente entrega de inventarios de software.',
-  },
-  {
-    id: 'CERT-2026-002',
-    contratistaDocumento: '1098765432',
-    contratistaNombre: 'Paula Valentina Rache Fonseca',
-    numeroContrato: 'CT-2026-088',
-    dependenciaCodigo: 'DEP-002',
-    dependenciaNombre: 'Almacén e Inventarios',
-    fechaSolicitud: '2026-08-10',
-    estado: 'Aprobado',
-    observaciones: 'Paz y salvo de equipos al día.',
-  },
-]
+const certificadosIniciales = JSON.parse(localStorage.getItem('gccon_certificados')) || [];
 
 export const useCertificadosStore = defineStore('certificados', {
   state: () => ({

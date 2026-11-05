@@ -247,12 +247,13 @@ import { useRouter } from 'vue-router'
 import { Notify } from 'quasar'
 import { useSolicitudesStore } from '../stores/useSolicitudesStore.js'
 import { useDependenciasStore } from '../stores/useDependenciasStore.js'
+import { useSupervisoresStore } from '../stores/useSupervisoresStore.js'
 import { useAuthStore } from '../stores/authStore.js'
-import api from '../services/api'
 
 const router = useRouter()
 const store = useSolicitudesStore()
 const dependenciasStore = useDependenciasStore()
+const supervisoresStore = useSupervisoresStore()
 const auth = useAuthStore()
 const cargando = ref(false)
 
@@ -291,20 +292,18 @@ function alCambiarVigencia(nuevoAnio) {
   }
 }
 
-const opcionesDependencias = ref([
-  'Sistemas e Informática',
-  'Gestión Tecnológica (TIC)',
-  'Almacén e Inventarios',
-  'Recursos Humanos',
-  'Biblioteca y Archivo',
-  'Bienestar al Aprendiz',
-])
+const opcionesDependencias = computed(() =>
+  dependenciasStore.dependencias
+    .filter((d) => d.estado !== 'Inactiva')
+    .map((d) => d.nombre || d.nombre_dependencia)
+)
 
-const opcionesSupervisores = ref([
-  { id: 'sup-1', nombre: 'Ing. Carlos Supervisor' },
-  { id: 'sup-2', nombre: 'Dra. Ana María Gómez' },
-  { id: 'sup-3', nombre: 'Ing. Fernando Ramírez' },
-])
+const opcionesSupervisores = computed(() =>
+  supervisoresStore.supervisores.map((s) => ({
+    id: s.id || s._id,
+    nombre: s.nombre || s.nombre_completo || 'Supervisor',
+  }))
+)
 
 const responsableDependenciaActual = computed(() => {
   if (!form.value.dependencia) return null
@@ -355,20 +354,7 @@ onMounted(async () => {
   }
   try {
     await dependenciasStore.cargarDependencias()
-    if (dependenciasStore.dependencias.length > 0) {
-      opcionesDependencias.value = dependenciasStore.dependencias
-        .filter((d) => d.estado !== 'Inactiva')
-        .map((d) => d.nombre)
-    }
-
-    const supRes = await api.get('/usuarios?rol=Supervisor')
-    const sups = Array.isArray(supRes.data) ? supRes.data : supRes.data?.usuarios || []
-    if (sups.length > 0) {
-      opcionesSupervisores.value = sups.map((s) => ({
-        id: s._id || s.id,
-        nombre: s.nombre_completo || s.nombre || 'Supervisor',
-      }))
-    }
+    await supervisoresStore.cargarSupervisores()
   } catch (err) {
     console.warn('Carga de listas para nueva solicitud:', err.message)
   }
@@ -392,11 +378,11 @@ async function guardarSolicitud() {
   const supNombre =
     typeof form.value.supervisor === 'object'
       ? form.value.supervisor?.nombre
-      : form.value.supervisor || 'Supervisor Asignado'
+      : form.value.supervisor || ''
   const depNombre =
     typeof form.value.dependencia === 'object'
       ? form.value.dependencia?.nombre || form.value.dependencia?.label
-      : form.value.dependencia || 'Gestión Tecnológica'
+      : form.value.dependencia || ''
 
   const numContrato = (form.value.numeroContrato || '').trim()
 

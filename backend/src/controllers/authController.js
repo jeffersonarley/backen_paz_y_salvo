@@ -8,8 +8,8 @@ const { HASH_FALSO, hashToken, generarJwt } = require('../utils/tokens');
 const asyncHandler = require('../utils/asyncHandler');
 const AppError = require('../utils/AppError');
 
-const MAX_INTENTOS = 3;
-const MINUTOS_BLOQUEO = 15;
+const MAX_INTENTOS = 10;
+const MINUTOS_BLOQUEO = 3;
 const LONGITUD_MAX_PASSWORD = 128;
 
 // Defensa contra inyección NoSQL: los campos deben ser texto, nunca objetos ({ "$ne": null })

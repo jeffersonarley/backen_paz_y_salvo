@@ -65,9 +65,9 @@ describe('Autenticación (Flujo 1)', () => {
     expect(res.status).toBe(401);
   });
 
-  test('bloqueo tras 3 intentos fallidos (403)', async () => {
+  test('bloqueo tras 10 intentos fallidos (403)', async () => {
     await Usuario.create({ nombre_completo: 'Bloqueo', correo_institucional: 'bloqueo@institucion.edu.co', password_hash: await bcrypt.hash(PASS, 8), rol: 'Contratista' });
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 10; i++) {
       await login('bloqueo@institucion.edu.co', 'ClaveMala123!');
     }
     const res = await login('bloqueo@institucion.edu.co', 'ClaveMala123!');

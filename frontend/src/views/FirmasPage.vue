@@ -916,7 +916,7 @@ const columnasBienes = [
   { name: 'estado_entrega', label: 'Estado Devolución', field: 'estado_entrega', align: 'center' },
 ]
 
-// Obtener el código enviado por query params: /app/firmas?codigo=SOL-2026-001
+
 const codigoSolicitud = computed(() => route.query.codigo)
 
 // Buscar la solicitud en el store comprobando múltiples nombres de propiedad

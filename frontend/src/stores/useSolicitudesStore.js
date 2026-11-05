@@ -3,196 +3,7 @@ import { ref } from 'vue'
 import api from '../services/api'
 
 export const useSolicitudesStore = defineStore('solicitudes', () => {
-  const solicitudesBase = [
-    {
-      id: 'SOL-2026-001',
-      numeroSolicitud: 'SOL-2026-001',
-      documentoContratista: '1098765432',
-      contratista: 'Juan Carlos Pérez Gómez',
-      nombreContratista: 'Juan Carlos Pérez Gómez',
-      correo: 'juan.perez@correo.com',
-      correoContratista: 'juan.perez@correo.com',
-      numeroContrato: 'CNT-2025-088',
-      dependencia: 'Gestión Tecnológica',
-      responsable: 'Ing. Carlos Supervisor',
-      supervisor: 'Ing. Carlos Supervisor',
-      correoSupervisor: 'supervisor@gccon.com',
-      fecha: '2026-08-15',
-      fechaSolicitud: '2026-08-15',
-      estado: 'En revisión',
-      firmas: [
-        {
-          dependenciaCodigo: 'DEP-01',
-          dependenciaNombre: 'Gestión Tecnológica',
-          firmada: true,
-          fechaFirma: '2026-08-16',
-        },
-        {
-          dependenciaCodigo: 'DEP-02',
-          dependenciaNombre: 'Recursos Humanos',
-          firmada: false,
-          fechaFirma: null,
-        },
-        {
-          dependenciaCodigo: 'DEP-03',
-          dependenciaNombre: 'Almacén e Inventarios',
-          firmada: false,
-          fechaFirma: null,
-        },
-      ],
-    },
-    {
-      id: 'SOL-2026-002',
-      numeroSolicitud: 'SOL-2026-002',
-      documentoContratista: '1095432189',
-      contratista: 'Laura Andrea Contratista',
-      nombreContratista: 'Laura Andrea Contratista',
-      correo: 'contratista@gccon.com',
-      correoContratista: 'contratista@gccon.com',
-      numeroContrato: 'CNT-2026-014',
-      dependencia: 'Almacén e Inventarios',
-      responsable: 'Ing. Carlos Supervisor',
-      supervisor: 'Ing. Carlos Supervisor',
-      correoSupervisor: 'supervisor@gccon.com',
-      fecha: '2026-09-02',
-      fechaSolicitud: '2026-09-02',
-      estado: 'Firmado',
-      firmas: [
-        {
-          dependenciaCodigo: 'DEP-01',
-          dependenciaNombre: 'Gestión Tecnológica',
-          firmada: true,
-          fechaFirma: '2026-09-03',
-        },
-        {
-          dependenciaCodigo: 'DEP-02',
-          dependenciaNombre: 'Almacén e Inventarios',
-          firmada: true,
-          fechaFirma: '2026-09-04',
-        },
-        {
-          dependenciaCodigo: 'DEP-03',
-          dependenciaNombre: 'Recursos Humanos',
-          firmada: true,
-          fechaFirma: '2026-09-04',
-        },
-      ],
-    },
-    {
-      id: 'SOL-2026-003',
-      numeroSolicitud: 'SOL-2026-003',
-      documentoContratista: '1094321765',
-      contratista: 'María Fernanda Gómez Ruiz',
-      nombreContratista: 'María Fernanda Gómez Ruiz',
-      correo: 'maria.gomez@correo.com',
-      correoContratista: 'maria.gomez@correo.com',
-      numeroContrato: 'CNT-2026-029',
-      dependencia: 'Recursos Humanos',
-      responsable: 'Dra. Ana María Gómez',
-      supervisor: 'Dra. Ana María Gómez',
-      correoSupervisor: 'agomez@sena.edu.co',
-      fecha: '2026-09-10',
-      fechaSolicitud: '2026-09-10',
-      estado: 'Rechazado',
-      observacionRechazo: 'Presenta novedades pendientes en Biblioteca y Almacén e Inventarios.',
-      novedades: [
-        {
-          dependencia: 'Biblioteca',
-          motivo: 'Pendiente devolución de libro de cálculo integral (código BIB-2026-04).',
-          responsable: 'Lic. Jorge Biblioteca',
-        },
-        {
-          dependencia: 'Almacén e Inventarios',
-          motivo: 'Pendiente reintegro de adaptador de corriente y carnet institucional.',
-          responsable: 'Lic. Martha Almacén',
-        },
-      ],
-      firmas: [
-        {
-          dependenciaCodigo: 'DEP-01',
-          dependenciaNombre: 'Gestión Tecnológica',
-          firmada: false,
-          fechaFirma: null,
-        },
-        {
-          dependenciaCodigo: 'DEP-02',
-          dependenciaNombre: 'Almacén e Inventarios',
-          firmada: false,
-          fechaFirma: null,
-        },
-      ],
-    },
-    {
-      id: 'SOL-2026-004',
-      numeroSolicitud: 'SOL-2026-004',
-      documentoContratista: '1097890123',
-      contratista: 'Carlos Eduardo Mendoza',
-      nombreContratista: 'Carlos Eduardo Mendoza',
-      correo: 'carlos.mendoza@email.com',
-      correoContratista: 'carlos.mendoza@email.com',
-      numeroContrato: 'CNT-2026-042',
-      dependencia: 'Gestión Tecnológica',
-      responsable: 'Ing. Carlos Supervisor',
-      supervisor: 'Ing. Carlos Supervisor',
-      correoSupervisor: 'supervisor@gccon.com',
-      fecha: '2026-09-12',
-      fechaSolicitud: '2026-09-12',
-      estado: 'Finalizado',
-      firmas: [
-        {
-          dependenciaCodigo: 'DEP-01',
-          dependenciaNombre: 'Gestión Tecnológica',
-          firmada: true,
-          fechaFirma: '2026-09-13',
-        },
-        {
-          dependenciaCodigo: 'DEP-02',
-          dependenciaNombre: 'Almacén e Inventarios',
-          firmada: true,
-          fechaFirma: '2026-09-13',
-        },
-        {
-          dependenciaCodigo: 'DEP-03',
-          dependenciaNombre: 'Recursos Humanos',
-          firmada: true,
-          fechaFirma: '2026-09-14',
-        },
-      ],
-    },
-    {
-      id: 'SOL-2026-005',
-      numeroSolicitud: 'SOL-2026-005',
-      documentoContratista: '1096543210',
-      contratista: 'Diego Morales Castro',
-      nombreContratista: 'Diego Morales Castro',
-      correo: 'diego.morales@correo.com',
-      correoContratista: 'diego.morales@correo.com',
-      numeroContrato: 'CNT-2026-055',
-      dependencia: 'Infraestructura y Servicios Generales',
-      responsable: 'Ing. Fernando Ramírez',
-      supervisor: 'Ing. Fernando Ramírez',
-      correoSupervisor: 'f.ramirez@sena.edu.co',
-      fecha: '2026-09-15',
-      fechaSolicitud: '2026-09-15',
-      estado: 'En revisión',
-      firmas: [
-        {
-          dependenciaCodigo: 'DEP-04',
-          dependenciaNombre: 'Infraestructura y Servicios Generales',
-          firmada: true,
-          fechaFirma: '2026-09-16',
-        },
-        {
-          dependenciaCodigo: 'DEP-03',
-          dependenciaNombre: 'Almacén e Inventarios',
-          firmada: false,
-          fechaFirma: null,
-        },
-      ],
-    },
-  ]
-
-  const solicitudes = ref([...solicitudesBase])
+  const solicitudes = ref([])
   const cargando = ref(false)
 
   async function cargarSolicitudes() {
@@ -200,7 +11,7 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
     try {
       const resp = await api.get('/contratos')
       const lista = Array.isArray(resp.data) ? resp.data : resp.data?.contratos || []
-      if (Array.isArray(lista) && lista.length > 0) {
+      if (Array.isArray(lista)) {
         const desdeAtlas = lista.map((c, idx) => {
           const num = c.numero_contrato || `CNT-${idx + 1}`
           const nom =
@@ -219,25 +30,8 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
           let supId = c.supervisor?._id || c.supervisor_id || null
 
           if (!sup || sup === 'Supervisor Asignado' || sup === 'SIN SUPERVISOR') {
-            const contratistasConfig = [
-              { nombre: 'Juan Carlos Pérez', sup: 'Ing. Carlos Supervisor', correoSup: 'supervisor@gccon.com' },
-              { nombre: 'Laura Andrea Contratista', sup: 'Ing. Carlos Supervisor', correoSup: 'supervisor@gccon.com' },
-              { nombre: 'Carlos Eduardo Mendoza', sup: 'Ing. Carlos Supervisor', correoSup: 'supervisor@gccon.com' },
-              { nombre: 'María Fernanda Gómez', sup: 'Dra. Ana María Gómez', correoSup: 'agomez@sena.edu.co' },
-              { nombre: 'Diego Morales Castro', sup: 'Ing. Fernando Ramírez', correoSup: 'f.ramirez@sena.edu.co' },
-            ]
-            const match = contratistasConfig.find(
-              (cc) =>
-                nom.toLowerCase().includes(cc.nombre.toLowerCase()) ||
-                cc.nombre.toLowerCase().includes(nom.toLowerCase()),
-            )
-            if (match) {
-              sup = match.sup
-              supCorreo = match.correoSup
-            } else {
-              sup = 'Ing. Carlos Supervisor'
-              supCorreo = 'supervisor@gccon.com'
-            }
+            sup = 'Sin supervisor'
+            supCorreo = ''
           }
 
           const fch = c.createdAt
@@ -266,16 +60,6 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
             localStorage.getItem(`certificado_identificacion_${String(num).toLowerCase().trim()}`) ||
             (nom ? localStorage.getItem(`certificado_identificacion_${nom.toLowerCase().trim()}`) : '') ||
             ''
-          if (!docCon || docCon === '—') {
-            const baseMatch = solicitudesBase.find(
-              (sb) =>
-                (sb.contratista || '').toLowerCase().trim() === nom.toLowerCase().trim() ||
-                (sb.numeroContrato || '').toLowerCase().trim() === String(num).toLowerCase().trim(),
-            )
-            if (baseMatch?.documentoContratista) {
-              docCon = baseMatch.documentoContratista
-            }
-          }
           if (docCon && docCon !== '—') {
             localStorage.setItem(`certificado_identificacion_${num}`, docCon)
             if (nom) localStorage.setItem(`certificado_identificacion_${nom.toLowerCase().trim()}`, docCon)
@@ -323,19 +107,7 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
               localStorage.getItem(`novedad_${c._id}`) ||
               localStorage.getItem(`novedad_${num}`) ||
               '',
-            bienes:
-              Array.isArray(c.bienes) && c.bienes.length > 0
-                ? c.bienes
-                : [
-                    {
-                      descripcion: 'Equipo de cómputo y periféricos institucionales',
-                      codigo_inventario: `INV-${String(num).replace(/\D/g, '').slice(-4).padStart(4, '0') || '1042'}`,
-                      estado_bien: 'Bueno',
-                      cantidad: 1,
-                      estado_entrega:
-                        est === 'Firmado' || est === 'Finalizado' ? 'Devuelto' : 'Pendiente',
-                    },
-                  ],
+            bienes: Array.isArray(c.bienes) ? c.bienes : [],
             ciudad: c.ciudad || 'San Gil',
             regional: c.regional || 'Santander',
             direccion: c.direccion || dep,
@@ -528,18 +300,12 @@ export const useSolicitudesStore = defineStore('solicitudes', () => {
         documento_contratista: doc,
         identificacion: doc,
         documento: doc,
-        telefono: nuevaSolicitud.telefono || '3001234567',
+        telefono: nuevaSolicitud.telefono || '',
         dependencia: dep,
         supervisor: sup,
         responsable: sup,
         estado: est,
-        bienes: [
-          {
-            descripcion: 'Equipo de cómputo y accesorios de oficina',
-            codigo_inventario: `INV-${Date.now().toString().slice(-4)}`,
-            estado_bien: 'Bueno',
-          },
-        ],
+        bienes: Array.isArray(nuevaSolicitud.bienes) ? nuevaSolicitud.bienes : [],
       })
       cargarSolicitudes().catch((e) => console.warn('Sync Atlas:', e.message))
     } catch (err) {

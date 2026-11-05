@@ -39,7 +39,7 @@ El Administrador **solo puede crear Supervisores**.
 |---------------------------------|--------------------|
 | `admin@gccon.com`      | `admin`  |
 
-Carga con `backend/scripts/cargarUsuariosGccon.js`. Bloqueo: 3 intentos fallidos bloquean 15 min.
+Carga con `backend/scripts/cargarUsuariosGccon.js`. Bloqueo: 10 intentos fallidos bloquean 3 min.
 
 ---
 

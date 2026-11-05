@@ -39,7 +39,7 @@ Requisito clave: el usuario `ResponsableArea` **debe tener `dependencia_id`** (e
 |-------------------------------------|--------------------|
 | `franklin.chacon@gccon.com`         | `franklin`         |
 
-Carga con `backend/scripts/cargarUsuariosGccon.js`. Bloqueo: 3 intentos -> 15 min. **Solo firma su casillero exacto** asignado por la plantilla/dependencia activa.
+Carga con `backend/scripts/cargarUsuariosGccon.js`. Bloqueo: 10 intentos -> 3 min. **Solo firma su casillero exacto** asignado por la plantilla/dependencia activa.
 Precondición: esta cuenta debe estar **asignada a una dependencia activa** con al menos un
 contrato en `Pendiente de Firmas`.
 

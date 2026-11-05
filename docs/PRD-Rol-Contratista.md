@@ -33,7 +33,7 @@ El Contratista queda vinculado a un Supervisor (`supervisor_id`) que será quien
 |-------------------------------------|--------------------|
 | `proyecto.gas@gccon.com`            | `gas123`           |
 
-Carga con `backend/scripts/cargarUsuariosGccon.js`. Bloqueo: 3 intentos -> 15 min.
+Carga con `backend/scripts/cargarUsuariosGccon.js`. Bloqueo: 10 intentos -> 3 min.
 
 ---
 

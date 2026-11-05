@@ -37,7 +37,7 @@ npm run dev            # abre http://localhost:9000 (el proxy /api -> :3000 ya e
 | Responsable Área | `responsable.demo@sena.edu.co` | `Responsable123!` |
 
 > Notas: la política exige contraseñas de 8+ caracteres (mayúscula, minúscula y número).
-> Tras **3** intentos fallidos la cuenta se bloquea 15 min; `seedDev.js` también la desbloquea.
+> Tras **10** intentos fallidos la cuenta se bloquea 3 min; `seedDev.js` también la desbloquea.
 
 ---
 
@@ -85,7 +85,7 @@ EMAIL_USER=        # correo Gmail para Nodemailer
 EMAIL_PASS=        # contraseña de aplicación
 FRONTEND_URL=http://localhost:3000   # opcional, usado en el enlace de recuperación
 CORS_ORIGIN=http://localhost:3000    # lista blanca de orígenes (separada por comas)
-RATE_LIMIT_MAX=10  # peticiones por ventana de 15 min en el login
+RATE_LIMIT_MAX=10  # peticiones por ventana de 3 min en el login
 ```
 
 ### Instalación desde cero (clonar en una máquina nueva)
@@ -235,7 +235,7 @@ La jerarquía se valida con el middleware `verificarJerarquia` (`src/middlewares
 
 | Método | Ruta | Acceso | Descripción |
 |---|---|---|---|
-| POST | `/api/auth/login` | público | Login + bloqueo por 3 intentos (15 min) |
+| POST | `/api/auth/login` | público | Login + bloqueo por 10 intentos (3 min) |
 | POST | `/api/auth/recuperar` | público | Genera token efímero de recuperación |
 | POST | `/api/auth/restablecer` | público | Restablece contraseña con token (body `{ token, nueva_password }`) |
 | PUT | `/api/auth/cambiar-password` | autenticado | Cambio de contraseña (RF-015) |
@@ -319,7 +319,7 @@ La jerarquía se valida con el middleware `verificarJerarquia` (`src/middlewares
 
 - **Rate limiting** (`express-rate-limit`): límite global por IP en toda `/api`
   (`API_RATE_LIMIT_MAX` por ventana de 15 min) + límite estricto en `/api/auth/login` y
-  `/api/auth/recuperar` contra fuerza bruta (`RATE_LIMIT_MAX`), con cabeceras `RateLimit-*`.
+  `/api/auth/recuperar` contra fuerza bruta (`RATE_LIMIT_MAX` por ventana de 3 min), con cabeceras `RateLimit-*`.
 - **Helmet**: cabeceras HTTP de seguridad en toda la API (CSP, HSTS con `preload`,
   `Referrer-Policy`, `X-Frame-Options: DENY`, `X-Content-Type-Options`).
 - **CORS**: lista blanca de orígenes configurada con `CORS_ORIGIN`.
@@ -340,7 +340,7 @@ de datos de prueba `pazysalvo_sena_test`:
 npm test
 ```
 
-Cubre: login (éxito, credenciales inválidas, usuario deshabilitado, bloqueo por 3 intentos),
+Cubre: login (éxito, credenciales inválidas, usuario deshabilitado, bloqueo por 10 intentos),
 jerarquía de creación, política de contraseñas, creación de contrato y validación de bienes,
 evaluación estricta del supervisor, firma y finalización, consulta de solicitudes, descarga de
 PDF, recuperación/restablecimiento y cambio de contraseña.
@@ -360,7 +360,7 @@ http://localhost:3000/api-docs
 ## 9. Flujo de negocio (los 7 diagramas)
 
 1. **Autenticación y bloqueos** (`/api/auth/login`): busca el correo, valida `bloqueado_hasta`,
-   compara con `bcrypt.compare()`, acumula intentos (bloqueo de 15 min tras 3 fallos) y emite
+   compara con `bcrypt.compare()`, acumula intentos (bloqueo de 3 min tras 10 fallos) y emite
    un JWT firmado con `id`, `rol`, `dependencia_id` y `supervisor_id`.
 2. **Registro contractual e inventario** (`/api/contratos/nuevo`): valida campos y cada bien
    (`descripcion` + `codigo_inventario`), hereda la versión vigente del formato y guarda el

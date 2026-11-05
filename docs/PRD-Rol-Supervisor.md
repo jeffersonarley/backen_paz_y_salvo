@@ -40,7 +40,7 @@ Cadena jerárquica: `Administrador -> Coordinador/Supervisor -> (Contratista | R
 |-------------------------------------|--------------------|
 | `supervisor@gccon.com`              | `super`            |
 
-Carga con `backend/scripts/cargarUsuariosGccon.js`. Bloqueo: 3 intentos -> 15 min (configurable). **Debe tener dependencia propia asignada**.
+Carga con `backend/scripts/cargarUsuariosGccon.js`. Bloqueo: 10 intentos -> 3 min (configurable). **Debe tener dependencia propia asignada**.
 
 ---
 

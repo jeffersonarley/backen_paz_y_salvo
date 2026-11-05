@@ -117,7 +117,7 @@ Creadas por `backend/scripts/seedDev.js` (idempotente y desbloqueante):
 
 **Política de contraseñas:** mínimo 8 caracteres, al menos una mayúscula, una minúscula y un número.
 
-**Bloqueo:** 3 intentos fallidos bloquean la cuenta 15 minutos (`seedDev` la desbloquea).
+**Bloqueo:** 10 intentos fallidos bloquean la cuenta 3 minutos (`seedDev` la desbloquea).
 
 ---
 
@@ -163,8 +163,8 @@ Formato de criterios: **Dado / Cuando / Entonces** (Gherkin simplificado). IDs `
   mensaje genérico "Credenciales inválidas." (sin revelar si el correo existe ni intentos restantes).
 - **AC-01.3** Dado un usuario `activo: false` con credenciales correctas, cuando inicia sesión,
   entonces responde `401` con "Usuario deshabilitado.".
-- **AC-01.4** Dado un usuario activo, cuando falla 3 veces, entonces el 4.º intento responde `403`
-  (cuenta bloqueada 15 min); tras ese bloqueo incluso la contraseña correcta es rechazada.
+- **AC-01.4** Dado un usuario activo, cuando falla 10 veces, entonces el 11.º intento responde `403`
+  (cuenta bloqueada 3 min); tras ese bloqueo incluso la contraseña correcta es rechazada.
 - **AC-01.5** Dado un body con objeto NoSQL (`{"correo_institucional":{"$ne":null}}`), cuando
   inicia sesión, entonces responde `400` sin emitir token.
 - **AC-01.6** Dado un JWT con `alg: "none"` o firma inválida, cuando se usa en un endpoint
@@ -462,7 +462,7 @@ Y su variante negativa: **rechazo de un área** deja el trámite detenido y bloq
 
 - **Datos compartidos:** si se apunta a la BD de desarrollo compartida, use números de contrato
   únicos y limpie sus datos; mejor usar staging aislado.
-- **Bloqueo de cuentas:** las pruebas negativas de login pueden bloquear usuarios demo (15 min);
+- **Bloqueo de cuentas:** las pruebas negativas de login pueden bloquear usuarios demo (3 min);
   re-ejecutar `seedDev` entre ciclos.
 - **Rate limit:** el volumen de pruebas puede disparar `429`; espaciar o subir `RATE_LIMIT_MAX`
   en el entorno de pruebas.

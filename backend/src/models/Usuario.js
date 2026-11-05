@@ -54,6 +54,14 @@ const usuarioSchema = new mongoose.Schema({
         type: String,
         trim: true
     },
+    documento: {
+        type: String,
+        trim: true
+    },
+    casilla: {
+        type: String,
+        trim: true
+    },
     activo: {
         type: Boolean,
         default: true

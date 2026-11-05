@@ -99,7 +99,33 @@ export const useAuthStore = defineStore('auth', () => {
     sessionStorage.setItem('gccon_user', serializado)
   }
 
+  // Elimina claves de datos demo/pruebas dejadas en el navegador
+  function limpiarDatosDemo() {
+    try {
+      Object.keys(localStorage).forEach((k) => {
+        if (
+          k === 'gccon_certificados' ||
+          k.startsWith('certificado_identificacion_')
+        ) {
+          localStorage.removeItem(k)
+        }
+      })
+      Object.keys(sessionStorage).forEach((k) => {
+        if (
+          k.startsWith('certificado_identificacion_') ||
+          k.startsWith('novedad_') ||
+          k.startsWith('notifs_leidas_')
+        ) {
+          sessionStorage.removeItem(k)
+        }
+      })
+    } catch {
+      /* noop */
+    }
+  }
+
   function logout() {
+    limpiarDatosDemo()
     usuario.value = null
     localStorage.removeItem('gccon_user')
     localStorage.removeItem('auth_token')
@@ -133,5 +159,6 @@ export const useAuthStore = defineStore('auth', () => {
     login,
     logout,
     actualizarUsuario,
+    limpiarDatosDemo,
   }
 })
