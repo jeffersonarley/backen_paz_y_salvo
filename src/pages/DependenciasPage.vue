@@ -70,26 +70,41 @@
 
       <template #body-cell-responsables="props">
         <q-td :props="props">
-          <div v-if="(props.row.responsables || []).length" class="column q-gutter-xs">
-            <q-chip
+          <div v-if="(props.row.responsables || []).length" class="column q-gutter-y-xs">
+            <div
               v-for="resp in props.row.responsables"
               :key="resp.id || resp._id"
-              dense
-              size="sm"
-              color="teal-1"
-              text-color="teal-9"
-              icon="badge"
-              class="q-ma-none"
+              class="user-tag row items-center no-wrap cursor-pointer"
             >
-              {{ resp.nombre }}
-              <q-tooltip>
-                {{ resp.rol === 'Supervisor' ? 'Coordinador' : 'Responsable de Área' }}
-                <br />
-                {{ resp.correo }}
+              <div
+                class="user-avatar text-weight-bold"
+                :style="avatarStyle(resp.nombre, resp.rol)"
+              >
+                {{ obtenerIniciales(resp.nombre) }}
+              </div>
+              <span class="user-name text-weight-medium text-grey-9 q-ml-xs">
+                {{ resp.nombre }}
+              </span>
+              <span
+                v-if="resp.rol === 'Supervisor'"
+                class="user-role-badge q-ml-xs"
+              >
+                Coord.
+              </span>
+
+              <q-tooltip class="bg-dark text-white shadow-3" :offset="[4, 4]">
+                <div class="text-weight-bold">{{ resp.nombre }}</div>
+                <div class="text-caption text-positive">
+                  {{ resp.rol === 'Supervisor' ? 'Coordinador (Supervisor)' : 'Responsable de Área' }}
+                </div>
+                <div v-if="resp.correo" class="text-caption text-grey-4">{{ resp.correo }}</div>
               </q-tooltip>
-            </q-chip>
+            </div>
           </div>
-          <span v-else class="text-caption text-grey-6">Sin responsables asignados</span>
+          <div v-else class="text-caption text-grey-5 text-italic row items-center">
+            <q-icon name="person_off" size="14px" class="q-mr-xs text-grey-4" />
+            Sin responsables asignados
+          </div>
         </q-td>
       </template>
 
@@ -213,15 +228,34 @@
               hint="Cada dependencia puede tener varios responsables (Coordinador o Responsable de Área); cualquiera de ellos puede firmar"
             >
               <template #prepend>
-                <q-icon name="badge" color="primary" />
+                <q-icon name="people" color="primary" />
+              </template>
+              <template #selected-item="scope">
+                <div class="user-chip-selected row items-center no-wrap q-mr-xs q-my-xs">
+                  <div
+                    class="user-avatar text-weight-bold"
+                    :style="avatarStyle(scope.opt.nombre, scope.opt.rol)"
+                  >
+                    {{ obtenerIniciales(scope.opt.nombre) }}
+                  </div>
+                  <span class="text-weight-medium q-ml-xs user-chip-text">{{ scope.opt.nombre }}</span>
+                  <q-icon
+                    name="cancel"
+                    size="16px"
+                    class="cursor-pointer q-ml-xs text-grey-6 hover-delete"
+                    @click.stop="scope.removeAtIndex(scope.index)"
+                  />
+                </div>
               </template>
               <template #option="scope">
                 <q-item v-bind="scope.itemProps">
                   <q-item-section avatar>
-                    <q-icon
-                      :name="scope.opt.rol === 'Supervisor' ? 'supervisor_account' : 'person'"
-                      :color="scope.opt.rol === 'Supervisor' ? 'indigo' : 'primary'"
-                    />
+                    <div
+                      class="user-avatar text-weight-bold"
+                      :style="avatarStyle(scope.opt.nombre, scope.opt.rol)"
+                    >
+                      {{ obtenerIniciales(scope.opt.nombre) }}
+                    </div>
                   </q-item-section>
                   <q-item-section>
                     <q-item-label class="text-weight-bold">{{ scope.opt.nombre }}</q-item-label>
@@ -667,4 +701,111 @@ function limpiarFormulario() {
   editando.value = false
   indiceEditar.value = null
 }
+
+function obtenerIniciales(nombre) {
+  if (!nombre) return 'U'
+  const partes = String(nombre).trim().split(/\s+/)
+  if (partes.length === 1) return partes[0].substring(0, 2).toUpperCase()
+  return (partes[0][0] + partes[partes.length - 1][0]).toUpperCase()
+}
+
+function avatarStyle(nombre, rol) {
+  if (rol === 'Supervisor') {
+    return {
+      backgroundColor: '#e0e7ff',
+      color: '#3730a3',
+      border: '1px solid #c7d2fe',
+    }
+  }
+
+  const palettes = [
+    { bg: '#e8f5e9', text: '#1b5e20', border: '#c8e6c9' }, // Verde SENA suave
+    { bg: '#e0f2fe', text: '#0369a1', border: '#bae6fd' }, // Celeste cielo
+    { bg: '#fef3c7', text: '#92400e', border: '#fde68a' }, // Ámbar dorado
+    { bg: '#f3e8ff', text: '#6b21a8', border: '#e9d5ff' }, // Púrpura elegante
+    { bg: '#ffe4e6', text: '#9f1239', border: '#fecdd3' }, // Rosa suave
+    { bg: '#f1f5f9', text: '#334155', border: '#cbd5e1' }, // Gris pizarra
+  ]
+
+  let hash = 0
+  const str = String(nombre || 'X')
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  const color = palettes[Math.abs(hash) % palettes.length]
+
+  return {
+    backgroundColor: color.bg,
+    color: color.text,
+    border: `1px solid ${color.border}`,
+  }
+}
 </script>
+
+<style scoped>
+.user-tag {
+  display: inline-flex;
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 3px 10px 3px 4px;
+  max-width: fit-content;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.user-tag:hover {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.user-avatar {
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  letter-spacing: -0.3px;
+  flex-shrink: 0;
+}
+
+.user-name {
+  font-size: 12.5px;
+  line-height: 1.2;
+  color: #1e293b;
+  white-space: nowrap;
+}
+
+.user-role-badge {
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 6px;
+  background: #e0e7ff;
+  color: #3730a3;
+  line-height: 1.2;
+  border: 1px solid #c7d2fe;
+}
+
+.user-chip-selected {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 16px;
+  padding: 2px 6px 2px 3px;
+}
+
+.user-chip-text {
+  font-size: 12px;
+  color: #1e293b;
+}
+
+.hover-delete:hover {
+  color: #dc2626 !important;
+}
+</style>
