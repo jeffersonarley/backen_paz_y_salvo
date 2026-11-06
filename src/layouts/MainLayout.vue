@@ -270,6 +270,14 @@ const menuBase = [
     roles: ['ADMINISTRADOR', 'SUPERVISOR'],
   },
   {
+    name: 'plantillas',
+    label: 'Plantillas',
+    to: { name: 'plantillas' },
+    icon: 'tune',
+    exact: false,
+    roles: ['ADMINISTRADOR', 'SUPERVISOR'],
+  },
+  {
     name: 'solicitudes',
     label: 'Solicitudes',
     to: { name: 'solicitudes' },

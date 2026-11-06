@@ -75,6 +75,15 @@ const routes = [
         meta: { titulo: 'Dependencias', roles: ['ADMINISTRADOR', 'SUPERVISOR'] },
       },
       {
+        path: 'plantillas',
+        name: 'plantillas',
+        component: () => import('@/pages/PlantillasPage.vue'),
+        meta: {
+          titulo: 'Plantillas GCCON-F-088',
+          roles: ['ADMINISTRADOR', 'SUPERVISOR'],
+        },
+      },
+      {
         path: 'solicitudes',
         name: 'solicitudes',
         component: () => import('@/pages/SolicitudesPage.vue'),

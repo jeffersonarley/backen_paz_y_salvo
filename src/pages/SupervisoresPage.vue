@@ -3,16 +3,16 @@
     <!-- Encabezado -->
     <div class="row items-center justify-between q-mb-lg">
       <div>
-        <div class="text-h4 text-primary text-weight-bold">Supervisores</div>
+        <div class="text-h4 text-primary text-weight-bold">Coordinadores (Supervisores)</div>
         <div class="text-subtitle2 text-grey-7">
-          Gestión de supervisores encargados del formato GCCON-F-088
+          Gestión de coordinadores y su apoyo de supervisión para el formato GCCON-F-088
         </div>
       </div>
 
       <q-btn
         color="positive"
         icon="add"
-        label="Nuevo Supervisor"
+        label="Nuevo Coordinador"
         unelevated
         @click="nuevoSupervisor"
       />
@@ -26,7 +26,7 @@
         dense
         clearable
         style="width: 320px"
-        placeholder="Buscar supervisor..."
+        placeholder="Buscar coordinador..."
       >
         <template #prepend>
           <q-icon name="search" />
@@ -34,33 +34,49 @@
       </q-input>
     </div>
 
-    <!-- Tabla de Supervisores -->
+    <!-- Tabla de Coordinadores / Supervisores -->
     <q-table
-      title="Listado de Supervisores"
-      :rows="store ? store.supervisores : rows"
+      title="Listado de Coordinadores (Supervisores)"
+      :rows="store.supervisores"
       :columns="columns"
       :filter="filtro"
-      row-key="id"
+      row-key="_id"
       flat
       bordered
+      :loading="store.cargando"
       :rows-per-page-options="[10, 25, 50, 0]"
       :pagination="{ rowsPerPage: 25 }"
-      no-data-label="No hay supervisores registrados"
+      no-data-label="No hay coordinadores registrados"
       no-results-label="No se encontraron coincidencias"
     >
       <template #body-cell-dependencia="props">
         <q-td :props="props">
           <q-badge color="blue-1" text-color="primary" class="text-weight-bold q-pa-xs">
             <q-icon name="apartment" class="q-mr-xs" />
-            {{ props.row.dependencia || 'Gestión Tecnológica (TIC)' }}
+            {{ props.row.dependencia || 'Coordinación Académica' }}
           </q-badge>
+        </q-td>
+      </template>
+
+      <template #body-cell-apoyo_supervision="props">
+        <q-td :props="props">
+          <q-badge
+            v-if="props.row.apoyo_supervision"
+            color="indigo-1"
+            text-color="indigo-9"
+            class="q-pa-xs text-weight-bold"
+          >
+            <q-icon name="support_agent" class="q-mr-xs" />
+            {{ props.row.apoyo_supervision }}
+          </q-badge>
+          <span v-else class="text-caption text-grey-6">Sin apoyo asignado</span>
         </q-td>
       </template>
 
       <template #body-cell-acciones="props">
         <q-td :props="props">
           <q-btn flat round dense color="primary" icon="edit" @click="editarSupervisor(props.row)">
-            <q-tooltip>Editar Supervisor</q-tooltip>
+            <q-tooltip>Editar Coordinador y Apoyo</q-tooltip>
           </q-btn>
 
           <q-btn
@@ -71,7 +87,7 @@
             icon="person_off"
             @click="eliminarSupervisor(props.row)"
           >
-            <q-tooltip>Desactivar Supervisor</q-tooltip>
+            <q-tooltip>Desactivar Coordinador</q-tooltip>
           </q-btn>
         </q-td>
       </template>
@@ -79,10 +95,10 @@
 
     <!-- Diálogo Formulario Creación / Edición -->
     <q-dialog v-model="dialogo" persistent>
-      <q-card style="min-width: 500px; max-width: 90vw">
+      <q-card style="min-width: 520px; max-width: 90vw">
         <q-card-section class="row items-center justify-between">
           <div class="text-h6 text-primary text-weight-bold">
-            {{ editando ? 'Editar Supervisor' : 'Nuevo Supervisor' }}
+            {{ editando ? 'Editar Coordinador (Supervisor)' : 'Nuevo Coordinador (Supervisor)' }}
           </div>
           <q-btn icon="close" flat round dense v-close-popup @click="cancelar" />
         </q-card-section>
@@ -98,7 +114,11 @@
               dense
               :disable="editando"
               :rules="[(val) => !!val || 'El documento es obligatorio']"
-            />
+            >
+              <template #prepend>
+                <q-icon name="badge" color="grey-7" />
+              </template>
+            </q-input>
 
             <q-input
               v-model="supervisor.nombre"
@@ -106,7 +126,11 @@
               outlined
               dense
               :rules="[(val) => !!val || 'El nombre es obligatorio']"
-            />
+            >
+              <template #prepend>
+                <q-icon name="person" color="primary" />
+              </template>
+            </q-input>
 
             <q-input
               v-model="supervisor.correo"
@@ -119,7 +143,11 @@
                 (val) =>
                   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) || 'Ingrese un correo electrónico válido',
               ]"
-            />
+            >
+              <template #prepend>
+                <q-icon name="email" color="grey-7" />
+              </template>
+            </q-input>
 
             <q-input
               v-model="supervisor.telefono"
@@ -127,21 +155,47 @@
               outlined
               dense
               :rules="[(val) => !!val || 'El teléfono es obligatorio']"
-            />
+            >
+              <template #prepend>
+                <q-icon name="phone" color="grey-7" />
+              </template>
+            </q-input>
 
+            <!-- Dependencia del Coordinador -->
             <q-select
-              v-model="supervisor.dependencia"
+              v-model="supervisor.dependencia_id"
               :options="opcionesDependencias"
-              label="Dependencia por Defecto *"
-              outlined
-              dense
+              option-label="label"
+              option-value="value"
               emit-value
               map-options
+              label="Dependencia del Coordinador *"
+              outlined
+              dense
               :rules="[(val) => !!val || 'La dependencia es obligatoria']"
-              hint="Área técnica o administrativa a cargo del supervisor"
+              hint="Área técnica o administrativa a cargo del coordinador (ej. Coordinación Académica)"
             >
               <template #prepend>
                 <q-icon name="apartment" color="primary" />
+              </template>
+            </q-select>
+
+            <!-- Asignación de apoyo de supervisión -->
+            <q-select
+              v-model="supervisor.apoyo_supervision_id"
+              :options="opcionesApoyo"
+              option-label="label"
+              option-value="value"
+              emit-value
+              map-options
+              clearable
+              label="Asignación de apoyo de supervisión"
+              outlined
+              dense
+              hint="Persona que apoya al coordinador en la gestión y seguimiento del contrato"
+            >
+              <template #prepend>
+                <q-icon name="support_agent" color="primary" />
               </template>
             </q-select>
 
@@ -152,7 +206,6 @@
               outlined
               dense
               hint="Mínimo 8 caracteres, con mayúscula, minúscula y número"
-              @focus="avisarRequisitosPassword"
               :rules="
                 editando
                   ? [
@@ -170,6 +223,9 @@
                     ]
               "
             >
+              <template #prepend>
+                <q-icon name="lock" color="grey-7" />
+              </template>
               <template #append>
                 <q-icon
                   :name="mostrarPassword ? 'visibility_off' : 'visibility'"
@@ -179,7 +235,6 @@
               </template>
             </q-input>
 
-            <!-- Banner de error si falla la validación en backend (sin cerrar planilla) -->
             <div v-if="errorFormulario" class="q-mt-sm">
               <q-banner rounded dense class="bg-red-1 text-negative text-caption">
                 <template #avatar>
@@ -190,9 +245,17 @@
             </div>
           </q-card-section>
 
+          <q-separator />
+
           <q-card-actions align="right" class="q-pa-md">
             <q-btn flat label="Cancelar" color="grey-8" @click="cancelar" :disable="guardando" />
-            <q-btn unelevated type="submit" color="positive" label="Guardar" :loading="guardando" />
+            <q-btn
+              unelevated
+              type="submit"
+              color="positive"
+              :label="editando ? 'Actualizar Coordinador' : 'Guardar Coordinador'"
+              :loading="guardando"
+            />
           </q-card-actions>
         </q-form>
       </q-card>
@@ -207,8 +270,8 @@
         </q-card-section>
 
         <q-card-section class="q-pt-none text-body1">
-          ¿Está seguro de desactivar al supervisor
-          <strong>{{ nombreSupervisorEliminar }}</strong
+          ¿Está seguro de desactivar al coordinador
+          <strong>{{ supervisorEliminar?.nombre }}</strong
           >?
         </q-card-section>
 
@@ -226,6 +289,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useQuasar } from 'quasar'
 import { useSupervisoresStore } from '../stores/useSupervisoresStore.js'
 import { useDependenciasStore } from '../stores/useDependenciasStore.js'
+import api from '../services/api'
 
 const store = useSupervisoresStore()
 const dependenciasStore = useDependenciasStore()
@@ -235,39 +299,50 @@ onMounted(async () => {
   if (dependenciasStore.cargarDependencias) {
     await dependenciasStore.cargarDependencias()
   }
+  await cargarOpcionesApoyo()
 })
 
 const opcionesDependencias = computed(() => {
-  return (dependenciasStore.dependencias || [])
-    .filter((d) => d.estado !== 'Inactiva')
-    .map((d) => ({
-      label: d.nombre,
-      value: d.nombre,
-    }))
+  const lista = (dependenciasStore.dependencias || []).filter((d) => d.estado !== 'Inactiva')
+  return lista.map((d) => ({
+    label: d.nombre,
+    value: d._idReal || d._id || d.id,
+  }))
 })
+
+// Candidatos para el apoyo de supervisión (responsables de área y coordinadores)
+const opcionesApoyo = ref([])
+
+async function cargarOpcionesApoyo() {
+  const opciones = []
+  const vistos = new Set()
+  for (const rol of ['ResponsableArea', 'Supervisor']) {
+    try {
+      const resp = await api.get(`/usuarios?rol=${rol}`)
+      const lista = Array.isArray(resp.data) ? resp.data : resp.data?.usuarios || []
+      lista.forEach((u) => {
+        const id = String(u._id || u.id || '')
+        if (!id || vistos.has(id)) return
+        vistos.add(id)
+        const nombre = u.nombre_completo || u.nombre || 'Usuario'
+        opciones.push({
+          label: `${nombre} — ${rol === 'Supervisor' ? 'Coordinador' : 'Responsable de Área'}`,
+          value: id,
+        })
+      })
+    } catch {
+      // continuar con los disponibles
+    }
+  }
+  opcionesApoyo.value = opciones
+}
 
 const filtro = ref('')
 const dialogo = ref(false)
 const dialogoEliminar = ref(false)
-const documentoEliminar = ref('')
-const supervisorSeleccionadoEliminar = ref(null)
-
-const nombreSupervisorEliminar = computed(() => {
-  if (supervisorSeleccionadoEliminar.value) {
-    return (
-      supervisorSeleccionadoEliminar.value.nombre ||
-      supervisorSeleccionadoEliminar.value.nombre_completo ||
-      documentoEliminar.value ||
-      'el supervisor'
-    )
-  }
-  const s = store.supervisores.find(
-    (item) => item.documento === documentoEliminar.value || item._id === documentoEliminar.value,
-  )
-  return s?.nombre || s?.nombre_completo || documentoEliminar.value || 'el supervisor'
-})
 const editando = ref(false)
 const indiceEditar = ref(null)
+const supervisorEliminar = ref(null)
 const mostrarPassword = ref(false)
 const guardando = ref(false)
 const errorFormulario = ref('')
@@ -277,20 +352,10 @@ const supervisor = ref({
   nombre: '',
   correo: '',
   telefono: '',
-  dependencia: '',
+  dependencia_id: null,
+  apoyo_supervision_id: null,
   password: '',
 })
-
-function avisarRequisitosPassword() {
-  $q.notify({
-    type: 'info',
-    icon: 'lock',
-    message:
-      'Requisitos de la contraseña: mínimo 8 caracteres, al menos una mayúscula, una minúscula y un número.',
-    position: 'top',
-    timeout: 4000,
-  })
-}
 
 const columns = [
   {
@@ -302,7 +367,7 @@ const columns = [
   },
   {
     name: 'nombre',
-    label: 'Nombre',
+    label: 'Nombre Coordinador',
     field: 'nombre',
     align: 'left',
     sortable: true,
@@ -310,7 +375,14 @@ const columns = [
   {
     name: 'dependencia',
     label: 'Dependencia Asignada',
-    field: (row) => row.dependencia || 'Gestión Tecnológica (TIC)',
+    field: (row) => row.dependencia || 'Coordinación Académica',
+    align: 'left',
+    sortable: true,
+  },
+  {
+    name: 'apoyo_supervision',
+    label: 'Apoyo de Supervisión',
+    field: 'apoyo_supervision',
     align: 'left',
     sortable: true,
   },
@@ -345,10 +417,10 @@ async function guardarSupervisor() {
     )
 
     if (existeDocumento) {
-      errorFormulario.value = 'Ya existe un supervisor registrado con ese documento.'
+      errorFormulario.value = 'Ya existe un coordinador registrado con ese documento.'
       $q.notify({
         type: 'negative',
-        message: 'Ya existe un supervisor registrado con ese documento.',
+        message: 'Ya existe un coordinador registrado con ese documento.',
         position: 'top',
       })
       return
@@ -360,65 +432,42 @@ async function guardarSupervisor() {
       $q.notify({ type: 'warning', message: msg, position: 'top', timeout: 4000 })
       return
     }
-
-    if (supervisor.value.password.length < 8) {
-      const msg = 'La contraseña debe tener mínimo 8 caracteres.'
-      errorFormulario.value = msg
-      $q.notify({ type: 'warning', message: msg, position: 'top', timeout: 4000 })
-      return
-    }
-
-    if (!/[A-Z]/.test(supervisor.value.password)) {
-      const msg = 'La contraseña debe incluir al menos una letra mayúscula.'
-      errorFormulario.value = msg
-      $q.notify({ type: 'warning', message: msg, position: 'top', timeout: 4000 })
-      return
-    }
-
-    if (!/[a-z]/.test(supervisor.value.password)) {
-      const msg = 'La contraseña debe incluir al menos una letra minúscula.'
-      errorFormulario.value = msg
-      $q.notify({ type: 'warning', message: msg, position: 'top', timeout: 4000 })
-      return
-    }
-
-    if (!/[0-9]/.test(supervisor.value.password)) {
-      const msg = 'La contraseña debe incluir al menos un número.'
-      errorFormulario.value = msg
-      $q.notify({ type: 'warning', message: msg, position: 'top', timeout: 4000 })
-      return
-    }
   }
 
   guardando.value = true
   try {
+    const depEncontrada = opcionesDependencias.value.find(
+      (d) => d.value === supervisor.value.dependencia_id,
+    )
+    const payload = {
+      ...supervisor.value,
+      dependencia: depEncontrada ? depEncontrada.label : supervisor.value.dependencia || 'Coordinación Académica',
+      dependencia_nombre: depEncontrada ? depEncontrada.label : supervisor.value.dependencia || 'Coordinación Académica',
+    }
+
     if (editando.value) {
-      store.editar(indiceEditar.value, { ...supervisor.value })
+      await store.editar(indiceEditar.value, payload)
       $q.notify({
         type: 'positive',
-        message: 'Supervisor actualizado correctamente.',
+        message: 'Coordinador actualizado correctamente.',
       })
     } else {
-      await store.agregar({ ...supervisor.value })
+      await store.agregar(payload)
       $q.notify({
         type: 'positive',
-        message: 'Supervisor registrado correctamente.',
+        message: 'Coordinador registrado exitosamente con su dependencia y apoyo.',
       })
     }
-    // Solo cerramos la planilla cuando la operación tiene éxito
     limpiarFormulario()
   } catch (err) {
-    const mensajeError =
-      err.response?.data?.mensaje ||
-      err.mensaje ||
-      'Error al guardar supervisor en la base de datos.'
-    errorFormulario.value = mensajeError
+    console.error('Error al guardar coordinador:', err)
+    errorFormulario.value =
+      err.response?.data?.mensaje || 'Error al guardar el coordinador en el servidor.'
     $q.notify({
       type: 'negative',
-      message: mensajeError,
+      message: errorFormulario.value,
       position: 'top',
     })
-    // No se llama a limpiarFormulario() para que la ventana permanezca abierta con los datos
   } finally {
     guardando.value = false
   }
@@ -426,47 +475,38 @@ async function guardarSupervisor() {
 
 function nuevoSupervisor() {
   limpiarFormulario()
-  const primera = dependenciasStore.dependencias.find((d) => d.estado !== 'Inactiva')
-  supervisor.value.dependencia = primera ? primera.nombre : 'Gestión Tecnológica (TIC)'
+  const primera = opcionesDependencias.value[0]
+  supervisor.value.dependencia_id = primera ? primera.value : null
   dialogo.value = true
 }
 
 function editarSupervisor(fila) {
   supervisor.value = {
     ...fila,
-    dependencia: fila.dependencia || 'Gestión Tecnológica (TIC)',
-    password: fila.password || '',
+    dependencia_id: fila.dependencia_id || null,
+    apoyo_supervision_id: fila.apoyo_supervision_id || null,
+    password: '',
   }
-
-  indiceEditar.value = store.supervisores.findIndex((item) => item.documento === fila.documento)
-
+  indiceEditar.value = fila._id || fila.id || fila.documento
   editando.value = true
-  errorFormulario.value = ''
   dialogo.value = true
 }
 
-function eliminarSupervisor(item) {
-  if (typeof item === 'object' && item !== null) {
-    supervisorSeleccionadoEliminar.value = item
-    documentoEliminar.value = item.documento || item._id || ''
-  } else {
-    documentoEliminar.value = item
-    supervisorSeleccionadoEliminar.value =
-      store.supervisores.find((s) => s.documento === item || s._id === item) || null
-  }
+function eliminarSupervisor(fila) {
+  supervisorEliminar.value = fila
   dialogoEliminar.value = true
 }
 
-function confirmarEliminar() {
-  const nombreSup = nombreSupervisorEliminar.value
-  store.eliminar(documentoEliminar.value)
-  documentoEliminar.value = ''
-  supervisorSeleccionadoEliminar.value = null
+async function confirmarEliminar() {
+  if (supervisorEliminar.value) {
+    await store.eliminar(supervisorEliminar.value.documento)
+    $q.notify({
+      type: 'info',
+      message: `Coordinador "${supervisorEliminar.value.nombre}" desactivado.`,
+    })
+    supervisorEliminar.value = null
+  }
   dialogoEliminar.value = false
-  $q.notify({
-    type: 'info',
-    message: `Supervisor "${nombreSup}" desactivado correctamente.`,
-  })
 }
 
 function cancelar() {
@@ -479,7 +519,8 @@ function limpiarFormulario() {
     nombre: '',
     correo: '',
     telefono: '',
-    dependencia: '',
+    dependencia_id: null,
+    apoyo_supervision_id: null,
     password: '',
   }
   errorFormulario.value = ''

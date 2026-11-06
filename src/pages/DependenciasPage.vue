@@ -68,10 +68,35 @@
         </q-td>
       </template>
 
+      <template #body-cell-responsables="props">
+        <q-td :props="props">
+          <div v-if="(props.row.responsables || []).length" class="column q-gutter-xs">
+            <q-chip
+              v-for="resp in props.row.responsables"
+              :key="resp.id || resp._id"
+              dense
+              size="sm"
+              color="teal-1"
+              text-color="teal-9"
+              icon="badge"
+              class="q-ma-none"
+            >
+              {{ resp.nombre }}
+              <q-tooltip>
+                {{ resp.rol === 'Supervisor' ? 'Coordinador' : 'Responsable de Área' }}
+                <br />
+                {{ resp.correo }}
+              </q-tooltip>
+            </q-chip>
+          </div>
+          <span v-else class="text-caption text-grey-6">Sin responsables asignados</span>
+        </q-td>
+      </template>
+
       <template #body-cell-acciones="props">
         <q-td :props="props">
           <q-btn flat round dense color="primary" icon="edit" @click="editarDependencia(props.row)">
-            <q-tooltip>Editar Dependencia</q-tooltip>
+            <q-tooltip>Editar Dependencia y Responsables</q-tooltip>
           </q-btn>
 
           <q-btn
@@ -94,7 +119,7 @@
 
     <!-- Diálogo Formulario Creación / Edición -->
     <q-dialog v-model="dialogo" persistent>
-      <q-card style="min-width: 500px; max-width: 90vw">
+      <q-card style="min-width: 540px; max-width: 90vw">
         <q-card-section class="row items-center justify-between">
           <div class="text-h6 text-primary text-weight-bold">
             {{ editando ? 'Editar Dependencia' : 'Nueva Dependencia' }}
@@ -111,9 +136,8 @@
                 <q-icon name="verified_user" color="positive" />
               </template>
               <div class="text-caption">
-                <strong>Destinatario oficial:</strong> Toda solicitud o paz y salvo vinculado a esta
-                dependencia va dirigido directamente a este Responsable de Área para su revisión y
-                firma oficial.
+                <strong>Destinatarios oficiales:</strong> Toda solicitud o paz y salvo vinculado a esta
+                dependencia va dirigido a los responsables asignados para su revisión y firma oficial.
               </div>
             </q-banner>
 
@@ -149,7 +173,7 @@
               @filter="filtrarNombresDependencias"
               @update:model-value="onSeleccionarNombreDependencia"
               :rules="[(val) => !!val || 'El nombre es obligatorio']"
-              hint="Elija un área estándar o escriba un nombre personalizado"
+              hint="Elija un área estándar (ej. Coordinación Académica, TIC, Almacén) o escriba un nombre personalizado"
             >
               <template #prepend>
                 <q-icon name="business" color="primary" />
@@ -172,22 +196,21 @@
               </template>
             </q-select>
 
-            <!-- Responsable de Área con Selección Automática -->
+            <!-- Responsables: pueden ser varios por dependencia -->
             <q-select
-              v-model="responsableSeleccionado"
-              label="Responsable de Área Destinatario *"
+              v-model="responsablesSeleccionados"
+              label="Responsables de la Dependencia *"
               outlined
               dense
+              multiple
+              use-chips
               :options="opcionesResponsables"
               option-label="etiqueta"
-              use-input
-              input-debounce="0"
-              new-value-mode="add-unique"
-              @update:model-value="onSeleccionarResponsable"
+              @update:model-value="onSeleccionarResponsables"
               :rules="[
-                (val) => !!dependencia.responsable || !!val || 'El responsable es obligatorio',
+                (val) => (val && val.length > 0) || 'Debe asignar al menos un responsable',
               ]"
-              hint="Seleccione el responsable registrado o escriba uno nuevo"
+              hint="Cada dependencia puede tener varios responsables (Coordinador o Responsable de Área); cualquiera de ellos puede firmar"
             >
               <template #prepend>
                 <q-icon name="badge" color="primary" />
@@ -195,49 +218,22 @@
               <template #option="scope">
                 <q-item v-bind="scope.itemProps">
                   <q-item-section avatar>
-                    <q-avatar icon="person" color="primary" text-color="white" size="sm" />
+                    <q-icon
+                      :name="scope.opt.rol === 'Supervisor' ? 'supervisor_account' : 'person'"
+                      :color="scope.opt.rol === 'Supervisor' ? 'indigo' : 'primary'"
+                    />
                   </q-item-section>
                   <q-item-section>
                     <q-item-label class="text-weight-bold">{{ scope.opt.nombre }}</q-item-label>
-                    <q-item-label caption>{{
-                      scope.opt.correo || 'Responsable de Área'
-                    }}</q-item-label>
+                    <q-item-label caption>
+                      {{ scope.opt.rol === 'Supervisor' ? 'Coordinador' : 'Responsable de Área' }} — {{ scope.opt.correo }}
+                    </q-item-label>
                   </q-item-section>
                 </q-item>
               </template>
             </q-select>
 
-            <q-input
-              v-model="dependencia.correo"
-              label="Correo Institucional del Responsable *"
-              outlined
-              dense
-              type="email"
-              :rules="[
-                (val) => !!val || 'El correo es obligatorio',
-                (val) =>
-                  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) || 'Ingrese un correo electrónico válido',
-              ]"
-            >
-              <template #prepend>
-                <q-icon name="email" color="grey-7" />
-              </template>
-            </q-input>
-
-            <!-- Estado: Activa por defecto al crear, editable solo al editar -->
-            <div
-              v-if="!editando"
-              class="row items-center q-pa-sm bg-green-1 text-positive rounded-borders q-mt-xs"
-            >
-              <q-icon name="check_circle" color="positive" size="sm" class="q-mr-sm" />
-              <div class="text-caption">
-                <strong>Estado:</strong> Activa (queda habilitada automáticamente para recibir
-                solicitudes y firmas).
-              </div>
-            </div>
-
             <q-select
-              v-else
               v-model="dependencia.estado"
               :options="['Activa', 'Inactiva']"
               label="Estado de la Dependencia"
@@ -246,12 +242,14 @@
             >
               <template #prepend>
                 <q-icon
-                  name="toggle_on"
+                  name="circle"
                   :color="dependencia.estado === 'Activa' ? 'positive' : 'grey-7'"
                 />
               </template>
             </q-select>
           </q-card-section>
+
+          <q-separator />
 
           <q-card-actions align="right" class="q-pa-md">
             <q-btn flat label="Cancelar" color="grey-8" @click="cancelar" />
@@ -259,17 +257,16 @@
               unelevated
               type="submit"
               color="positive"
-              label="Guardar Dependencia"
-              icon="save"
+              :label="editando ? 'Actualizar Dependencia' : 'Guardar Dependencia'"
             />
           </q-card-actions>
         </q-form>
       </q-card>
     </q-dialog>
 
-    <!-- Diálogo Confirmar Desactivación / Activación -->
+    <!-- Diálogo Confirmar Cambio de Estado (Activar / Desactivar) -->
     <q-dialog v-model="dialogoEliminar">
-      <q-card style="min-width: 420px; max-width: 90vw">
+      <q-card style="min-width: 400px">
         <q-card-section class="row items-center">
           <q-avatar
             :icon="esInactivaSeleccionada ? 'check_circle' : 'domain_disabled'"
@@ -277,25 +274,25 @@
             text-color="white"
             class="q-mr-sm"
           />
-          <span class="text-h6 text-weight-bold">{{
-            esInactivaSeleccionada ? 'Confirmar activación' : 'Confirmar desactivación'
-          }}</span>
+          <span class="text-h6">
+            {{ esInactivaSeleccionada ? 'Activar Dependencia' : 'Desactivar Dependencia' }}
+          </span>
         </q-card-section>
 
         <q-card-section class="q-pt-none text-body1">
           ¿Está seguro de {{ esInactivaSeleccionada ? 'activar' : 'desactivar' }} la dependencia
-          <strong class="text-primary text-weight-bold">{{ nombreEliminar }}</strong
+          <strong>{{ nombreEliminar }}</strong
           >?
           <div class="text-caption text-grey-7 q-mt-xs">
             {{
               esInactivaSeleccionada
-                ? 'El área quedará habilitada para firmar y validar compromisos contractuales.'
-                : 'Esta área no podrá firmar ni validar nuevos trámites hasta que sea reactivada.'
+                ? 'Al activarla, aparecerá disponible para firmas y revisión en el formato GCCON-F-088.'
+                : 'Al desactivarla, no se exigirán firmas para esta área en los nuevos trámites.'
             }}
           </div>
         </q-card-section>
 
-        <q-card-actions align="right" class="q-px-md q-pb-md">
+        <q-card-actions align="right">
           <q-btn flat label="Cancelar" color="grey-8" v-close-popup />
           <q-btn
             unelevated
@@ -315,111 +312,68 @@ import { useQuasar } from 'quasar'
 import { useDependenciasStore } from '../stores/useDependenciasStore.js'
 import api from '../services/api'
 
-const $q = useQuasar()
 const store = useDependenciasStore()
+const $q = useQuasar()
 
 const filtro = ref('')
 const dialogo = ref(false)
 const dialogoEliminar = ref(false)
-const codigoEliminar = ref('')
 const editando = ref(false)
 const indiceEditar = ref(null)
-const responsableSeleccionado = ref(null)
+const codigoEliminar = ref('')
+const responsablesSeleccionados = ref([])
 
-const responsablesPredefinidos = [
-  {
-    id: 'usr_tic',
-    nombre: 'Ing. Roberto Gómez',
-    correo: 'area.tic@gccon.com',
-    dependenciaSugerida: 'Gestión Tecnológica (TIC)',
-    etiqueta: 'Ing. Roberto Gómez (Gestión Tecnológica - TIC)',
-  },
-  {
-    id: 'usr_almacen',
-    nombre: 'Lic. Martha Almacén',
-    correo: 'area.almacen@gccon.com',
-    dependenciaSugerida: 'Almacén e Inventarios',
-    etiqueta: 'Lic. Martha Almacén (Almacén e Inventarios)',
-  },
-  {
-    id: 'usr_rrhh',
-    nombre: 'Dra. Claudia Ramos',
-    correo: 'rrhh@sena.edu.co',
-    dependenciaSugerida: 'Recursos Humanos / Talento Humano',
-    etiqueta: 'Dra. Claudia Ramos (Talento Humano)',
-  },
-  {
-    id: 'usr_infra',
-    nombre: 'Ing. Fernando Ramírez',
-    correo: 'infraestructura@sena.edu.co',
-    dependenciaSugerida: 'Infraestructura y Servicios Generales',
-    etiqueta: 'Ing. Fernando Ramírez (Infraestructura y Servicios)',
-  },
-  {
-    id: 'usr_biblio',
-    nombre: 'Lic. Jorge Biblioteca',
-    correo: 'biblioteca@sena.edu.co',
-    dependenciaSugerida: 'Biblioteca y Archivo',
-    etiqueta: 'Lic. Jorge Biblioteca (Biblioteca y Archivo)',
-  },
-  {
-    id: 'usr_bienestar',
-    nombre: 'Dra. Patricia Valenzuela',
-    correo: 'bienestar@sena.edu.co',
-    dependenciaSugerida: 'Bienestar al Aprendiz y Comunidad',
-    etiqueta: 'Dra. Patricia Valenzuela (Bienestar al Aprendiz)',
-  },
-]
-
+// Catálogo de dependencias sugeridas institucionales SENA
 const nombresDependenciasSugeridas = [
   {
+    nombre: 'Coordinación Académica',
+    descripcion: 'Coordinación y supervisión de contratos formativos y académicos',
+    icono: 'school',
+  },
+  {
     nombre: 'Gestión Tecnológica (TIC)',
-    descripcion: 'Equipos de cómputo, sistemas y accesos digitales',
-    icono: 'computer',
-    responsableSugerido: 'Ing. Roberto Gómez',
-    correoSugerido: 'area.tic@gccon.com',
+    descripcion: 'Equipos de cómputo, conectividad y sistemas de información',
+    icono: 'devices',
   },
   {
     nombre: 'Almacén e Inventarios',
-    descripcion: 'Herramientas, mobiliario y activos físicos',
+    descripcion: 'Recepción y control de bienes devolutivos y de consumo',
     icono: 'inventory_2',
-    responsableSugerido: 'Lic. Martha Almacén',
-    correoSugerido: 'area.almacen@gccon.com',
-  },
-  {
-    nombre: 'Recursos Humanos / Talento Humano',
-    descripcion: 'Carné institucional, aportes y paz y salvo laboral',
-    icono: 'badge',
-    responsableSugerido: 'Dra. Claudia Ramos',
-    correoSugerido: 'rrhh@sena.edu.co',
-  },
-  {
-    nombre: 'Infraestructura y Servicios Generales',
-    descripcion: 'Llaves, tarjetas de acceso y espacios físicos',
-    icono: 'domain',
-    responsableSugerido: 'Ing. Fernando Ramírez',
-    correoSugerido: 'infraestructura@sena.edu.co',
   },
   {
     nombre: 'Biblioteca y Archivo',
-    descripcion: 'Préstamos bibliográficos y entrega de archivos',
+    descripcion: 'Préstamo de material bibliográfico, libros y documentos',
     icono: 'menu_book',
-    responsableSugerido: 'Lic. Jorge Biblioteca',
-    correoSugerido: 'biblioteca@sena.edu.co',
   },
   {
     nombre: 'Bienestar al Aprendiz y Comunidad',
-    descripcion: 'Comunidad educativa y apoyos institucionales',
-    icono: 'volunteer_activism',
-    responsableSugerido: 'Dra. Patricia Valenzuela',
-    correoSugerido: 'bienestar@sena.edu.co',
+    descripcion: 'Servicios de apoyo, elementos deportivos y de bienestar',
+    icono: 'favorite',
   },
   {
-    nombre: 'Coordinación Académica y Formación',
-    descripcion: 'Calificaciones, fichas y reportes formativos',
-    icono: 'school',
-    responsableSugerido: 'Lic. Martha Almacén',
-    correoSugerido: 'area.almacen@gccon.com',
+    nombre: 'Recursos Humanos / Talento Humano',
+    descripcion: 'Paz y salvo contractual y vinculación de personal',
+    icono: 'people',
+  },
+  {
+    nombre: 'Infraestructura y Servicios Generales',
+    descripcion: 'Herramientas, llaves y mantenimiento de instalaciones',
+    icono: 'handyman',
+  },
+  {
+    nombre: 'Agencia Pública de Empleo (APE)',
+    descripcion: 'Gestión y colocación de empleo institucional',
+    icono: 'work',
+  },
+  {
+    nombre: 'Sennova',
+    descripcion: 'Investigación, desarrollo tecnológico e innovación',
+    icono: 'science',
+  },
+  {
+    nombre: 'Administración Educativa',
+    descripcion: 'Certificaciones, matrículas y archivo académico',
+    icono: 'folder_shared',
   },
 ]
 
@@ -446,80 +400,54 @@ function onSeleccionarNombreDependencia(val) {
   if (!val) return
   const nombreTexto = typeof val === 'object' ? val.nombre : val
   dependencia.value.nombre = nombreTexto
-
-  // Autoseleccionar responsable correspondiente si existe
-  const sugerencia = nombresDependenciasSugeridas.find(
-    (s) => s.nombre.toLowerCase() === nombreTexto.toLowerCase(),
-  )
-
-  if (sugerencia) {
-    const respEncontrado = opcionesResponsables.value.find(
-      (r) =>
-        (r.nombre &&
-          sugerencia.responsableSugerido &&
-          r.nombre.toLowerCase().includes(sugerencia.responsableSugerido.toLowerCase())) ||
-        (r.correo &&
-          sugerencia.correoSugerido &&
-          r.correo.toLowerCase() === sugerencia.correoSugerido.toLowerCase()),
-    )
-    if (respEncontrado) {
-      responsableSeleccionado.value = respEncontrado
-      dependencia.value.responsable = respEncontrado.nombre
-      dependencia.value.correo = respEncontrado.correo
-      dependencia.value.responsable_id = respEncontrado.id || respEncontrado._id || null
-    }
-  }
 }
 
-const opcionesResponsables = ref([...responsablesPredefinidos])
+const opcionesResponsables = ref([])
 
 async function cargarResponsables() {
-  try {
-    const resp = await api.get('/usuarios?rol=ResponsableArea')
-    const lista = Array.isArray(resp.data) ? resp.data : resp.data?.usuarios || []
-    if (Array.isArray(lista) && lista.length > 0) {
-      const desdeAtlas = lista.map((u) => ({
-        id: u._id || u.id,
-        _id: u._id || u.id,
-        nombre: u.nombre_completo || u.nombre,
-        correo: u.correo_institucional || u.correo || '',
-        etiqueta: `${u.nombre_completo || u.nombre} (${u.correo_institucional || u.correo || 'Responsable de Área'})`,
-      }))
-      const mapa = new Map()
-      desdeAtlas.forEach((r) => mapa.set(r.correo.toLowerCase(), r))
-      responsablesPredefinidos.forEach((r) => {
-        if (!mapa.has(r.correo.toLowerCase())) {
-          mapa.set(r.correo.toLowerCase(), r)
-        }
+  const opciones = []
+  const vistos = new Set()
+
+  const roles = ['ResponsableArea', 'Supervisor']
+  for (const rol of roles) {
+    try {
+      const resp = await api.get(`/usuarios?rol=${rol}`)
+      const lista = Array.isArray(resp.data) ? resp.data : resp.data?.usuarios || []
+      lista.forEach((u) => {
+        const id = String(u._id || u.id || '')
+        if (!id || vistos.has(id)) return
+        vistos.add(id)
+        const nombre = u.nombre_completo || u.nombre || 'Usuario'
+        const correo = u.correo_institucional || u.correo || ''
+        opciones.push({
+          id,
+          _id: id,
+          nombre,
+          correo,
+          rol: u.rol,
+          etiqueta: `${nombre} — ${u.rol === 'Supervisor' ? 'Coordinador' : 'Responsable de Área'} (${correo || 'sin correo'})`,
+        })
       })
-      opcionesResponsables.value = Array.from(mapa.values())
-    } else {
-      opcionesResponsables.value = [...responsablesPredefinidos]
+    } catch {
+      // continuar con el siguiente rol
     }
-  } catch {
-    opcionesResponsables.value = [...responsablesPredefinidos]
   }
+
+  opcionesResponsables.value = opciones
 }
 
 onMounted(() => {
   cargarResponsables()
 })
 
-function onSeleccionarResponsable(val) {
-  if (!val) return
-  if (typeof val === 'object') {
-    dependencia.value.responsable = val.nombre || val.etiqueta || ''
-    if (val.correo) {
-      dependencia.value.correo = val.correo
-    }
-    dependencia.value.responsable_id = val.id || val._id || null
+function onSeleccionarResponsables(val) {
+  const seleccionados = Array.isArray(val) ? val : val ? [val] : []
+  responsablesSeleccionados.value = seleccionados
 
-    if (val.dependenciaSugerida && !dependencia.value.nombre) {
-      dependencia.value.nombre = val.dependenciaSugerida
-    }
-  } else if (typeof val === 'string') {
-    dependencia.value.responsable = val
-  }
+  dependencia.value.responsables = seleccionados
+  dependencia.value.responsable = seleccionados[0]?.nombre || ''
+  dependencia.value.correo = seleccionados[0]?.correo || ''
+  dependencia.value.responsable_id = seleccionados[0]?.id || seleccionados[0]?._id || null
 }
 
 const dependenciaSeleccionadaEliminar = ref(null)
@@ -528,7 +456,10 @@ const esInactivaSeleccionada = computed(() => {
   const d =
     dependenciaSeleccionadaEliminar.value ||
     store.dependencias.find(
-      (item) => item.codigo === codigoEliminar.value || item._id === codigoEliminar.value,
+      (item) =>
+        item._idReal === codigoEliminar.value ||
+        item._id === codigoEliminar.value ||
+        item.codigo === codigoEliminar.value,
     )
   return d ? d.estado === 'Inactiva' || d.estado === 'Inactivo' : false
 })
@@ -542,7 +473,11 @@ const nombreEliminar = computed(() => {
   }
   const cod = codigoEliminar.value
   const d = store.dependencias.find(
-    (item) => item.codigo === cod || item._id === cod || item.id === cod,
+    (item) =>
+      item._idReal === cod ||
+      item._id === cod ||
+      item.id === cod ||
+      item.codigo === cod,
   )
   return d?.nombre || d?.nombre_dependencia || 'la dependencia'
 })
@@ -552,6 +487,7 @@ const dependencia = ref({
   nombre: '',
   responsable: '',
   responsable_id: null,
+  responsables: [],
   correo: '',
   estado: 'Activa',
 })
@@ -572,16 +508,9 @@ const columns = [
     sortable: true,
   },
   {
-    name: 'responsable',
-    label: 'Responsable de Área',
-    field: 'responsable',
-    align: 'left',
-    sortable: true,
-  },
-  {
-    name: 'correo',
-    label: 'Correo Responsable',
-    field: 'correo',
+    name: 'responsables',
+    label: 'Responsables',
+    field: 'responsables',
     align: 'left',
     sortable: true,
   },
@@ -600,9 +529,14 @@ const columns = [
   },
 ]
 
-function guardarDependencia() {
+async function guardarDependencia() {
   const existeCodigo = store.dependencias.some((item, index) => {
-    return item.codigo === dependencia.value.codigo && index !== indiceEditar.value
+    return (
+      item.codigo === dependencia.value.codigo &&
+      item._idReal !== indiceEditar.value &&
+      item._id !== indiceEditar.value &&
+      index !== indiceEditar.value
+    )
   })
 
   if (existeCodigo) {
@@ -613,19 +547,32 @@ function guardarDependencia() {
     return
   }
 
-  if (editando.value) {
-    store.editar(indiceEditar.value, { ...dependencia.value })
+  if (!responsablesSeleccionados.value.length) {
     $q.notify({
-      type: 'positive',
-      message: 'Dependencia y responsable asignados correctamente.',
+      type: 'negative',
+      message: 'Debe asignar al menos un responsable a la dependencia.',
     })
-  } else {
-    store.agregar({ ...dependencia.value })
-    $q.notify({
-      type: 'positive',
-      message: 'Dependencia registrada con su responsable de área exitosamente.',
-    })
+    return
   }
+
+  const resultado = editando.value
+    ? await store.editar(indiceEditar.value, { ...dependencia.value })
+    : await store.agregar({ ...dependencia.value })
+
+  if (resultado && resultado.ok === false) {
+    $q.notify({
+      type: 'negative',
+      message: resultado.mensaje || 'No se pudo guardar la dependencia.',
+    })
+    return
+  }
+
+  $q.notify({
+    type: 'positive',
+    message: editando.value
+      ? 'Dependencia y responsables actualizados correctamente.'
+      : 'Dependencia registrada con sus responsables exitosamente.',
+  })
 
   limpiarFormulario()
 }
@@ -635,31 +582,29 @@ function nuevaDependencia() {
   const siguienteNum = (store.dependencias.length + 1).toString().padStart(2, '0')
   dependencia.value.codigo = `DEP-${siguienteNum}`
 
-  // Ya aparece la Dependencia y el Responsable de Área asignado de inmediato
   if (nombresDependenciasSugeridas.length > 0) {
     const primeraSugerencia = nombresDependenciasSugeridas[0]
     dependencia.value.nombre = primeraSugerencia.nombre
     onSeleccionarNombreDependencia(primeraSugerencia.nombre)
-  } else if (opcionesResponsables.value.length > 0) {
-    const seleccionado = opcionesResponsables.value[0]
-    responsableSeleccionado.value = seleccionado
-    dependencia.value.responsable = seleccionado.nombre
-    dependencia.value.correo = seleccionado.correo
-    dependencia.value.responsable_id = seleccionado.id
   }
   dialogo.value = true
 }
 
 function editarDependencia(fila) {
   dependencia.value = { ...fila }
-  responsableSeleccionado.value =
-    opcionesResponsables.value.find(
-      (r) =>
-        r.nombre === fila.responsable ||
-        r.id === fila.responsable_id ||
-        r._id === fila.responsable_id,
-    ) || fila.responsable
-  indiceEditar.value = store.dependencias.findIndex((item) => item.codigo === fila.codigo)
+  const actuales = fila.responsables || []
+  responsablesSeleccionados.value = actuales.length
+    ? actuales
+        .map((r) =>
+          opcionesResponsables.value.find(
+            (op) => String(op.id) === String(r.id || r._id) || op.nombre === r.nombre,
+          ) || r,
+        )
+        .filter(Boolean)
+    : []
+  dependencia.value.responsables = responsablesSeleccionados.value
+  indiceEditar.value =
+    fila._idReal || fila._id || fila.id || store.dependencias.findIndex((item) => item.codigo === fila.codigo)
   editando.value = true
   dialogo.value = true
 }
@@ -667,23 +612,34 @@ function editarDependencia(fila) {
 function eliminarDependencia(item) {
   if (typeof item === 'object' && item !== null) {
     dependenciaSeleccionadaEliminar.value = { ...item }
-    codigoEliminar.value = item.codigo || item._id || item.id || ''
+    codigoEliminar.value = item._idReal || item._id || item.id || item.codigo || ''
   } else {
     codigoEliminar.value = item
     const encontrada =
-      store.dependencias.find((d) => d.codigo === item || d._id === item || d.id === item) || null
+      store.dependencias.find(
+        (d) => d._idReal === item || d._id === item || d.id === item || d.codigo === item,
+      ) || null
     dependenciaSeleccionadaEliminar.value = encontrada ? { ...encontrada } : null
   }
   dialogoEliminar.value = true
 }
 
-function confirmarEliminar() {
+async function confirmarEliminar() {
   const eraInactiva = esInactivaSeleccionada.value
   const nombreDep = nombreEliminar.value
-  store.eliminar(codigoEliminar.value)
+  const resultado = await store.eliminar(codigoEliminar.value)
   codigoEliminar.value = ''
   dependenciaSeleccionadaEliminar.value = null
   dialogoEliminar.value = false
+
+  if (resultado && resultado.ok === false) {
+    $q.notify({
+      type: 'negative',
+      message: resultado.mensaje || 'No se pudo actualizar el estado de la dependencia.',
+    })
+    return
+  }
+
   $q.notify({
     type: 'info',
     message: eraInactiva
@@ -702,10 +658,11 @@ function limpiarFormulario() {
     nombre: '',
     responsable: '',
     responsable_id: null,
+    responsables: [],
     correo: '',
     estado: 'Activa',
   }
-  responsableSeleccionado.value = null
+  responsablesSeleccionados.value = []
   dialogo.value = false
   editando.value = false
   indiceEditar.value = null

@@ -26,22 +26,6 @@
 
       <!-- Lado Derecho: Acciones principales con estilo homogéneo, espaciadas y legibles -->
       <div class="toolbar-right row items-center q-gutter-md no-wrap">
-        <!-- Botón Plantilla y Firmantes: Alta visibilidad, exclusivo para Supervisor y Admin -->
-        <q-btn
-          v-if="!esContratista"
-          unelevated
-          dense
-          color="teal-8"
-          icon="tune"
-          label="Plantilla y Firmantes"
-          class="q-px-md text-weight-bold shadow-1"
-          @click="abrirModalPlantillaFirmas"
-        >
-          <q-tooltip
-            >Configurar qué dependencias aplican para este contrato y asignar sus firmantes autorizados</q-tooltip
-          >
-        </q-btn>
-
         <!-- Botón Editar Formato -->
         <q-btn
           outline
@@ -1271,6 +1255,7 @@ function guardarPlantillaFirmas() {
     icon: 'assignment_turned_in',
   })
 }
+void abrirModalPlantillaFirmas
 
 function abrirModalFirma() {
   if (!esContratista.value) {
@@ -1344,6 +1329,30 @@ function puedeFirmarFila(fila) {
   const cargoUsuario = normalizarTexto(u.cargo)
   const nombresFila = normalizarTexto(fila.nombres)
   const responsableContratoNorm = normalizarTexto(datosSolicitud.value.responsable)
+  const idUsuario = String(u._id || u.id || '')
+
+  // Verificación de múltiples responsables asignados a la dependencia
+  if (Array.isArray(fila.responsables) && fila.responsables.length > 0) {
+    const coincideId = fila.responsables.some((r) => {
+      const rid = String(r?._id || r?.id || r || '')
+      return rid && rid === idUsuario
+    })
+    if (coincideId) return true
+  }
+
+  if (Array.isArray(fila.encargados) && fila.encargados.length > 0) {
+    const coincideEnc = fila.encargados.some((enc) => {
+      const eid = String(enc?._id || enc?.id || '')
+      const enom = normalizarTexto(enc?.nombre || '')
+      const ecor = normalizarTexto(enc?.correo || '')
+      return (
+        (eid && eid === idUsuario) ||
+        (enom && nombreUsuario && (enom.includes(nombreUsuario) || nombreUsuario.includes(enom))) ||
+        (ecor && ecor === correoUsuario)
+      )
+    })
+    if (coincideEnc) return true
+  }
 
   // 1. Fila 14 (SUPERVISOR DE CONTRATO)
   if (fila.id === 14) {
@@ -2282,7 +2291,28 @@ onMounted(async () => {
       datosSolicitud.value.bienesFaltantes = []
     }
 
-    // Restaurar plantilla de dependencias y firmantes para este contrato si fue guardada
+    // Cargar plantilla oficial configurada por el Supervisor para este contrato desde la API
+    const idContrato = encontrada?._id || encontrada?.id || null
+    if (idContrato) {
+      try {
+        const respPl = await api.get(`/contratos/${idContrato}/plantilla`).catch(() => null)
+        if (respPl?.data?.filas && respPl.data.filas.length > 0) {
+          filasDependencias.value = respPl.data.filas.map((f, idx) => ({
+            ...filasDependencias.value[idx],
+            ...f,
+            aplica: f.aplica !== false,
+            marca: f.aplica !== false ? 'X' : 'N/A',
+          }))
+          if (respPl.data.tipo) {
+            plantillaSeleccionada.value = respPl.data.tipo
+          }
+        }
+      } catch (errPl) {
+        console.warn('Fallback a plantilla local:', errPl)
+      }
+    }
+
+    // Restaurar plantilla de dependencias y firmantes para este contrato si fue guardada localmente
     const clavePlantilla = `plantilla_firmas_${String(codigo).toLowerCase().trim()}`
     const plantillaGuardada =
       localStorage.getItem(`plantilla_firmas_${codigo}`) ||
