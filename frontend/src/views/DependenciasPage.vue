@@ -74,30 +74,33 @@
             <div
               v-for="resp in props.row.responsables"
               :key="resp.id || resp._id"
-              class="user-tag row items-center no-wrap cursor-pointer"
+              class="user-tag row items-center no-wrap cursor-pointer notranslate"
+              translate="no"
             >
               <div
-                class="user-avatar text-weight-bold"
+                class="user-avatar text-weight-bold notranslate"
+                translate="no"
                 :style="avatarStyle(resp.nombre, resp.rol)"
               >
                 {{ obtenerIniciales(resp.nombre) }}
               </div>
-              <span class="user-name text-weight-medium text-grey-9 q-ml-xs">
+              <span class="user-name text-weight-medium text-grey-9 q-ml-xs notranslate" translate="no">
                 {{ resp.nombre }}
               </span>
               <span
                 v-if="resp.rol === 'Supervisor'"
-                class="user-role-badge q-ml-xs"
+                class="user-role-badge q-ml-xs notranslate"
+                translate="no"
               >
                 Coord.
               </span>
 
-              <q-tooltip class="bg-dark text-white shadow-3" :offset="[4, 4]">
-                <div class="text-weight-bold">{{ resp.nombre }}</div>
-                <div class="text-caption text-positive">
+              <q-tooltip class="bg-dark text-white shadow-3 notranslate" translate="no" :offset="[4, 4]">
+                <div class="text-weight-bold notranslate" translate="no">{{ resp.nombre }}</div>
+                <div class="text-caption text-positive notranslate" translate="no">
                   {{ resp.rol === 'Supervisor' ? 'Coordinador (Supervisor)' : 'Responsable de Área' }}
                 </div>
-                <div v-if="resp.correo" class="text-caption text-grey-4">{{ resp.correo }}</div>
+                <div v-if="resp.correo" class="text-caption text-grey-4 notranslate" translate="no">{{ resp.correo }}</div>
               </q-tooltip>
             </div>
           </div>
@@ -111,7 +114,7 @@
       <template #body-cell-acciones="props">
         <q-td :props="props">
           <q-btn flat round dense color="primary" icon="edit" @click="editarDependencia(props.row)">
-            <q-tooltip>Editar Dependencia</q-tooltip>
+            <q-tooltip>Editar Dependencia y Responsables</q-tooltip>
           </q-btn>
 
           <q-btn
@@ -134,7 +137,7 @@
 
     <!-- Diálogo Formulario Creación / Edición -->
     <q-dialog v-model="dialogo" persistent>
-      <q-card style="min-width: 500px; max-width: 90vw">
+      <q-card style="min-width: 540px; max-width: 90vw">
         <q-card-section class="row items-center justify-between">
           <div class="text-h6 text-primary text-weight-bold">
             {{ editando ? 'Editar Dependencia' : 'Nueva Dependencia' }}
@@ -188,7 +191,7 @@
               @filter="filtrarNombresDependencias"
               @update:model-value="onSeleccionarNombreDependencia"
               :rules="[(val) => !!val || 'El nombre es obligatorio']"
-              hint="Elija un área estándar o escriba un nombre personalizado"
+              hint="Elija un área estándar (ej. Coordinación Académica, TIC, Almacén) o escriba un nombre personalizado"
             >
               <template #prepend>
                 <q-icon name="business" color="primary" />
@@ -231,70 +234,46 @@
                 <q-icon name="people" color="primary" />
               </template>
               <template #selected-item="scope">
-                <div class="user-chip-selected row items-center no-wrap q-mr-xs q-my-xs">
+                <div class="user-chip-selected row items-center no-wrap q-mr-xs q-my-xs notranslate" translate="no">
                   <div
-                    class="user-avatar text-weight-bold"
+                    class="user-avatar text-weight-bold notranslate"
+                    translate="no"
                     :style="avatarStyle(scope.opt.nombre, scope.opt.rol)"
                   >
                     {{ obtenerIniciales(scope.opt.nombre) }}
                   </div>
-                  <span class="text-weight-medium q-ml-xs user-chip-text">{{ scope.opt.nombre }}</span>
+                  <span class="text-weight-medium q-ml-xs user-chip-text notranslate" translate="no">{{ scope.opt.nombre }}</span>
                   <q-icon
                     name="cancel"
                     size="16px"
-                    class="cursor-pointer q-ml-xs text-grey-6 hover-delete"
+                    class="cursor-pointer q-ml-xs text-grey-6 hover-delete notranslate"
+                    translate="no"
                     @click.stop="scope.removeAtIndex(scope.index)"
                   />
                 </div>
               </template>
               <template #option="scope">
-                <q-item v-bind="scope.itemProps">
+                <q-item v-bind="scope.itemProps" class="notranslate" translate="no">
                   <q-item-section avatar>
                     <div
-                      class="user-avatar text-weight-bold"
+                      class="user-avatar text-weight-bold notranslate"
+                      translate="no"
                       :style="avatarStyle(scope.opt.nombre, scope.opt.rol)"
                     >
                       {{ obtenerIniciales(scope.opt.nombre) }}
                     </div>
                   </q-item-section>
                   <q-item-section>
-                    <q-item-label class="text-weight-bold">{{ scope.opt.nombre }}</q-item-label>
+                    <q-item-label class="text-weight-bold notranslate" translate="no">{{ scope.opt.nombre }}</q-item-label>
                     <q-item-label caption>
-                      {{ scope.opt.rol === 'Supervisor' ? 'Coordinador' : 'Responsable de Área' }} — {{ scope.opt.correo || 'Sin correo registrado' }}
+                      {{ scope.opt.rol === 'Supervisor' ? 'Coordinador' : 'Responsable de Área' }} — {{ scope.opt.correo }}
                     </q-item-label>
                   </q-item-section>
                 </q-item>
               </template>
             </q-select>
 
-            <div
-              v-if="responsablesSeleccionados.length"
-              class="q-pa-sm bg-blue-1 text-primary rounded-borders"
-            >
-              <div class="text-caption text-weight-bold">Correos de notificación:</div>
-              <div class="text-caption">
-                {{
-                  responsablesSeleccionados
-                    .map((r) => r.correo || 'sin correo')
-                    .join(' · ')
-                }}
-              </div>
-            </div>
-
-            <!-- Estado: Activa por defecto al crear, editable solo al editar -->
-            <div
-              v-if="!editando"
-              class="row items-center q-pa-sm bg-green-1 text-positive rounded-borders q-mt-xs"
-            >
-              <q-icon name="check_circle" color="positive" size="sm" class="q-mr-sm" />
-              <div class="text-caption">
-                <strong>Estado:</strong> Activa (queda habilitada automáticamente para recibir
-                solicitudes y firmas).
-              </div>
-            </div>
-
             <q-select
-              v-else
               v-model="dependencia.estado"
               :options="['Activa', 'Inactiva']"
               label="Estado de la Dependencia"
@@ -303,12 +282,14 @@
             >
               <template #prepend>
                 <q-icon
-                  name="toggle_on"
+                  name="circle"
                   :color="dependencia.estado === 'Activa' ? 'positive' : 'grey-7'"
                 />
               </template>
             </q-select>
           </q-card-section>
+
+          <q-separator />
 
           <q-card-actions align="right" class="q-pa-md">
             <q-btn flat label="Cancelar" color="grey-8" @click="cancelar" />
@@ -316,17 +297,16 @@
               unelevated
               type="submit"
               color="positive"
-              label="Guardar Dependencia"
-              icon="save"
+              :label="editando ? 'Actualizar Dependencia' : 'Guardar Dependencia'"
             />
           </q-card-actions>
         </q-form>
       </q-card>
     </q-dialog>
 
-    <!-- Diálogo Confirmar Desactivación / Activación -->
+    <!-- Diálogo Confirmar Cambio de Estado (Activar / Desactivar) -->
     <q-dialog v-model="dialogoEliminar">
-      <q-card style="min-width: 420px; max-width: 90vw">
+      <q-card style="min-width: 400px">
         <q-card-section class="row items-center">
           <q-avatar
             :icon="esInactivaSeleccionada ? 'check_circle' : 'domain_disabled'"
@@ -334,25 +314,25 @@
             text-color="white"
             class="q-mr-sm"
           />
-          <span class="text-h6 text-weight-bold">{{
-            esInactivaSeleccionada ? 'Confirmar activación' : 'Confirmar desactivación'
-          }}</span>
+          <span class="text-h6">
+            {{ esInactivaSeleccionada ? 'Activar Dependencia' : 'Desactivar Dependencia' }}
+          </span>
         </q-card-section>
 
         <q-card-section class="q-pt-none text-body1">
           ¿Está seguro de {{ esInactivaSeleccionada ? 'activar' : 'desactivar' }} la dependencia
-          <strong class="text-primary text-weight-bold">{{ nombreEliminar }}</strong
+          <strong>{{ nombreEliminar }}</strong
           >?
           <div class="text-caption text-grey-7 q-mt-xs">
             {{
               esInactivaSeleccionada
-                ? 'El área quedará habilitada para firmar y validar compromisos contractuales.'
-                : 'Esta área no podrá firmar ni validar nuevos trámites hasta que sea reactivada.'
+                ? 'Al activarla, aparecerá disponible para firmas y revisión en el formato GCCON-F-088.'
+                : 'Al desactivarla, no se exigirán firmas para esta área en los nuevos trámites.'
             }}
           </div>
         </q-card-section>
 
-        <q-card-actions align="right" class="q-px-md q-pb-md">
+        <q-card-actions align="right">
           <q-btn flat label="Cancelar" color="grey-8" v-close-popup />
           <q-btn
             unelevated
@@ -372,19 +352,72 @@ import { useQuasar } from 'quasar'
 import { useDependenciasStore } from '../stores/useDependenciasStore.js'
 import api from '../services/api'
 
-const $q = useQuasar()
 const store = useDependenciasStore()
+const $q = useQuasar()
 
 const filtro = ref('')
 const dialogo = ref(false)
 const dialogoEliminar = ref(false)
-const codigoEliminar = ref('')
 const editando = ref(false)
 const indiceEditar = ref(null)
+const codigoEliminar = ref('')
 const responsablesSeleccionados = ref([])
 
-  const nombresDependenciasSugeridas = []
-  const filtroNombresDependencias = ref([])
+// Catálogo de dependencias sugeridas institucionales SENA
+const nombresDependenciasSugeridas = [
+  {
+    nombre: 'Coordinación Académica',
+    descripcion: 'Coordinación y supervisión de contratos formativos y académicos',
+    icono: 'school',
+  },
+  {
+    nombre: 'Gestión Tecnológica (TIC)',
+    descripcion: 'Equipos de cómputo, conectividad y sistemas de información',
+    icono: 'devices',
+  },
+  {
+    nombre: 'Almacén e Inventarios',
+    descripcion: 'Recepción y control de bienes devolutivos y de consumo',
+    icono: 'inventory_2',
+  },
+  {
+    nombre: 'Biblioteca y Archivo',
+    descripcion: 'Préstamo de material bibliográfico, libros y documentos',
+    icono: 'menu_book',
+  },
+  {
+    nombre: 'Bienestar al Aprendiz y Comunidad',
+    descripcion: 'Servicios de apoyo, elementos deportivos y de bienestar',
+    icono: 'favorite',
+  },
+  {
+    nombre: 'Recursos Humanos / Talento Humano',
+    descripcion: 'Paz y salvo contractual y vinculación de personal',
+    icono: 'people',
+  },
+  {
+    nombre: 'Infraestructura y Servicios Generales',
+    descripcion: 'Herramientas, llaves y mantenimiento de instalaciones',
+    icono: 'handyman',
+  },
+  {
+    nombre: 'Agencia Pública de Empleo (APE)',
+    descripcion: 'Gestión y colocación de empleo institucional',
+    icono: 'work',
+  },
+  {
+    nombre: 'Sennova',
+    descripcion: 'Investigación, desarrollo tecnológico e innovación',
+    icono: 'science',
+  },
+  {
+    nombre: 'Administración Educativa',
+    descripcion: 'Certificaciones, matrículas y archivo académico',
+    icono: 'folder_shared',
+  },
+]
+
+const filtroNombresDependencias = ref([...nombresDependenciasSugeridas])
 
 function filtrarNombresDependencias(val, update) {
   if (val === '') {
@@ -407,35 +440,10 @@ function onSeleccionarNombreDependencia(val) {
   if (!val) return
   const nombreTexto = typeof val === 'object' ? val.nombre : val
   dependencia.value.nombre = nombreTexto
-
-  // Autoseleccionar responsable correspondiente si existe
-  const sugerencia = nombresDependenciasSugeridas.find(
-    (s) => s.nombre.toLowerCase() === nombreTexto.toLowerCase(),
-  )
-
-  if (sugerencia) {
-    const respEncontrado = opcionesResponsables.value.find(
-      (r) =>
-        (r.nombre &&
-          sugerencia.responsableSugerido &&
-          r.nombre.toLowerCase().includes(sugerencia.responsableSugerido.toLowerCase())) ||
-        (r.correo &&
-          sugerencia.correoSugerido &&
-          r.correo.toLowerCase() === sugerencia.correoSugerido.toLowerCase()),
-    )
-    if (respEncontrado) {
-      responsablesSeleccionados.value = [respEncontrado]
-      dependencia.value.responsables = [respEncontrado]
-      dependencia.value.responsable = respEncontrado.nombre
-      dependencia.value.correo = respEncontrado.correo
-      dependencia.value.responsable_id = respEncontrado.id || respEncontrado._id || null
-    }
-  }
 }
 
 const opcionesResponsables = ref([])
 
-// Los responsables son usuarios reales: responsables de área y coordinadores (supervisores)
 async function cargarResponsables() {
   const opciones = []
   const vistos = new Set()
@@ -457,11 +465,11 @@ async function cargarResponsables() {
           nombre,
           correo,
           rol: u.rol,
-          etiqueta: `${nombre} — ${rol === 'Supervisor' ? 'Coordinador' : 'Responsable de Área'} (${correo || 'sin correo'})`,
+          etiqueta: `${nombre} — ${u.rol === 'Supervisor' ? 'Coordinador' : 'Responsable de Área'} (${correo || 'sin correo'})`,
         })
       })
     } catch {
-      // Si un rol falla se sigue con el resto
+      // continuar con el siguiente rol
     }
   }
 
@@ -488,7 +496,10 @@ const esInactivaSeleccionada = computed(() => {
   const d =
     dependenciaSeleccionadaEliminar.value ||
     store.dependencias.find(
-      (item) => item.codigo === codigoEliminar.value || item._id === codigoEliminar.value,
+      (item) =>
+        item._idReal === codigoEliminar.value ||
+        item._id === codigoEliminar.value ||
+        item.codigo === codigoEliminar.value,
     )
   return d ? d.estado === 'Inactiva' || d.estado === 'Inactivo' : false
 })
@@ -502,7 +513,11 @@ const nombreEliminar = computed(() => {
   }
   const cod = codigoEliminar.value
   const d = store.dependencias.find(
-    (item) => item.codigo === cod || item._id === cod || item.id === cod,
+    (item) =>
+      item._idReal === cod ||
+      item._id === cod ||
+      item.id === cod ||
+      item.codigo === cod,
   )
   return d?.nombre || d?.nombre_dependencia || 'la dependencia'
 })
@@ -556,7 +571,12 @@ const columns = [
 
 async function guardarDependencia() {
   const existeCodigo = store.dependencias.some((item, index) => {
-    return item.codigo === dependencia.value.codigo && index !== indiceEditar.value
+    return (
+      item.codigo === dependencia.value.codigo &&
+      item._idReal !== indiceEditar.value &&
+      item._id !== indiceEditar.value &&
+      index !== indiceEditar.value
+    )
   })
 
   if (existeCodigo) {
@@ -602,7 +622,6 @@ function nuevaDependencia() {
   const siguienteNum = (store.dependencias.length + 1).toString().padStart(2, '0')
   dependencia.value.codigo = `DEP-${siguienteNum}`
 
-  // Ya aparece la Dependencia con el responsable sugerido de inmediato
   if (nombresDependenciasSugeridas.length > 0) {
     const primeraSugerencia = nombresDependenciasSugeridas[0]
     dependencia.value.nombre = primeraSugerencia.nombre
@@ -624,7 +643,8 @@ function editarDependencia(fila) {
         .filter(Boolean)
     : []
   dependencia.value.responsables = responsablesSeleccionados.value
-  indiceEditar.value = fila._idReal || fila._id || fila.id || store.dependencias.findIndex((item) => item.codigo === fila.codigo)
+  indiceEditar.value =
+    fila._idReal || fila._id || fila.id || store.dependencias.findIndex((item) => item.codigo === fila.codigo)
   editando.value = true
   dialogo.value = true
 }
@@ -690,9 +710,11 @@ function limpiarFormulario() {
 
 function obtenerIniciales(nombre) {
   if (!nombre) return 'U'
-  const partes = String(nombre).trim().split(/\s+/)
+  const limpio = String(nombre).replace(/^(lic\.|ing\.|dr\.|dra\.|sr\.|sra\.|abg\.)\s+/i, '').trim()
+  const partes = limpio.split(/\s+/).filter(Boolean)
+  if (!partes.length) return 'U'
   if (partes.length === 1) return partes[0].substring(0, 2).toUpperCase()
-  return (partes[0][0] + partes[partes.length - 1][0]).toUpperCase()
+  return (partes[0][0] + partes[1][0]).toUpperCase()
 }
 
 function avatarStyle(nombre, rol) {
@@ -752,6 +774,7 @@ function avatarStyle(nombre, rol) {
   width: 22px;
   height: 22px;
   min-width: 22px;
+  max-width: 22px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -759,6 +782,11 @@ function avatarStyle(nombre, rol) {
   font-size: 10px;
   letter-spacing: -0.3px;
   flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: clip;
+  white-space: nowrap;
+  user-select: none;
+  line-height: 1;
 }
 
 .user-name {

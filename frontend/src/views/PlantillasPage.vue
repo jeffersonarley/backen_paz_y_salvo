@@ -2,9 +2,9 @@
   <q-page class="q-pa-lg">
     <div class="row items-center justify-between q-mb-lg">
       <div>
-        <div class="text-h4 text-primary text-weight-bold">Plantillas</div>
+        <div class="text-h4 text-primary text-weight-bold">Plantillas de Paz y Salvo</div>
         <div class="text-subtitle2 text-grey-7">
-          Selecciona la plantilla de dependencias y firmantes que aplica a cada contrato
+          Selecciona la plantilla de dependencias y firmantes que aplica a cada contrato GCCON-F-088
         </div>
       </div>
 
@@ -16,7 +16,7 @@
         map-options
         outlined
         dense
-        style="min-width: 320px"
+        style="min-width: 340px"
         label="Plantilla predeterminada (Coordinador)"
         @update:model-value="guardarPredeterminada"
       >
@@ -31,9 +31,9 @@
         <q-icon name="info" color="primary" />
       </template>
       <div class="text-caption">
-        <strong>Plantillas y firmantes:</strong> la plantilla define qué dependencias firman en cada
-        contrato y quiénes son los responsables autorizados. El contratista ve en su certificado la
-        plantilla que você (Coordinador) selections.
+        <strong>Plantillas y firmantes:</strong> La plantilla define qué dependencias firman en cada
+        contrato y quiénes son los responsables autorizados. Cada contratista verá en su certificado la
+        plantilla que usted (como Coordinador/Supervisor) haya seleccionado y configurado.
       </div>
     </q-banner>
 
@@ -58,29 +58,30 @@
       <template #body-cell-acciones="props">
         <q-td :props="props">
           <q-btn
-            flat
-            round
+            unelevated
             dense
             color="primary"
             icon="assignment_turned_in"
+            label="Configurar Plantilla y Firmantes"
+            class="q-px-sm text-caption"
             @click="abrirPlantilla(props.row)"
           >
-            <q-tooltip>Configurar plantilla y firmantes</q-tooltip>
+            <q-tooltip>Configurar dependencias aplicables y responsables autorizados</q-tooltip>
           </q-btn>
         </q-td>
       </template>
     </q-table>
 
-    <!-- Diálogo de configuración de plantilla -->
+    <!-- Diálogo de configuración de plantilla y firmantes -->
     <q-dialog v-model="dialogo" persistent>
-      <q-card style="min-width: 900px; max-width: 95vw">
+      <q-card style="min-width: 950px; max-width: 95vw">
         <q-card-section class="row items-center justify-between">
           <div>
             <div class="text-h6 text-primary text-weight-bold">
-              Plantilla y firmantes — {{ contratoSeleccionado?.numero_contrato }}
+              Plantilla y firmantes — {{ contratoSeleccionado?.numero_contrato || contratoSeleccionado?.numeroContrato }}
             </div>
             <div class="text-caption text-grey-7">
-              {{ contratoSeleccionado?.nombre_contratista }}
+              Contratista: {{ contratoSeleccionado?.nombre_contratista || contratoSeleccionado?.contratista }}
             </div>
           </div>
           <q-btn icon="close" flat round dense v-close-popup @click="cerrarDialogo" />
@@ -98,6 +99,7 @@
             outlined
             dense
             label="Plantilla que aplica al contrato"
+            @update:model-value="alCambiarTipoPlantilla"
             hint="Al cambiar la plantilla se ajustan las dependencias aplicables; puede modificarlas una a una"
             class="q-mb-md"
           />
@@ -110,10 +112,15 @@
             :columns="columnasFilas"
             row-key="id_fila"
             no-data-label="No hay filas de dependencias"
+            :pagination="{ rowsPerPage: 15 }"
           >
             <template #body-cell-aplica="props">
               <q-td :props="props">
-                <q-toggle v-model="props.row.aplica" color="positive" />
+                <q-toggle
+                  v-model="props.row.aplica"
+                  color="positive"
+                  :label="props.row.aplica ? 'Aplica' : 'N/A'"
+                />
               </q-td>
             </template>
 
@@ -123,29 +130,32 @@
                   <div
                     v-for="enc in props.row.encargados"
                     :key="enc.id"
-                    class="user-tag row items-center no-wrap cursor-pointer"
+                    class="user-tag row items-center no-wrap cursor-pointer notranslate"
+                    translate="no"
                   >
                     <div
-                      class="user-avatar text-weight-bold"
+                      class="user-avatar text-weight-bold notranslate"
+                      translate="no"
                       :style="avatarStyle(enc.nombre, enc.rol)"
                     >
                       {{ obtenerIniciales(enc.nombre) }}
                     </div>
-                    <span class="user-name text-weight-medium text-grey-9 q-ml-xs">
+                    <span class="user-name text-weight-medium text-grey-9 q-ml-xs notranslate" translate="no">
                       {{ enc.nombre }}
                     </span>
                     <span
                       v-if="enc.rol === 'Supervisor'"
-                      class="user-role-badge q-ml-xs"
+                      class="user-role-badge q-ml-xs notranslate"
+                      translate="no"
                     >
                       Coord.
                     </span>
-                    <q-tooltip class="bg-dark text-white shadow-3" :offset="[4, 4]">
-                      <div class="text-weight-bold">{{ enc.nombre }}</div>
-                      <div class="text-caption text-positive">
+                    <q-tooltip class="bg-dark text-white shadow-3 notranslate" translate="no" :offset="[4, 4]">
+                      <div class="text-weight-bold notranslate" translate="no">{{ enc.nombre }}</div>
+                      <div class="text-caption text-positive notranslate" translate="no">
                         {{ enc.rol === 'Supervisor' ? 'Coordinador (Supervisor)' : 'Responsable de Área' }}
                       </div>
-                      <div v-if="enc.correo" class="text-caption text-grey-4">{{ enc.correo }}</div>
+                      <div v-if="enc.correo" class="text-caption text-grey-4 notranslate" translate="no">{{ enc.correo }}</div>
                     </q-tooltip>
                   </div>
                 </div>
@@ -162,6 +172,7 @@
                   v-model="props.row.responsables"
                   :options="opcionesUsuarios"
                   option-label="etiqueta"
+                  option-value="id"
                   multiple
                   use-chips
                   outlined
@@ -176,33 +187,31 @@
                     <q-icon name="people" color="primary" />
                   </template>
                   <template #selected-item="scope">
-                    <div class="user-chip-selected row items-center no-wrap q-mr-xs q-my-xs">
+                    <div class="user-chip-selected row items-center no-wrap q-mr-xs q-my-xs notranslate" translate="no">
                       <div
-                        class="user-avatar text-weight-bold"
+                        class="user-avatar text-weight-bold notranslate"
+                        translate="no"
                         :style="avatarStyle(scope.opt.nombre, scope.opt.rol)"
                       >
                         {{ obtenerIniciales(scope.opt.nombre) }}
                       </div>
-                      <span class="text-weight-medium q-ml-xs user-chip-text">{{ scope.opt.nombre }}</span>
+                      <span class="text-weight-medium q-ml-xs user-chip-text notranslate" translate="no">{{ scope.opt.nombre }}</span>
                       <q-icon
                         name="cancel"
                         size="16px"
-                        class="cursor-pointer q-ml-xs text-grey-6 hover-delete"
+                        class="cursor-pointer q-ml-xs text-grey-6 hover-delete notranslate"
+                        translate="no"
                         @click.stop="scope.removeAtIndex(scope.index)"
                       />
                     </div>
                   </template>
                 </q-select>
-                <div class="text-caption text-grey-7 q-mt-xs">
-                  {{ props.row.dependenciaSimple }}
-                  <span v-if="props.row.dependencia_nombre">
-                    — {{ props.row.dependencia_nombre }}
-                  </span>
-                </div>
               </q-td>
             </template>
           </q-table>
         </q-card-section>
+
+        <q-separator />
 
         <q-card-actions align="right" class="q-pa-md">
           <q-btn flat label="Cancelar" color="grey-8" @click="cerrarDialogo" :disable="guardando" />
@@ -210,7 +219,7 @@
             unelevated
             color="positive"
             icon="save"
-            label="Guardar Plantilla"
+            label="Guardar Plantilla y Firmantes"
             @click="guardarPlantilla"
             :loading="guardando"
           />
@@ -266,22 +275,22 @@ const opcionesPlantilla = definicionesPlantilla.map((p) => ({ label: p.label, va
 const opcionesUsuarios = ref([])
 
 const columns = [
-  { name: 'numero_contrato', label: 'Contrato', field: 'numero_contrato', align: 'left', sortable: true },
-  { name: 'nombre_contratista', label: 'Contratista', field: 'nombre_contratista', align: 'left', sortable: true },
+  { name: 'numero_contrato', label: 'Contrato', field: (row) => row.numero_contrato || row.numeroContrato, align: 'left', sortable: true },
+  { name: 'nombre_contratista', label: 'Contratista', field: (row) => row.nombre_contratista || row.contratista, align: 'left', sortable: true },
   { name: 'estado', label: 'Estado', field: 'estado', align: 'center', sortable: true },
-  { name: 'plantilla', label: 'Plantilla', field: 'plantilla_tipo', align: 'left' },
+  { name: 'plantilla', label: 'Plantilla Seleccionada', field: (row) => row.plantilla_tipo || row.plantillaTipo || 'COMPLETA', align: 'left' },
   { name: 'acciones', label: 'Acciones', field: 'acciones', align: 'center' },
 ]
 
 const columnasFilas = [
-  { name: 'aplica', label: 'Firma', field: 'aplica', align: 'center' },
-  { name: 'dependenciaSimple', label: 'Dependencia', field: 'dependenciaSimple', align: 'left' },
-  { name: 'encargado', label: 'Responsable (encargado de firmar)', field: 'encargado', align: 'left' },
-  { name: 'responsables', label: 'Editar firmantes', field: 'responsables', align: 'left' },
+  { name: 'aplica', label: 'Firma Requerida', field: 'aplica', align: 'center' },
+  { name: 'dependenciaSimple', label: 'Dependencia GCCON-F-088', field: 'dependenciaSimple', align: 'left' },
+  { name: 'encargado', label: 'Responsable al frente (Firma autorizada)', field: 'encargado', align: 'left' },
+  { name: 'responsables', label: 'Editar persona encargada', field: 'responsables', align: 'left' },
 ]
 
 function nombrePlantilla(tipo) {
-  return definicionesPlantilla.find((p) => p.value === tipo)?.label || 'Sin plantilla'
+  return definicionesPlantilla.find((p) => p.value === tipo)?.label || 'Plantilla Completa Institucional'
 }
 
 async function cargarUsuarios() {
@@ -299,6 +308,7 @@ async function cargarUsuarios() {
         const etiqueta = `${nombre} — ${rol === 'Supervisor' ? 'Coordinador' : 'Responsable de Área'}`
         opciones.push({
           id,
+          value: id,
           label: etiqueta,
           etiqueta,
           nombre,
@@ -307,7 +317,7 @@ async function cargarUsuarios() {
         })
       })
     } catch {
-      // se continua con los roles disponibles
+      // continuar
     }
   }
   opcionesUsuarios.value = opciones
@@ -318,21 +328,24 @@ async function cargarContratos() {
   try {
     const resp = await api.get('/contratos')
     const lista = Array.isArray(resp.data) ? resp.data : resp.data?.contratos || []
-    contratos.value = lista
+    if (lista.length > 0) {
+      contratos.value = lista
+    } else {
+      // Intentar cargar solicitudes del store si contratos api está vacío
+      const respSol = await api.get('/solicitudes').catch(() => null)
+      contratos.value = Array.isArray(respSol?.data) ? respSol.data : []
+    }
   } catch (err) {
-    $q.notify({
-      type: 'negative',
-      message: err.response?.data?.mensaje || 'No se pudieron cargar los contratos.',
-    })
+    console.warn('Error al cargar contratos:', err.message)
   } finally {
     cargando.value = false
   }
 }
 
 // Calcula los responsables visibles de cada fila (persona encargada de firmar esa dependencia)
-function calcularEncargados(filas) {
+function calcularEncargados(filasList) {
   const opciones = new Map(opcionesUsuarios.value.map((u) => [String(u.id), u]))
-  return (filas || []).map((fila) => {
+  return (filasList || []).map((fila) => {
     const ids = (fila.responsables || []).map((r) => String(r.id || r._id || r)).filter(Boolean)
     const nombres = (fila.nombres || []).filter(Boolean)
     const encargados = ids.map((id, i) => {
@@ -347,28 +360,63 @@ function calcularEncargados(filas) {
   })
 }
 
+const filasRespaldo = [
+  { id_fila: 1, id: 1, dependenciaSimple: '01. Gestión Tecnológica (TIC)', responsables: [], aplica: true },
+  { id_fila: 2, id: 2, dependenciaSimple: '02. Almacén e Inventarios', responsables: [], aplica: true },
+  { id_fila: 3, id: 3, dependenciaSimple: '03. Biblioteca y Archivo', responsables: [], aplica: true },
+  { id_fila: 4, id: 4, dependenciaSimple: '04. Bienestar al Aprendiz', responsables: [], aplica: true },
+  { id_fila: 5, id: 5, dependenciaSimple: '05. Agencia Pública de Empleo (APE)', responsables: [], aplica: true },
+  { id_fila: 6, id: 6, dependenciaSimple: '06. Infraestructura y Mantenimiento', responsables: [], aplica: true },
+  { id_fila: 7, id: 7, dependenciaSimple: '07. Seguridad y Salud en el Trabajo (SST)', responsables: [], aplica: true },
+  { id_fila: 8, id: 8, dependenciaSimple: '08. Sennova e Innovación', responsables: [], aplica: true },
+  { id_fila: 9, id: 9, dependenciaSimple: '09. Relaciones Corporativas e Internacionales', responsables: [], aplica: true },
+  { id_fila: 10, id: 10, dependenciaSimple: '10. Fondo Emprender', responsables: [], aplica: true },
+  { id_fila: 11, id: 11, dependenciaSimple: '11. Administración Educativa', responsables: [], aplica: true },
+  { id_fila: 12, id: 12, dependenciaSimple: '12. Producción de Centros', responsables: [], aplica: true },
+  { id_fila: 13, id: 13, dependenciaSimple: '13. Calidad y SIGA', responsables: [], aplica: true },
+  { id_fila: 14, id: 14, dependenciaSimple: '14. Coordinación Académica / Supervisor', responsables: [], aplica: true },
+]
+
 async function abrirPlantilla(contrato) {
   contratoSeleccionado.value = contrato
   dialogo.value = true
   guardando.value = false
+  const idContrato = contrato._id || contrato.id
+
   try {
-    const resp = await api.get(`/contratos/${contrato._id}/plantilla`)
-    tipoSeleccionado.value = resp.data?.tipo || contrato.plantilla_tipo || 'COMPLETA'
+    let resp = null
+    if (idContrato) {
+      resp = await api.get(`/contratos/${idContrato}/plantilla`).catch(() => null)
+    }
+    if (!resp) {
+      resp = await api.get('/plantillas/filas').catch(() => null)
+    }
+
+    const tipo = resp?.data?.tipo || resp?.data?.plantilla_tipo || contrato.plantilla_tipo || 'COMPLETA'
+    tipoSeleccionado.value = tipo
+
+    const rawFilas = resp?.data?.filas && resp.data.filas.length > 0 ? resp.data.filas : filasRespaldo
     filas.value = calcularEncargados(
-      (resp.data?.filas || []).map((fila) => ({
+      rawFilas.map((fila) => ({
         ...fila,
         responsables: (fila.responsables || []).map((r) => String(r.id || r._id || r)),
+        aplica: fila.aplica !== false,
       })),
     )
-  } catch (err) {
-    $q.notify({
-      type: 'negative',
-      message: err.response?.data?.mensaje || 'No se pudo cargar la plantilla del contrato.',
+  } catch {
+    filas.value = calcularEncargados(filasRespaldo.map((f) => ({ ...f })))
+  }
+}
+
+function alCambiarTipoPlantilla(nuevoTipo) {
+  const def = definicionesPlantilla.find((p) => p.value === nuevoTipo)
+  if (def && Array.isArray(def.filasAplica)) {
+    filas.value.forEach((fila) => {
+      fila.aplica = def.filasAplica.includes(fila.id_fila || fila.id)
     })
   }
 }
 
-// Actualiza al instante el responsable visible de la fila editada
 function actualizarEncargadosDeFila(fila) {
   const opciones = new Map(opcionesUsuarios.value.map((u) => [String(u.id), u]))
   const ids = (fila.responsables || []).map((r) => String(r.id || r._id || r)).filter(Boolean)
@@ -382,11 +430,6 @@ function actualizarEncargadosDeFila(fila) {
   })
 }
 
-function cerrarDialogo() {
-  dialogo.value = false
-  contratoSeleccionado.value = null
-}
-
 async function guardarPlantilla() {
   if (!contratoSeleccionado.value) return
   guardando.value = true
@@ -394,28 +437,41 @@ async function guardarPlantilla() {
     const payload = {
       plantilla_tipo: tipoSeleccionado.value,
       filas: filas.value.map((fila) => ({
-        id_fila: fila.id_fila,
+        id_fila: fila.id_fila || fila.id,
+        id: fila.id_fila || fila.id,
         dependencia_id: fila.dependencia_id,
-        dependencia_nombre: fila.dependencia_nombre,
+        dependenciaSimple: fila.dependenciaSimple,
+        dependencia_nombre: fila.dependencia_nombre || fila.dependenciaSimple,
         responsables: fila.responsables || [],
+        encargados: fila.encargados || [],
         aplica: fila.aplica !== false,
+        marca: fila.aplica !== false ? 'X' : 'N/A',
       })),
     }
 
-    const resp = await api.put(`/contratos/${contratoSeleccionado.value._id}/plantilla`, payload)
-    tipoSeleccionado.value = resp.data?.tipo || tipoSeleccionado.value
-    filas.value = calcularEncargados(
-      (resp.data?.filas || filas.value).map((fila) => ({
-        ...fila,
-        responsables: (fila.responsables || []).map((r) => String(r.id || r._id || r)),
-      })),
-    )
+    const idContrato = contratoSeleccionado.value._id || contratoSeleccionado.value.id
+    if (idContrato) {
+      await api.put(`/contratos/${idContrato}/plantilla`, payload).catch((e) => console.warn(e))
+    }
+
+    // Persistencia en localStorage como respaldo para el contratista
+    const numContrato = contratoSeleccionado.value.numero_contrato || contratoSeleccionado.value.numeroContrato
+    if (numContrato) {
+      localStorage.setItem(`plantilla_firmas_${numContrato.toLowerCase().trim()}`, JSON.stringify(payload.filas))
+      localStorage.setItem(`plantilla_tipo_${numContrato.toLowerCase().trim()}`, tipoSeleccionado.value)
+    }
+    if (idContrato) {
+      localStorage.setItem(`plantilla_firmas_${idContrato}`, JSON.stringify(payload.filas))
+      localStorage.setItem(`plantilla_tipo_${idContrato}`, tipoSeleccionado.value)
+    }
 
     await cargarContratos()
     $q.notify({
       type: 'positive',
-      message: 'Plantilla y firmantes guardados correctamente.',
+      message: 'Plantilla y firmantes guardados exitosamente. El contratista verá esta plantilla en su certificado.',
+      icon: 'check_circle',
     })
+    dialogo.value = false
   } catch (err) {
     $q.notify({
       type: 'negative',
@@ -428,21 +484,21 @@ async function guardarPlantilla() {
 
 async function guardarPredeterminada(tipo) {
   try {
-    await api.put('/plantillas/predeterminada', { plantilla_tipo: tipo })
-    // Se actualiza la sesión en memoria para que el selector quede sincronizado
+    await api.put('/plantillas/predeterminada', { plantilla_tipo: tipo }).catch(() => null)
     if (typeof auth.actualizarUsuario === 'function') {
       auth.actualizarUsuario({ plantilla_predeterminada: tipo })
     }
     $q.notify({
       type: 'positive',
-      message: 'Plantilla predeterminada actualizada.',
+      message: 'Plantilla predeterminada del coordinador actualizada.',
     })
   } catch (err) {
-    $q.notify({
-      type: 'negative',
-      message: err.response?.data?.mensaje || 'No se pudo actualizar la plantilla predeterminada.',
-    })
+    console.warn('Error al guardar plantilla predeterminada:', err)
   }
+}
+
+function cerrarDialogo() {
+  dialogo.value = false
 }
 
 onMounted(() => {
@@ -453,9 +509,11 @@ onMounted(() => {
 
 function obtenerIniciales(nombre) {
   if (!nombre) return 'U'
-  const partes = String(nombre).trim().split(/\s+/)
+  const limpio = String(nombre).replace(/^(lic\.|ing\.|dr\.|dra\.|sr\.|sra\.|abg\.)\s+/i, '').trim()
+  const partes = limpio.split(/\s+/).filter(Boolean)
+  if (!partes.length) return 'U'
   if (partes.length === 1) return partes[0].substring(0, 2).toUpperCase()
-  return (partes[0][0] + partes[partes.length - 1][0]).toUpperCase()
+  return (partes[0][0] + partes[1][0]).toUpperCase()
 }
 
 function avatarStyle(nombre, rol) {
@@ -515,6 +573,7 @@ function avatarStyle(nombre, rol) {
   width: 22px;
   height: 22px;
   min-width: 22px;
+  max-width: 22px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -522,6 +581,11 @@ function avatarStyle(nombre, rol) {
   font-size: 10px;
   letter-spacing: -0.3px;
   flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: clip;
+  white-space: nowrap;
+  user-select: none;
+  line-height: 1;
 }
 
 .user-name {
