@@ -74,30 +74,33 @@
             <div
               v-for="resp in props.row.responsables"
               :key="resp.id || resp._id"
-              class="user-tag row items-center no-wrap cursor-pointer"
+              class="user-tag row items-center no-wrap cursor-pointer notranslate"
+              translate="no"
             >
               <div
-                class="user-avatar text-weight-bold"
+                class="user-avatar text-weight-bold notranslate"
+                translate="no"
                 :style="avatarStyle(resp.nombre, resp.rol)"
               >
                 {{ obtenerIniciales(resp.nombre) }}
               </div>
-              <span class="user-name text-weight-medium text-grey-9 q-ml-xs">
+              <span class="user-name text-weight-medium text-grey-9 q-ml-xs notranslate" translate="no">
                 {{ resp.nombre }}
               </span>
               <span
                 v-if="resp.rol === 'Supervisor'"
-                class="user-role-badge q-ml-xs"
+                class="user-role-badge q-ml-xs notranslate"
+                translate="no"
               >
                 Coord.
               </span>
 
-              <q-tooltip class="bg-dark text-white shadow-3" :offset="[4, 4]">
-                <div class="text-weight-bold">{{ resp.nombre }}</div>
-                <div class="text-caption text-positive">
+              <q-tooltip class="bg-dark text-white shadow-3 notranslate" translate="no" :offset="[4, 4]">
+                <div class="text-weight-bold notranslate" translate="no">{{ resp.nombre }}</div>
+                <div class="text-caption text-positive notranslate" translate="no">
                   {{ resp.rol === 'Supervisor' ? 'Coordinador (Supervisor)' : 'Responsable de Área' }}
                 </div>
-                <div v-if="resp.correo" class="text-caption text-grey-4">{{ resp.correo }}</div>
+                <div v-if="resp.correo" class="text-caption text-grey-4 notranslate" translate="no">{{ resp.correo }}</div>
               </q-tooltip>
             </div>
           </div>
@@ -231,34 +234,37 @@
                 <q-icon name="people" color="primary" />
               </template>
               <template #selected-item="scope">
-                <div class="user-chip-selected row items-center no-wrap q-mr-xs q-my-xs">
+                <div class="user-chip-selected row items-center no-wrap q-mr-xs q-my-xs notranslate" translate="no">
                   <div
-                    class="user-avatar text-weight-bold"
+                    class="user-avatar text-weight-bold notranslate"
+                    translate="no"
                     :style="avatarStyle(scope.opt.nombre, scope.opt.rol)"
                   >
                     {{ obtenerIniciales(scope.opt.nombre) }}
                   </div>
-                  <span class="text-weight-medium q-ml-xs user-chip-text">{{ scope.opt.nombre }}</span>
+                  <span class="text-weight-medium q-ml-xs user-chip-text notranslate" translate="no">{{ scope.opt.nombre }}</span>
                   <q-icon
                     name="cancel"
                     size="16px"
-                    class="cursor-pointer q-ml-xs text-grey-6 hover-delete"
+                    class="cursor-pointer q-ml-xs text-grey-6 hover-delete notranslate"
+                    translate="no"
                     @click.stop="scope.removeAtIndex(scope.index)"
                   />
                 </div>
               </template>
               <template #option="scope">
-                <q-item v-bind="scope.itemProps">
+                <q-item v-bind="scope.itemProps" class="notranslate" translate="no">
                   <q-item-section avatar>
                     <div
-                      class="user-avatar text-weight-bold"
+                      class="user-avatar text-weight-bold notranslate"
+                      translate="no"
                       :style="avatarStyle(scope.opt.nombre, scope.opt.rol)"
                     >
                       {{ obtenerIniciales(scope.opt.nombre) }}
                     </div>
                   </q-item-section>
                   <q-item-section>
-                    <q-item-label class="text-weight-bold">{{ scope.opt.nombre }}</q-item-label>
+                    <q-item-label class="text-weight-bold notranslate" translate="no">{{ scope.opt.nombre }}</q-item-label>
                     <q-item-label caption>
                       {{ scope.opt.rol === 'Supervisor' ? 'Coordinador' : 'Responsable de Área' }} — {{ scope.opt.correo }}
                     </q-item-label>
@@ -704,9 +710,11 @@ function limpiarFormulario() {
 
 function obtenerIniciales(nombre) {
   if (!nombre) return 'U'
-  const partes = String(nombre).trim().split(/\s+/)
+  const limpio = String(nombre).replace(/^(lic\.|ing\.|dr\.|dra\.|sr\.|sra\.|abg\.)\s+/i, '').trim()
+  const partes = limpio.split(/\s+/).filter(Boolean)
+  if (!partes.length) return 'U'
   if (partes.length === 1) return partes[0].substring(0, 2).toUpperCase()
-  return (partes[0][0] + partes[partes.length - 1][0]).toUpperCase()
+  return (partes[0][0] + partes[1][0]).toUpperCase()
 }
 
 function avatarStyle(nombre, rol) {
@@ -766,6 +774,7 @@ function avatarStyle(nombre, rol) {
   width: 22px;
   height: 22px;
   min-width: 22px;
+  max-width: 22px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -773,6 +782,11 @@ function avatarStyle(nombre, rol) {
   font-size: 10px;
   letter-spacing: -0.3px;
   flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: clip;
+  white-space: nowrap;
+  user-select: none;
+  line-height: 1;
 }
 
 .user-name {
