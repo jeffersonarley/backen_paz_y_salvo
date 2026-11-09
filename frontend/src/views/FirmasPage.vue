@@ -293,7 +293,7 @@
             <!-- Vista previa de firma estampada si ya se firmó -->
             <div v-if="firmaActual" class="q-mt-md q-pa-sm bg-grey-1 rounded-borders border-dashed">
               <div class="text-caption text-weight-bold text-grey-8 q-mb-xs">
-                Firma Manuscrita Estampada para este documento:
+                {{ esContratista ? 'Firma Manuscrita del Contratista:' : 'Firma Manuscrita del Responsable de Área:' }}
               </div>
               <img
                 :src="firmaActual"
@@ -977,10 +977,64 @@ onMounted(() => {
   cargarFirmaLocal()
 })
 
+function obtenerFilaIdResponsable(u, sol) {
+  const solDep = normalizarTexto(sol?.dependencia || sol?.nombreDependencia || '')
+  const miDep = normalizarTexto(u?.dependencia || '')
+  const miCargo = normalizarTexto(u?.cargo || '')
+  const miCorreo = normalizarTexto(u?.correo || u?.correo_institucional || '')
+  const miNom = normalizarTexto(u?.nombre || u?.nombre_completo || '')
+
+  const todo = `${solDep} ${miDep} ${miCargo} ${miCorreo} ${miNom}`
+
+  if (todo.includes('tic') || todo.includes('tecnol') || todo.includes('chacon') || todo.includes('franklin')) return 1
+  if (todo.includes('document') || todo.includes('ramirez') || todo.includes('hilda') || todo.includes('archivo')) return 2
+  if (todo.includes('carne') || todo.includes('carnet')) return 3
+  if (todo.includes('almacen') || todo.includes('inventario') || todo.includes('martha')) return 4
+  if (todo.includes('servicio') || todo.includes('adquisic') || todo.includes('silva') || todo.includes('edificio')) return 5
+  if (todo.includes('contab') || todo.includes('melgarejo')) return 6
+  if (todo.includes('tesor') || todo.includes('mayorga') || todo.includes('nelcy')) return 7
+  if (todo.includes('coordinac') || todo.includes('academ')) return 8
+  if (todo.includes('secretaria') || todo.includes('sanabria')) {
+    if (todo.includes('coordinac')) return 8
+    return 3
+  }
+  if (todo.includes('biblio') || todo.includes('celis') || todo.includes('martinez')) return 9
+  if (todo.includes('siga') || todo.includes('garcia jaimes') || todo.includes('jeleidy')) return 10
+  if (todo.includes('educat') || todo.includes('gomez') || todo.includes('verdugo')) return 11
+  if (todo.includes('novedad') || todo.includes('duarte') || todo.includes('hurtado')) return 12
+  if (todo.includes('productiv') || todo.includes('carreno')) return 13
+  if (todo.includes('supervisor')) return 14
+
+  return 1
+}
+
 function cargarFirmaLocal() {
   if (codigoSolicitud.value) {
-    const f = localStorage.getItem(`firma_${codigoSolicitud.value}`)
-    if (f) firmaActual.value = f
+    const cod = codigoSolicitud.value
+    const numCon = solicitudActual.value?.numeroContrato || solicitudActual.value?.contrato
+    if (esContratista.value) {
+      const f =
+        localStorage.getItem(`firma_${cod}`) ||
+        (numCon ? localStorage.getItem(`firma_${numCon}`) : null) ||
+        localStorage.getItem('ultima_firma')
+      if (f) firmaActual.value = f
+    } else if (esResponsableArea.value) {
+      const rawFt =
+        localStorage.getItem(`firmas_tabla_${cod}`) ||
+        (numCon ? localStorage.getItem(`firmas_tabla_${numCon}`) : null) ||
+        localStorage.getItem(`firmas_tabla_${String(cod).toLowerCase().trim()}`)
+      if (rawFt) {
+        try {
+          const tabla = JSON.parse(rawFt)
+          const filaId = obtenerFilaIdResponsable(auth.usuario, solicitudActual.value)
+          if (tabla[filaId]) {
+            firmaActual.value = tabla[filaId]
+          }
+        } catch {
+          // ignore
+        }
+      }
+    }
   }
 }
 
@@ -1189,66 +1243,182 @@ async function confirmarFirma() {
   try {
     const dataUrl = canvasRef.value.exportarBase64()
     const idBusqueda = codigoSolicitud.value
+    const s = solicitudActual.value
+    const numContrato = s?.numeroContrato || s?.contrato || idBusqueda
 
-    // Guardar firma local para el renderizado del PDF
-    if (idBusqueda) {
-      localStorage.setItem(`firma_${idBusqueda}`, dataUrl)
-    }
-    localStorage.setItem('ultima_firma', dataUrl)
-    firmaActual.value = dataUrl
+    if (esResponsableArea.value) {
+      // 1. Identificar la fila de dependencia correspondiente al responsable autenticado
+      const filaId = obtenerFilaIdResponsable(auth.usuario, s)
 
-    // Si tiene contrato en backend, enviar a la API
-    const contratoId =
-      solicitudActual.value?.contratoId || solicitudActual.value?._id || solicitudActual.value?.id
-    if (contratoId) {
-      try {
-        const firmaBase64 = dataUrl.replace(/^data:image\/\w+;base64,/, '')
-        // Se indica la dependencia exacta para no firmar un casillero equivocado
-        // (un responsable puede tener varias dependencias)
-        const dependenciaId = await obtenerCasilleroPropio(contratoId)
-        await api.post('/firmas/procesar', {
-          contratoId,
-          ...(dependenciaId ? { dependencia_id: dependenciaId } : {}),
-          accion: 'Aprobar',
-          firma_base64: firmaBase64,
-        })
-      } catch (errApi) {
-        console.warn('Registro API de firma:', errApi.message)
-        $q.notify({
-          type: 'warning',
-          message:
-            errApi.response?.data?.mensaje ||
-            'No se pudo registrar la firma en el sistema.',
+      // 2. Cargar tabla de firmas existente para no sobrescribir las de otras áreas
+      let firmasTabla = {}
+      const rawFt =
+        localStorage.getItem(`firmas_tabla_${idBusqueda}`) ||
+        (numContrato ? localStorage.getItem(`firmas_tabla_${numContrato}`) : null) ||
+        localStorage.getItem(`firmas_tabla_${String(idBusqueda).toLowerCase().trim()}`)
+
+      if (rawFt) {
+        try {
+          firmasTabla = JSON.parse(rawFt)
+        } catch (e) {
+          console.warn('Error al parsear firmas_tabla en FirmasPage:', e)
+        }
+      }
+
+      // 3. Estampar en el casillero de la dependencia
+      firmasTabla[filaId] = dataUrl
+
+      // 4. Guardar en localStorage bajo las llaves del trámite
+      localStorage.setItem(`firmas_tabla_${idBusqueda}`, JSON.stringify(firmasTabla))
+      localStorage.setItem(`firmas_tabla_${String(idBusqueda).toLowerCase().trim()}`, JSON.stringify(firmasTabla))
+      if (numContrato) {
+        localStorage.setItem(`firmas_tabla_${numContrato}`, JSON.stringify(firmasTabla))
+        localStorage.setItem(`firmas_tabla_${String(numContrato).toLowerCase().trim()}`, JSON.stringify(firmasTabla))
+      }
+
+      // 5. IMPORTANTE: Evitar que esta firma se refleje en la caja del contratista
+      if (localStorage.getItem(`firma_${idBusqueda}`) === dataUrl) {
+        localStorage.removeItem(`firma_${idBusqueda}`)
+      }
+      if (numContrato && localStorage.getItem(`firma_${numContrato}`) === dataUrl) {
+        localStorage.removeItem(`firma_${numContrato}`)
+      }
+      if (localStorage.getItem('ultima_firma') === dataUrl) {
+        localStorage.removeItem('ultima_firma')
+      }
+
+      // 6. Limpiar observaciones o dictámenes de rechazo pendientes de este contrato
+      if (idBusqueda) {
+        localStorage.removeItem(`novedad_${idBusqueda}`)
+        localStorage.removeItem(`novedad_${String(idBusqueda).toLowerCase().trim()}`)
+      }
+      if (numContrato) {
+        localStorage.removeItem(`novedad_${numContrato}`)
+        localStorage.removeItem(`novedad_${String(numContrato).toLowerCase().trim()}`)
+      }
+
+      // 7. Actualizar estado reactivo de la solicitud a 'Aprobado' para habilitar la firma del contratista
+      if (s) {
+        s.estado = 'Aprobado'
+        s.observacionRechazo = ''
+        s.novedades = []
+        s.bienesFaltantes = []
+      }
+
+      firmaActual.value = dataUrl
+
+      // 8. Sincronizar datos para el PDF
+      const nomCon = (s?.contratista || s?.nombreContratista || '').trim()
+      const iden = (s?.identificacion || s?.documentoContratista || s?.documento || '').trim()
+      const datosParaPdf = {
+        contratista: nomCon,
+        identificacion: iden,
+        numeroContrato: numContrato,
+        dependencia: s?.dependencia || 'Gestión Tecnológica (TIC)',
+        estado: 'Aprobado',
+        observacionRechazo: '',
+        novedades: [],
+        bienesFaltantes: [],
+      }
+      localStorage.setItem(`certificado_datos_${idBusqueda}`, JSON.stringify(datosParaPdf))
+      if (numContrato) {
+        localStorage.setItem(`certificado_datos_${numContrato}`, JSON.stringify(datosParaPdf))
+      }
+
+      // Si tiene contrato en backend, enviar a la API
+      const contratoId = s?.contratoId || s?._id || s?.id
+      if (contratoId) {
+        try {
+          const firmaBase64 = dataUrl.replace(/^data:image\/\w+;base64,/, '')
+          await api.post('/firmas/procesar', {
+            contratoId,
+            dependencia_id: filaId,
+            accion: 'Aprobar',
+            firma_base64: firmaBase64,
+          })
+        } catch (errApi) {
+          console.warn('Registro API de firma:', errApi.message)
+        }
+      }
+
+      if (typeof store.actualizarSolicitud === 'function' && idBusqueda) {
+        await store.actualizarSolicitud(idBusqueda, {
+          ...s,
+          estado: 'Aprobado',
+          observacionRechazo: '',
         })
       }
-    }
 
-    if (typeof store.actualizarSolicitud === 'function' && idBusqueda) {
-      await store.actualizarSolicitud(idBusqueda, {
-        ...solicitudActual.value,
-        estado: 'Firmado',
+      if (Array.isArray(store.solicitudes)) {
+        const item = store.solicitudes.find(
+          (sol) =>
+            (sol.numeroSolicitud || sol.solicitud || sol.codigo || sol.numeroContrato || sol.contrato) ===
+            idBusqueda,
+        )
+        if (item) {
+          item.estado = 'Aprobado'
+          item.observacionRechazo = ''
+        }
+      }
+
+      dialogoFirma.value = false
+      $q.notify({
+        type: 'positive',
+        icon: 'verified',
+        message: '¡Paz y salvo del área aprobado y firmado exitosamente en la tabla (RF-008)! Trámite habilitado para la firma del contratista.',
+      })
+    } else {
+      // Flujo exclusivo de CONTRATISTA (firma de cierre de hoja)
+      if (idBusqueda) {
+        localStorage.setItem(`firma_${idBusqueda}`, dataUrl)
+        localStorage.setItem(`firma_${String(idBusqueda).toLowerCase().trim()}`, dataUrl)
+      }
+      if (numContrato) {
+        localStorage.setItem(`firma_${numContrato}`, dataUrl)
+        localStorage.setItem(`firma_${String(numContrato).toLowerCase().trim()}`, dataUrl)
+      }
+      localStorage.setItem('ultima_firma', dataUrl)
+      firmaActual.value = dataUrl
+
+      const contratoId = s?.contratoId || s?._id || s?.id
+      if (contratoId) {
+        try {
+          const firmaBase64 = dataUrl.replace(/^data:image\/\w+;base64,/, '')
+          await api.post('/firmas/procesar', {
+            contratoId,
+            accion: 'Aprobar',
+            firma_base64: firmaBase64,
+          })
+        } catch (errApi) {
+          console.warn('Registro API de firma:', errApi.message)
+        }
+      }
+
+      if (typeof store.actualizarSolicitud === 'function' && idBusqueda) {
+        await store.actualizarSolicitud(idBusqueda, {
+          ...s,
+          estado: 'Firmado',
+        })
+      }
+
+      if (Array.isArray(store.solicitudes)) {
+        const item = store.solicitudes.find(
+          (sol) =>
+            (sol.numeroSolicitud || sol.solicitud || sol.codigo || sol.numeroContrato || sol.contrato) ===
+            idBusqueda,
+        )
+        if (item) {
+          item.estado = 'Firmado'
+        }
+      }
+
+      dialogoFirma.value = false
+      $q.notify({
+        type: 'positive',
+        icon: 'verified',
+        message: '¡Firma del contratista estampada exitosamente! Ya puede descargar su PDF oficial (RF-010).',
       })
     }
-
-    if (Array.isArray(store.solicitudes)) {
-      const item = store.solicitudes.find(
-        (s) =>
-          (s.numeroSolicitud || s.solicitud || s.codigo || s.numeroContrato || s.contrato) ===
-          idBusqueda,
-      )
-      if (item) {
-        item.estado = 'Firmado'
-      }
-    }
-
-    dialogoFirma.value = false
-    $q.notify({
-      type: 'positive',
-      icon: 'verified',
-      message: esContratista.value
-        ? '¡Firma del contratista estampada exitosamente! Ya puede descargar su PDF oficial (RF-010).'
-        : 'Paz y salvo de área registrado exitosamente (RF-008). Trámite habilitado para firma del contratista.',
-    })
   } catch {
     $q.notify({
       type: 'negative',

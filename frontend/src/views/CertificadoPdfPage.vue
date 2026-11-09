@@ -1781,10 +1781,9 @@ onMounted(async () => {
     (auth.rolUsuario === 'CONTRATISTA' ? (auth.usuario?.numeroContrato || auth.usuario?.nombre) : '') ||
     ''
   if (codigo) {
-    const f = localStorage.getItem(`firma_${codigo}`) || localStorage.getItem('ultima_firma')
-    if (f) firmaGuardada.value = f
-
-    const ft = localStorage.getItem(`firmas_tabla_${codigo}`)
+    const ft =
+      localStorage.getItem(`firmas_tabla_${codigo}`) ||
+      localStorage.getItem(`firmas_tabla_${String(codigo).toLowerCase().trim()}`)
     if (ft) {
       try {
         firmasTabla.value = JSON.parse(ft)
@@ -1792,6 +1791,27 @@ onMounted(async () => {
         console.warn('Error al parsear firmas tabla:', e)
       }
     }
+
+    let f =
+      localStorage.getItem(`firma_${codigo}`) ||
+      localStorage.getItem(`firma_${String(codigo).toLowerCase().trim()}`)
+    if (!f && esContratista.value) {
+      f = localStorage.getItem('ultima_firma')
+    }
+
+    // Si la firma en firmaGuardada es idéntica a alguna firma de área en la tabla,
+    // significa que proviene del visto bueno de un responsable de área y NO del contratista.
+    const esFirmaDeArea =
+      f &&
+      Object.values(firmasTabla.value || {}).some(
+        (firmaArea) => firmaArea && firmaArea === f,
+      )
+    if (esFirmaDeArea && !esContratista.value) {
+      f = null
+      localStorage.removeItem(`firma_${codigo}`)
+      localStorage.removeItem(`firma_${String(codigo).toLowerCase().trim()}`)
+    }
+    if (f) firmaGuardada.value = f
 
     // 1. Verificar si hay datos guardados previamente para este código o contratista
     const claveStorage = `certificado_datos_${String(codigo).toLowerCase().trim()}`
@@ -1937,6 +1957,31 @@ onMounted(async () => {
         novedades: encontrada.novedades || [],
         bienesFaltantes: encontrada.bienesFaltantes || [],
         firmas: encontrada.firmas || [],
+      }
+      if (numContrato) {
+        const ftContrato =
+          localStorage.getItem(`firmas_tabla_${numContrato}`) ||
+          localStorage.getItem(`firmas_tabla_${String(numContrato).toLowerCase().trim()}`)
+        if (ftContrato) {
+          try {
+            const parsedFc = JSON.parse(ftContrato)
+            firmasTabla.value = { ...parsedFc, ...firmasTabla.value }
+          } catch (e) {
+            console.warn('Error al parsear firmas tabla por contrato:', e)
+          }
+        }
+        if (firmaGuardada.value && !esContratista.value) {
+          const esFirmaDeArea = Object.values(firmasTabla.value || {}).some(
+            (firmaArea) => firmaArea && firmaArea === firmaGuardada.value,
+          )
+          if (esFirmaDeArea) {
+            firmaGuardada.value = null
+            localStorage.removeItem(`firma_${codigo}`)
+            localStorage.removeItem(`firma_${String(codigo).toLowerCase().trim()}`)
+            localStorage.removeItem(`firma_${numContrato}`)
+            localStorage.removeItem(`firma_${String(numContrato).toLowerCase().trim()}`)
+          }
+        }
       }
     } else {
       try {
