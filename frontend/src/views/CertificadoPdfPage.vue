@@ -837,13 +837,6 @@ function sincronizarSupervisorConFilas(forzar = false) {
     (auth.rolUsuario === 'SUPERVISOR' ? auth.usuario?.nombre : null) ||
     ''
 
-  const respReal =
-    (typeof responsable === 'string'
-      ? responsable
-      : responsable?.nombre_completo || responsable?.nombre || '') ||
-    (auth.rolUsuario === 'RESPONSABLE_AREA' ? auth.usuario?.nombre : null) ||
-    ''
-
   const f14 = filasDependencias.value.find((f) => f.id === 14)
   if (f14) {
     if (forzar || !f14.nombres || f14.nombres === 'Johon Fredy Sanabria Muñoz' || f14.nombres === 'Ing. Carlos Supervisor') {
