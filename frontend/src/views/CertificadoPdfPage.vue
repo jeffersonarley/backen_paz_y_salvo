@@ -25,41 +25,7 @@
       </div>
 
       <!-- Lado Derecho: Acciones principales con estilo homogéneo, espaciadas y legibles -->
-      <div class="toolbar-right row items-center q-gutter-md no-wrap">
-        <!-- Botón Completar Todas las Firmas -->
-        <q-btn
-          unelevated
-          dense
-          color="teal-8"
-          icon="draw"
-          label="Completar Firmas"
-          class="q-px-md text-weight-bold shadow-1"
-          @click="completarTodasLasFirmas"
-        >
-          <q-tooltip>Estampar todas las firmas para tener el certificado 100% completado y listo para imprimir</q-tooltip>
-        </q-btn>
-
-        <!-- Menú de opciones de firma -->
-        <q-btn flat round dense icon="more_vert" color="grey-7">
-          <q-menu>
-            <q-list style="min-width: 200px">
-              <q-item clickable v-close-popup @click="completarTodasLasFirmas">
-                <q-item-section avatar>
-                  <q-icon name="verified" color="teal-8" />
-                </q-item-section>
-                <q-item-section>Completar Todas las Firmas</q-item-section>
-              </q-item>
-              <q-separator />
-              <q-item clickable v-close-popup @click="limpiarTodasLasFirmas">
-                <q-item-section avatar>
-                  <q-icon name="delete_sweep" color="negative" />
-                </q-item-section>
-                <q-item-section class="text-negative">Limpiar Todas las Firmas</q-item-section>
-              </q-item>
-            </q-list>
-          </q-menu>
-        </q-btn>
-
+      <div class="toolbar-right row items-center q-gutter-sm no-wrap">
         <!-- Botón Editar Formato -->
         <q-btn
           outline
@@ -86,6 +52,32 @@
           @click="imprimir"
         >
           <q-tooltip>Imprimir o guardar como PDF oficial</q-tooltip>
+        </q-btn>
+
+        <!-- Menú discreto de opciones del certificado -->
+        <q-btn flat round dense size="sm" icon="more_vert" color="grey-6">
+          <q-tooltip>Opciones de gestión</q-tooltip>
+          <q-menu>
+            <q-list style="min-width: 220px" dense>
+              <q-item clickable v-close-popup @click="completarTodasLasFirmas">
+                <q-item-section avatar>
+                  <q-icon name="verified" color="primary" size="xs" />
+                </q-item-section>
+                <q-item-section class="text-caption text-weight-medium">
+                  Validación masiva de dependencias
+                </q-item-section>
+              </q-item>
+              <q-separator />
+              <q-item clickable v-close-popup @click="limpiarTodasLasFirmas">
+                <q-item-section avatar>
+                  <q-icon name="restart_alt" color="grey-7" size="xs" />
+                </q-item-section>
+                <q-item-section class="text-caption text-grey-8">
+                  Restablecer firmas
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-menu>
         </q-btn>
       </div>
     </div>
@@ -2242,9 +2234,9 @@ function completarTodasLasFirmas() {
 
   $q.notify({
     type: 'positive',
-    message: '¡Todas las firmas de dependencias y del contratista han sido completadas con éxito! El documento está 100% firmado y listo para imprimir.',
+    message: 'Todas las firmas y vistos buenos de dependencias han sido validados exitosamente.',
     icon: 'verified',
-    timeout: 4000,
+    timeout: 3000,
   })
 }
 
