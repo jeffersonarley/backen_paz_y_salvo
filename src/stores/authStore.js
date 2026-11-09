@@ -277,6 +277,16 @@ export const useAuthStore = defineStore('auth', () => {
       cargo: 'Responsable de Gestión de TIC',
       dependencia: 'Gestión de TIC',
     },
+    {
+      id: 26,
+      nombre: 'Carlos Eduardo Mendoza',
+      correo: 'contratista@sena.edu.co',
+      password: '123',
+      rol: 'CONTRATISTA',
+      cargo: 'Consultor en Redes y Telecomunicaciones',
+      documento: '1097890123',
+      numeroContrato: 'CNT-2026-042',
+    },
   ])
 
   const estaAutenticado = computed(() => !!usuario.value)
@@ -314,13 +324,25 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function login(correo, password) {
     let emailLimpio = (correo || '').trim().toLowerCase()
+    const passLimpia = (password || '').trim()
+
+    // Aliases amigables para agilizar pruebas y exposición en vivo
     if (emailLimpio === 'admin' || emailLimpio === 'administrador') {
       emailLimpio = 'admin@gccon.com'
-    } else if (emailLimpio === 'supervisor') {
+    } else if (emailLimpio === 'supervisor' || emailLimpio === 'super') {
       emailLimpio = 'supervisor@gccon.com'
-    } else if (emailLimpio === 'contratista') {
+    } else if (
+      emailLimpio === 'contratista' ||
+      emailLimpio === 'contratista@gccon.com' ||
+      emailLimpio === 'contratista@sena.edu.co' ||
+      emailLimpio.includes('contratist')
+    ) {
       emailLimpio = 'carlos.mendoza@email.com'
-    } else if (emailLimpio === 'responsable') {
+    } else if (
+      emailLimpio === 'responsable' ||
+      emailLimpio === 'responsable@gccon.com' ||
+      emailLimpio === 'tic'
+    ) {
       emailLimpio = 'responsable@gccon.com'
     }
 
@@ -356,28 +378,45 @@ export const useAuthStore = defineStore('auth', () => {
       )
     }
 
-    // 2. Fallback con la lista local
-    let user = usuariosPrueba.value.find(
-      (u) =>
-        u.correo.toLowerCase() === emailLimpio &&
-        (u.password === password ||
-          password === 'admin' ||
-          password === '123' ||
-          password === '12345678' ||
-          password === 'Admin1234!'),
-    )
+    // 2. Fallback resiliente con la lista local
+    let user = usuariosPrueba.value.find((u) => u.correo.toLowerCase() === emailLimpio)
 
     if (!user) {
-      user = usuariosPrueba.value.find((u) => u.correo.toLowerCase() === emailLimpio)
+      user = usuariosPrueba.value.find(
+        (u) =>
+          u.documento === emailLimpio ||
+          (u.numeroContrato && u.numeroContrato.toLowerCase() === emailLimpio) ||
+          u.nombre.toLowerCase().includes(emailLimpio),
+      )
+    }
+
+    if (!user && (emailLimpio.includes('contrat') || emailLimpio.includes('mendoza'))) {
+      user = usuariosPrueba.value.find((u) => u.rol === 'CONTRATISTA')
     }
 
     if (user) {
-      const mockToken = 'mock-jwt-token-' + Date.now()
-      guardarCredenciales(mockToken, user)
-      return { success: true, user }
-    } else {
-      return { success: false, message: 'Correo o contraseña incorrectos.' }
+      // Contraseñas de prueba permitidas para agilizar la presentación
+      const passValida =
+        !passLimpia ||
+        user.password === passLimpia ||
+        passLimpia === '123' ||
+        passLimpia === 'admin' ||
+        passLimpia === 'super' ||
+        passLimpia === 'contratista' ||
+        passLimpia === 'contratista123' ||
+        passLimpia === '1234' ||
+        passLimpia === '123456' ||
+        passLimpia === '12345678' ||
+        passLimpia === 'Admin1234!'
+
+      if (passValida) {
+        const mockToken = 'mock-jwt-token-' + Date.now()
+        guardarCredenciales(mockToken, user)
+        return { success: true, user }
+      }
     }
+
+    return { success: false, message: 'Correo o contraseña incorrectos.' }
   }
 
   function registrarUsuarioLocal(nuevoUsuario) {
