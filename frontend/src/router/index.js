@@ -52,7 +52,7 @@ export default defineRouter(() => {
 
     const rolesPermitidos = Array.isArray(to.meta?.roles) ? to.meta.roles : []
     if (rolesPermitidos.length > 0) {
-      const rolActual = normalizarRol(usuario.rol)
+      const rolActual = normalizarRol(usuario?.rol || usuario?.role)
       const tieneRol = rolesPermitidos.some((rol) => normalizarRol(rol) === rolActual)
       if (!tieneRol) {
         return { name: 'no-permisos' }

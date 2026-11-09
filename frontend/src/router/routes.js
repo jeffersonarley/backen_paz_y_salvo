@@ -7,7 +7,7 @@ const routes = [
       {
         path: '',
         name: 'login',
-        component: () => import('@/views/LoginPage.vue'),
+        component: () => import('@/pages/LoginPage.vue'),
         meta: { titulo: 'Iniciar Sesión', publica: true },
       },
     ],
@@ -22,6 +22,22 @@ const routes = [
   {
     path: '/solicitudes',
     redirect: '/app/solicitudes',
+  },
+  {
+    path: '/plantillas',
+    redirect: '/app/plantillas',
+  },
+  {
+    path: '/contratistas',
+    redirect: '/app/contratistas',
+  },
+  {
+    path: '/dependencias',
+    redirect: '/app/dependencias',
+  },
+  {
+    path: '/firmas',
+    redirect: '/app/firmas',
   },
   {
     path: '/solicitudes/certificado',
@@ -44,7 +60,7 @@ const routes = [
       {
         path: 'dashboard',
         name: 'dashboard',
-        component: () => import('@/views/DashboardPage.vue'),
+        component: () => import('@/pages/DashboardPage.vue'),
         meta: {
           titulo: 'Dashboard',
           roles: ['ADMINISTRADOR', 'SUPERVISOR', 'CONTRATISTA', 'RESPONSABLE_AREA'],
@@ -53,37 +69,40 @@ const routes = [
       {
         path: 'usuarios',
         name: 'usuarios',
-        component: () => import('@/views/UsuariosPage.vue'),
+        component: () => import('@/pages/UsuariosPage.vue'),
         meta: { titulo: 'Usuarios', roles: ['ADMINISTRADOR'] },
       },
       {
         path: 'supervisores',
         name: 'supervisores',
-        component: () => import('@/views/SupervisoresPage.vue'),
+        component: () => import('@/pages/SupervisoresPage.vue'),
         meta: { titulo: 'Supervisores', roles: ['ADMINISTRADOR'] },
       },
       {
         path: 'contratistas',
         name: 'contratistas',
-        component: () => import('@/views/ContratistasPage.vue'),
+        component: () => import('@/pages/ContratistasPage.vue'),
         meta: { titulo: 'Contratistas', roles: ['ADMINISTRADOR', 'SUPERVISOR'] },
       },
       {
         path: 'dependencias',
         name: 'dependencias',
-        component: () => import('@/views/DependenciasPage.vue'),
+        component: () => import('@/pages/DependenciasPage.vue'),
         meta: { titulo: 'Dependencias', roles: ['ADMINISTRADOR', 'SUPERVISOR'] },
       },
       {
         path: 'plantillas',
         name: 'plantillas',
-        component: () => import('@/views/PlantillasPage.vue'),
-        meta: { titulo: 'Plantillas y Firmantes', roles: ['ADMINISTRADOR', 'SUPERVISOR'] },
+        component: () => import('@/pages/PlantillasPage.vue'),
+        meta: {
+          titulo: 'Plantillas GCCON-F-088',
+          roles: ['ADMINISTRADOR', 'SUPERVISOR'],
+        },
       },
       {
         path: 'solicitudes',
         name: 'solicitudes',
-        component: () => import('@/views/SolicitudesPage.vue'),
+        component: () => import('@/pages/SolicitudesPage.vue'),
         meta: {
           titulo: 'Solicitudes GCCON-F-088',
           roles: ['ADMINISTRADOR', 'SUPERVISOR', 'CONTRATISTA', 'RESPONSABLE_AREA'],
@@ -92,16 +111,16 @@ const routes = [
       {
         path: 'solicitudes/nueva',
         name: 'nueva-solicitud',
-        component: () => import('@/views/NuevaSolicitudPage.vue'),
+        component: () => import('@/pages/NuevaSolicitudPage.vue'),
         meta: {
           titulo: 'Nueva Solicitud GCCON-F-088',
-          roles: ['CONTRATISTA'],
+          roles: ['ADMINISTRADOR', 'SUPERVISOR', 'CONTRATISTA'],
         },
       },
       {
         path: 'solicitudes/certificado',
         name: 'certificado-pdf',
-        component: () => import('@/views/CertificadoPdfPage.vue'),
+        component: () => import('@/pages/CertificadoPdfPage.vue'),
         meta: {
           titulo: 'Certificado GCCON-F-088',
           roles: ['ADMINISTRADOR', 'SUPERVISOR', 'CONTRATISTA', 'RESPONSABLE_AREA'],
@@ -110,16 +129,16 @@ const routes = [
       {
         path: 'firmas',
         name: 'firmas',
-        component: () => import('@/views/FirmasPage.vue'),
+        component: () => import('@/pages/FirmasPage.vue'),
         meta: {
           titulo: 'Gestionar Firmas',
-          roles: ['RESPONSABLE_AREA'],
+          roles: ['RESPONSABLE_AREA', 'SUPERVISOR'],
         },
       },
       {
         path: 'perfil',
         name: 'perfil',
-        component: () => import('@/views/PerfilPage.vue'),
+        component: () => import('@/pages/PerfilPage.vue'),
         meta: {
           titulo: 'Perfil',
           roles: ['ADMINISTRADOR', 'SUPERVISOR', 'CONTRATISTA', 'RESPONSABLE_AREA'],
@@ -128,7 +147,7 @@ const routes = [
       {
         path: 'reportes',
         name: 'reportes',
-        component: () => import('@/views/ReportesPage.vue'),
+        component: () => import('@/pages/ReportesPage.vue'),
         meta: {
           titulo: 'Reportes y Métricas',
           roles: ['ADMINISTRADOR', 'SUPERVISOR'],
@@ -137,21 +156,20 @@ const routes = [
       {
         path: 'notificaciones',
         name: 'notificaciones',
-        component: () => import('@/views/NotificacionesPage.vue'),
+        component: () => import('@/pages/NotificacionesPage.vue'),
         meta: {
           titulo: 'Notificaciones',
           roles: ['ADMINISTRADOR', 'SUPERVISOR', 'CONTRATISTA', 'RESPONSABLE_AREA'],
         },
       },
-      // Trazabilidad del sistema (Admin)
+      // Redirecciones seguras para evitar 404 si el navegador tenía la URL anterior
       {
         path: 'auditoria',
-        name: 'auditoria',
-        component: () => import('@/views/AuditoriaPage.vue'),
-        meta: {
-          titulo: 'Auditoría del Sistema',
-          roles: ['ADMINISTRADOR'],
-        },
+        redirect: { name: 'dashboard' },
+      },
+      {
+        path: 'plantilla',
+        redirect: { name: 'plantillas' },
       },
     ],
   },
@@ -160,7 +178,7 @@ const routes = [
   {
     path: '/recuperar',
     name: 'recuperar',
-    component: () => import('@/views/RecuperarPage.vue'),
+    component: () => import('@/pages/RecuperarPage.vue'),
     meta: { titulo: 'Recuperar Contraseña', publica: true },
   },
 
@@ -168,7 +186,7 @@ const routes = [
   {
     path: '/restablecer',
     name: 'restablecer',
-    component: () => import('@/views/RestablecerPage.vue'),
+    component: () => import('@/pages/RestablecerPage.vue'),
     meta: { titulo: 'Restablecer Contraseña', publica: true },
   },
 
@@ -176,12 +194,12 @@ const routes = [
   {
     path: '/app/no-permisos',
     name: 'no-permisos',
-    component: () => import('@/views/NoPermisosPage.vue'),
+    component: () => import('@/pages/NoPermisosPage.vue'),
     meta: { titulo: 'Sin permisos' },
   },
   {
     path: '/:catchAll(.*)*',
-    component: () => import('@/views/ErrorNotFound.vue'),
+    component: () => import('@/pages/ErrorNotFound.vue'),
   },
 ]
 

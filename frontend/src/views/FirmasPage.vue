@@ -754,21 +754,6 @@ function normalizarTexto(txt) {
     .trim()
 }
 
-// Devuelve el id de la dependencia del casillero pendiente que le corresponde al usuario
-async function obtenerCasilleroPropio(contratoId) {
-  try {
-    const resp = await api.get('/firmas/pendientes')
-    const lista = Array.isArray(resp.data) ? resp.data : resp.data?.pendientes || []
-    const casillero = lista.find(
-      (c) => String(c.contrato_id?._id || c.contrato_id) === String(contratoId),
-    )
-    const area = casillero?.area_id
-    return area?._id || area || null
-  } catch {
-    return null
-  }
-}
-
 const solicitudesParaBandeja = computed(() => {
   const lista = store.solicitudes || []
   if (!auth.usuario) return lista
@@ -916,7 +901,7 @@ const columnasBienes = [
   { name: 'estado_entrega', label: 'Estado Devolución', field: 'estado_entrega', align: 'center' },
 ]
 
-
+// Obtener el código enviado por query params: /app/firmas?codigo=SOL-2026-001
 const codigoSolicitud = computed(() => route.query.codigo)
 
 // Buscar la solicitud en el store comprobando múltiples nombres de propiedad
@@ -971,6 +956,15 @@ const listaBienes = computed(() => {
 })
 
 onMounted(() => {
+  if (!esResponsableArea.value && !esSupervisorOAdmin.value) {
+    $q.notify({
+      type: 'warning',
+      message: 'El módulo de firmas y evaluación de dependencias es exclusivo para los Responsables de Área y Supervisores.',
+      icon: 'lock',
+    })
+    router.replace({ name: 'solicitudes' })
+    return
+  }
   if (store.cargarSolicitudes) {
     store.cargarSolicitudes()
   }

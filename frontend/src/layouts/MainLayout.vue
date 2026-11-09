@@ -185,7 +185,7 @@ const normalizarRol = (valor) => {
 }
 
 const $q = useQuasar()
-const leftDrawerOpen = ref($q.screen.gt.sm)
+const leftDrawerOpen = ref(true)
 const router = useRouter()
 const auth = useAuthStore()
 const notifStore = useNotificacionesStore()
@@ -204,7 +204,7 @@ watch(
 const rolLegible = computed(() => {
   const r = normalizarRol(auth.usuario?.rol || auth.rolUsuario)
   if (r === 'ADMINISTRADOR') return 'Administrador General'
-  if (r === 'SUPERVISOR') return 'Coordinador (Supervisor de Contrato)'
+  if (r === 'SUPERVISOR') return 'Supervisor'
   if (r === 'RESPONSABLE_AREA') return 'Responsable de Área'
   if (r === 'CONTRATISTA') return 'Contratista'
   return auth.usuario?.rol || 'Usuario'
@@ -291,7 +291,7 @@ const menuBase = [
     to: { name: 'firmas' },
     icon: 'draw',
     exact: false,
-    roles: ['RESPONSABLE_AREA'],
+    roles: ['RESPONSABLE_AREA', 'SUPERVISOR'],
   },
   {
     name: 'reportes',
@@ -301,18 +301,11 @@ const menuBase = [
     exact: false,
     roles: ['ADMINISTRADOR', 'SUPERVISOR'],
   },
-  {
-    name: 'auditoria',
-    label: 'Auditoría',
-    to: { name: 'auditoria' },
-    icon: 'history',
-    exact: false,
-    roles: ['ADMINISTRADOR'],
-  },
 ]
 
 const menuItems = computed(() => {
-  const rolActual = normalizarRol(auth.usuario?.rol)
+  const u = auth.usuario || (typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('gccon_user') || 'null') : null)
+  const rolActual = normalizarRol(u?.rol || auth.rolUsuario)
   if (!rolActual) return []
 
   return menuBase.filter((item) => item.roles.some((rol) => normalizarRol(rol) === rolActual))
@@ -343,7 +336,7 @@ function cerrarSesion() {
 }
 
 function cerrarDrawerEnMovil() {
-  if ($q.screen.lt.md) {
+  if ($q.screen.xs) {
     leftDrawerOpen.value = false
   }
 }
