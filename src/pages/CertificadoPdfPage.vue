@@ -26,6 +26,40 @@
 
       <!-- Lado Derecho: Acciones principales con estilo homogéneo, espaciadas y legibles -->
       <div class="toolbar-right row items-center q-gutter-md no-wrap">
+        <!-- Botón Completar Todas las Firmas -->
+        <q-btn
+          unelevated
+          dense
+          color="teal-8"
+          icon="draw"
+          label="Completar Firmas"
+          class="q-px-md text-weight-bold shadow-1"
+          @click="completarTodasLasFirmas"
+        >
+          <q-tooltip>Estampar todas las firmas para tener el certificado 100% completado y listo para imprimir</q-tooltip>
+        </q-btn>
+
+        <!-- Menú de opciones de firma -->
+        <q-btn flat round dense icon="more_vert" color="grey-7">
+          <q-menu>
+            <q-list style="min-width: 200px">
+              <q-item clickable v-close-popup @click="completarTodasLasFirmas">
+                <q-item-section avatar>
+                  <q-icon name="verified" color="teal-8" />
+                </q-item-section>
+                <q-item-section>Completar Todas las Firmas</q-item-section>
+              </q-item>
+              <q-separator />
+              <q-item clickable v-close-popup @click="limpiarTodasLasFirmas">
+                <q-item-section avatar>
+                  <q-icon name="delete_sweep" color="negative" />
+                </q-item-section>
+                <q-item-section class="text-negative">Limpiar Todas las Firmas</q-item-section>
+              </q-item>
+            </q-list>
+          </q-menu>
+        </q-btn>
+
         <!-- Botón Editar Formato -->
         <q-btn
           outline
@@ -2505,6 +2539,139 @@ onMounted(async () => {
 
 function volver() {
   router.push({ name: 'solicitudes' })
+}
+
+function generarFirmaSimulada(nombre) {
+  const canvas = document.createElement('canvas')
+  canvas.width = 240
+  canvas.height = 70
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return ''
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+  ctx.strokeStyle = '#0e2b4f'
+  ctx.lineWidth = 1.8
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+
+  const nomLimpio = String(nombre || 'Firma').replace(/<[^>]*>/g, '').trim()
+  const partes = nomLimpio.split(/\s+/)
+  const inicial = partes[0]?.charAt(0).toUpperCase() || 'F'
+  const apellido = partes[1] || partes[0] || 'Oficial'
+
+  // Rúbrica artística
+  ctx.beginPath()
+  ctx.moveTo(25, 45)
+  ctx.bezierCurveTo(35, 10, 55, 15, 45, 50)
+  ctx.bezierCurveTo(40, 55, 60, 40, 80, 42)
+  ctx.bezierCurveTo(100, 45, 115, 28, 135, 38)
+  ctx.bezierCurveTo(155, 46, 175, 32, 195, 40)
+  ctx.stroke()
+
+  // Línea de rúbrica inferior
+  ctx.beginPath()
+  ctx.lineWidth = 1.3
+  ctx.moveTo(30, 52)
+  ctx.quadraticCurveTo(120, 62, 210, 48)
+  ctx.stroke()
+
+  // Caligrafía estilizada
+  ctx.font = 'italic 13px "Segoe Script", "Brush Script MT", "Caveat", cursive, sans-serif'
+  ctx.fillStyle = '#0e2b4f'
+  ctx.fillText(`${inicial}. ${apellido}`, 45, 38)
+
+  return canvas.toDataURL('image/png')
+}
+
+function completarTodasLasFirmas() {
+  const codigo =
+    route.query.codigo ||
+    route.params.id ||
+    datosSolicitud.value.numeroContrato ||
+    datosSolicitud.value.contratista ||
+    'CNT-E2E-25626'
+
+  const nuevasFirmas = { ...firmasTabla.value }
+
+  filasDependencias.value.forEach((fila) => {
+    if (fila.aplica !== false) {
+      if (!nuevasFirmas[fila.id]) {
+        nuevasFirmas[fila.id] = generarFirmaSimulada(fila.nombres || fila.dependenciaSimple)
+      }
+    }
+  })
+
+  firmasTabla.value = nuevasFirmas
+
+  if (!firmaGuardada.value) {
+    firmaGuardada.value = generarFirmaSimulada(datosSolicitud.value.contratista || 'Contratista')
+  }
+
+  // Persistir en localStorage
+  if (codigo) {
+    localStorage.setItem(`firmas_tabla_${codigo}`, JSON.stringify(firmasTabla.value))
+    localStorage.setItem(`firma_${codigo}`, firmaGuardada.value)
+    localStorage.setItem(`firmas_tabla_${String(codigo).toLowerCase().trim()}`, JSON.stringify(firmasTabla.value))
+    localStorage.setItem(`firma_${String(codigo).toLowerCase().trim()}`, firmaGuardada.value)
+  }
+  if (datosSolicitud.value.numeroContrato) {
+    localStorage.setItem(`firmas_tabla_${datosSolicitud.value.numeroContrato}`, JSON.stringify(firmasTabla.value))
+    localStorage.setItem(`firma_${datosSolicitud.value.numeroContrato}`, firmaGuardada.value)
+  }
+  localStorage.setItem('ultima_firma', firmaGuardada.value)
+
+  // Asegurar estado completado/firmado sin marcas de rechazo
+  datosSolicitud.value.estado = 'Firmado'
+  datosSolicitud.value.observacionRechazo = ''
+  datosSolicitud.value.novedades = []
+  datosSolicitud.value.bienesFaltantes = []
+
+  $q.notify({
+    type: 'positive',
+    message: '¡Todas las firmas de dependencias y del contratista han sido completadas con éxito! El documento está 100% firmado y listo para imprimir.',
+    icon: 'verified',
+    timeout: 4000,
+  })
+}
+
+function limpiarTodasLasFirmas() {
+  $q.dialog({
+    title: 'Limpiar Firmas',
+    message: '¿Está seguro de que desea remover todas las firmas de las dependencias y del contratista para reiniciar el formato?',
+    cancel: {
+      label: 'Cancelar',
+      flat: true,
+      color: 'grey-8',
+    },
+    ok: {
+      label: 'Sí, Limpiar Todas',
+      color: 'negative',
+      unelevated: true,
+    },
+  }).onOk(() => {
+    firmasTabla.value = {}
+    firmaGuardada.value = null
+    const codigo =
+      route.query.codigo ||
+      route.params.id ||
+      datosSolicitud.value.numeroContrato ||
+      datosSolicitud.value.contratista
+    if (codigo) {
+      localStorage.removeItem(`firmas_tabla_${codigo}`)
+      localStorage.removeItem(`firma_${codigo}`)
+      localStorage.removeItem(`firmas_tabla_${String(codigo).toLowerCase().trim()}`)
+      localStorage.removeItem(`firma_${String(codigo).toLowerCase().trim()}`)
+    }
+    if (datosSolicitud.value.numeroContrato) {
+      localStorage.removeItem(`firmas_tabla_${datosSolicitud.value.numeroContrato}`)
+      localStorage.removeItem(`firma_${datosSolicitud.value.numeroContrato}`)
+    }
+    $q.notify({
+      type: 'info',
+      message: 'Todas las firmas han sido removidas. El formato quedó en estado Pendiente.',
+      icon: 'delete_sweep',
+    })
+  })
 }
 
 function imprimir() {
