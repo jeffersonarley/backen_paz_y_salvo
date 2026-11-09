@@ -971,15 +971,6 @@ const listaBienes = computed(() => {
 })
 
 onMounted(() => {
-  if (!esResponsableArea.value) {
-    $q.notify({
-      type: 'warning',
-      message: 'El módulo de firmas y evaluación de dependencias es exclusivo para los Responsables de Área.',
-      icon: 'lock',
-    })
-    router.replace({ name: 'solicitudes' })
-    return
-  }
   if (store.cargarSolicitudes) {
     store.cargarSolicitudes()
   }

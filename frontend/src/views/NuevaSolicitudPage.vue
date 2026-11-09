@@ -263,7 +263,7 @@ const opcionesVigencia = ref(['2024', '2025', '2026', '2027', '2028'])
 const form = ref({
   vigencia: String(anioActual),
   numeroContrato:
-    auth.usuario?.numeroContrato || `CNT-${anioActual}-${Math.floor(100 + Math.random() * 900)}`,
+    auth.usuario?.numeroContrato || `CNT-${anioActual}-000`,
   contratista: auth.usuario?.nombre || '',
   identificacion: auth.usuario?.documento || auth.usuario?.identificacion || '',
   dependencia: null,
@@ -288,7 +288,7 @@ function alCambiarVigencia(nuevoAnio) {
       form.value.numeroContrato = `CNT-${nuevoAnio}-${consecutivo}`
     }
   } else {
-    form.value.numeroContrato = `CNT-${nuevoAnio}-${Math.floor(100 + Math.random() * 900)}`
+    form.value.numeroContrato = `CNT-${nuevoAnio}-000`
   }
 }
 

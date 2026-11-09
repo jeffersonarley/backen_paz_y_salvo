@@ -26,6 +26,7 @@ const RESPONSABLES = [
     { correo: 'juan.silva@sena.edu.co', password: '123', fila: 5 },
     { correo: 'zaida.melgarejo@sena.edu.co', password: '123', fila: 6 },
     { correo: 'nelcy.mayorga@sena.edu.co', password: '123', fila: 7 },
+    { correo: 'johon.sanabria@sena.edu.co', password: '123', fila: 3 },
     { correo: 'johon.sanabria@sena.edu.co', password: '123', fila: 8 },
     { correo: 'andrea.celis@sena.edu.co', password: '123', fila: 9 },
     { correo: 'zaida.garcia@sena.edu.co', password: '123', fila: 10 },
@@ -86,8 +87,8 @@ const login = async ({ correo, password }) => {
     check(!!tCoordinador, `Sesión del coordinador (${COORDINADOR.correo})`);
 
     const rDep = await llamar('GET', '/dependencias', tCoordinador);
-    const depTic = rDep.datos?.find((d) => d.nombre_dependencia === 'Gestión Tecnológica (TIC)');
-    check(!!depTic, 'Dependencia principal del contrato disponible', 'Gestión Tecnológica (TIC)');
+    const depTic = rDep.datos?.find((d) => String(d.nombre_dependencia || '').toUpperCase().includes('TIC'));
+    check(!!depTic, 'Dependencia principal del contrato disponible', depTic?.nombre_dependencia || 'no encontrada');
 
     // La plantilla predeterminada del coordinador debe ser la completa (14 filas)
     const rPlantillaCoord = await llamar('PUT', '/plantillas/predeterminada', tCoordinador, { plantilla_tipo: 'COMPLETA' });

@@ -131,34 +131,26 @@ const opcionesRoles = [
   {
     label: 'Administrador',
     value: 'ADMINISTRADOR',
-    correo: 'admin@gccon.com',
-    pass: 'admin',
     icon: 'admin_panel_settings',
     descripcion: 'Gestión global y supervisores',
   },
   {
     label: 'Supervisor',
     value: 'SUPERVISOR',
-    correo: 'supervisor@gccon.com',
-    pass: 'super',
     icon: 'supervisor_account',
     descripcion: 'Gestión de contratistas y dependencias',
   },
   {
     label: 'Contratista',
     value: 'CONTRATISTA',
-    correo: 'carlos.mendoza@email.com',
-    pass: '123',
     icon: 'person',
     descripcion: 'Registro de contrato y solicitud',
   },
   {
     label: 'Responsable de Área',
     value: 'RESPONSABLE_AREA',
-    correo: 'franklin.chacon@sena.edu.co',
-    pass: '123',
     icon: 'draw',
-    descripcion: 'Gestión de TIC — Franklin Rolando Chacón',
+    descripcion: 'Validación de bienes y firma de área',
   },
 ]
 

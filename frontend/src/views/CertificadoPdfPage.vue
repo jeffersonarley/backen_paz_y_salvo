@@ -810,11 +810,23 @@ const opcionesFirmantesSupervisor = computed(() => {
 
 function sincronizarSupervisorConFilas(forzar = false) {
   const responsable = datosSolicitud.value.responsable
+  const supervisor = datosSolicitud.value.supervisor
+
   const supReal =
+    (typeof supervisor === 'string' && supervisor.trim() !== ''
+      ? supervisor
+      : supervisor?.nombre_completo || supervisor?.nombre || '') ||
     (typeof responsable === 'string'
       ? responsable
       : responsable?.nombre_completo || responsable?.nombre || '') ||
     (auth.rolUsuario === 'SUPERVISOR' ? auth.usuario?.nombre : null) ||
+    ''
+
+  const respReal =
+    (typeof responsable === 'string'
+      ? responsable
+      : responsable?.nombre_completo || responsable?.nombre || '') ||
+    (auth.rolUsuario === 'RESPONSABLE_AREA' ? auth.usuario?.nombre : null) ||
     ''
 
   const f14 = filasDependencias.value.find((f) => f.id === 14)
@@ -827,7 +839,7 @@ function sincronizarSupervisorConFilas(forzar = false) {
   const f3 = filasDependencias.value.find((f) => f.id === 3)
   if (f3) {
     if (forzar || !f3.nombres || f3.nombres === 'Johon Fredy Sanabria Muñoz' || f3.nombres === 'Ing. Carlos Supervisor') {
-      f3.nombres = supReal
+      f3.nombres = respReal
     }
   }
 }
@@ -1352,6 +1364,7 @@ const datosSolicitud = ref({
   causalTerminacion: 'LIQUIDACION_MUTUO_ACUERDO',
   clasificacion: 'Publica',
   responsable: '',
+  supervisor: '',
   estado: 'En revisión',
   observacionRechazo: '',
   dependenciaRechazo: '',
