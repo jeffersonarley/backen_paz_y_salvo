@@ -414,6 +414,14 @@
         <q-card-actions align="right" class="q-pa-md">
           <q-btn flat label="Cancelar" color="grey-7" v-close-popup />
           <q-btn
+            v-if="firmandoFila && firmasTabla[firmandoFila.id]"
+            flat
+            color="negative"
+            icon="delete"
+            label="Quitar Firma"
+            @click="eliminarFirmaFila(firmandoFila)"
+          />
+          <q-btn
             color="positive"
             icon="verified"
             label="Estampar en Certificado"
@@ -842,13 +850,6 @@ function sincronizarSupervisorConFilas(forzar = false) {
       f14.nombres = supReal
     }
   }
-
-  const f3 = filasDependencias.value.find((f) => f.id === 3)
-  if (f3) {
-    if (forzar || !f3.nombres || f3.nombres === 'Johon Fredy Sanabria Muñoz' || f3.nombres === 'Ing. Carlos Supervisor') {
-      f3.nombres = respReal
-    }
-  }
 }
 
 function alHacerClicFirmaContratistaBloqueada() {
@@ -991,18 +992,24 @@ function puedeFirmarFila(fila) {
     return false
   }
 
-  // 2. Fila 3 (ENTREGA CARNÉ al supervisor)
-  if (idFila === 3) {
-    if (esSupervisor) return true
-    if (
-      responsableContratoNorm &&
-      nombreUsuario &&
-      (nombreUsuario === responsableContratoNorm ||
-        (nombreUsuario.length >= 6 && responsableContratoNorm.includes(nombreUsuario)) ||
-        (responsableContratoNorm.length >= 6 && nombreUsuario.includes(responsableContratoNorm)))
-    ) {
-      return true
+  // Si el usuario es SUPERVISOR y la fila NO es la 14 (es dependencia 1 a 13):
+  // Solo puede firmar si su nombre figura explícitamente asignado en la fila.
+  // NO puede firmar en nombre de Johon Fredy Sanabria ni ningún otro Responsable de Área.
+  if (esSupervisor && idFila !== 14) {
+    if (nombresFila && nombreUsuario) {
+      if (
+        nombresFila === nombreUsuario ||
+        (nombreUsuario.length >= 6 && nombresFila.includes(nombreUsuario)) ||
+        (nombresFila.length >= 6 && nombreUsuario.includes(nombresFila))
+      ) {
+        return true
+      }
     }
+    return false
+  }
+
+  // 2. Fila 3 (ENTREGA CARNÉ - Secretaría General / Responsable de Área)
+  if (idFila === 3) {
     if (
       nombresFila &&
       nombreUsuario &&
@@ -1013,11 +1020,16 @@ function puedeFirmarFila(fila) {
       return true
     }
     if (
+      nombreUsuario.includes('johon') ||
+      nombreUsuario.includes('sanabria') ||
+      correoUsuario.includes('sanabria') ||
       correoUsuario.includes('secretaria') ||
-      correoUsuario.includes('carne')
+      depUsuario.includes('secretaria') ||
+      cargoUsuario.includes('secretaria')
     ) {
       return true
     }
+    return false
   }
 
   // 3. Fila 9 (BIBLIOTECA - Múltiples firmantes autorizados)
@@ -1213,6 +1225,24 @@ function puedeFirmarFila(fila) {
   return false
 }
 
+function eliminarFirmaFila(fila) {
+  if (!fila) return
+  const nuevasFirmas = { ...firmasTabla.value }
+  delete nuevasFirmas[fila.id]
+  firmasTabla.value = nuevasFirmas
+  const codigo = route.query.codigo || route.params.id
+  if (codigo) {
+    localStorage.setItem(`firmas_tabla_${codigo}`, JSON.stringify(firmasTabla.value))
+  }
+  dialogoFirma.value = false
+  filaParaFirmar.value = null
+  $q.notify({
+    type: 'info',
+    message: `Firma de la fila ${fila.id} (${fila.nombres || 'dependencia'}) eliminada.`,
+    icon: 'delete',
+  })
+}
+
 function alHacerClicFirmaFila(fila) {
   if (fila.aplica === false) {
     $q.notify({
@@ -1222,6 +1252,31 @@ function alHacerClicFirmaFila(fila) {
     })
     return
   }
+
+  // Si la fila ya tiene firma estampada:
+  if (firmasTabla.value[fila.id]) {
+    const r = (auth.rolUsuario || '').toUpperCase()
+    if (puedeFirmarFila(fila) || r.includes('SUPER') || r.includes('COORD')) {
+      $q.dialog({
+        title: `Firma en Fila ${fila.id} (${fila.nombres || 'Dependencia'})`,
+        message: `Esta fila ya tiene una firma estampada. ¿Desea removerla para dejar la fila en estado Pendiente o volver a firmar?`,
+        cancel: {
+          label: 'Cancelar',
+          flat: true,
+          color: 'grey-7',
+        },
+        ok: {
+          label: 'Quitar Firma (Dejar Pendiente)',
+          color: 'negative',
+          unelevated: true,
+        },
+      }).onOk(() => {
+        eliminarFirmaFila(fila)
+      })
+      return
+    }
+  }
+
   abrirModalFirmaFila(fila)
 }
 
@@ -1247,7 +1302,7 @@ function abrirModalFirmaFila(fila) {
     if (r.includes('SUPER') || r.includes('COORD')) {
       $q.notify({
         type: 'warning',
-        message: `Como Supervisor, su firma corresponde a la Fila 14 (Supervisor de Contrato) y Fila 3 (Carné). La Fila ${fila.id} corresponde al Responsable de Área: ${fila.nombres || 'el área'}.`,
+        message: `Como Supervisor, su firma corresponde a la Fila 14 (Supervisor de Contrato). La Fila ${fila.id} corresponde al Responsable de Área: ${fila.nombres || 'el área'}.`,
         icon: 'lock',
         timeout: 4500,
       })
