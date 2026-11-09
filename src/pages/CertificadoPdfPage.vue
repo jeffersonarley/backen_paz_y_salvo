@@ -1170,6 +1170,29 @@ function sincronizarSupervisorConFilas(forzar = false) {
       f14.nombres = supReal
     }
   }
+
+  const nombresOficiales = {
+    1: 'Franklin Rolando Chacon Lopez',
+    2: 'Hilda Lucia Ramirez Alvarado',
+    3: 'Johon Fredy Sanabria Muñoz',
+    4: 'Lic. Martha Almacén (Generar reporte de https://miinventario.sena.edu.co/Inicio.aspx)',
+    5: 'Juan David Silva Guierrez',
+    6: 'Zaida Leny Melgarejo Ballesteros',
+    7: 'Nelcy Mabel Mayorga Pinto',
+    8: 'Johon Fredy Sanabria Muñoz',
+    9: 'Andrea Juliana Celis Camacho / Yudith Milagros Martinez Bautista',
+    10: 'Zaida Jeleidy Garcia Jaimes',
+    11: 'Erika Johana Gómez Verdugo',
+    12: 'Nelson Fabian Duarte Peñaloza / Eileen Erlensi Hurtado Ariza',
+    13: 'Karen Andrea Garcia Carreño',
+    14: 'Ing. Carlos Supervisor',
+  }
+
+  filasDependencias.value.forEach((f) => {
+    if (!f.nombres || String(f.nombres).trim() === '') {
+      f.nombres = nombresOficiales[f.id] || ''
+    }
+  })
 }
 
 function abrirModalPlantillaFirmas() {
