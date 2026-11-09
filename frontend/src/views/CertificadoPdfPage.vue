@@ -743,21 +743,43 @@ const plantillaSeleccionada = ref('COMPLETA')
 // El Supervisor/Coordinador las define en el menú "Plantillas"; el Contratista solo las consulta.
 const filasDependencias = ref([])
 
+const nombresOficialesDependencias = {
+  1: 'Franklin Rolando Chacon Lopez',
+  2: 'Hilda Lucia Ramirez Alvarado',
+  3: 'Johon Fredy Sanabria Muñoz',
+  4: 'Lic. Martha Almacén (Generar reporte de https://miinventario.sena.edu.co/Inicio.aspx)',
+  5: 'Juan David Silva Guierrez',
+  6: 'Zaida Leny Melgarejo Ballesteros',
+  7: 'Nelcy Mabel Mayorga Pinto',
+  8: 'Johon Fredy Sanabria Muñoz',
+  9: 'Andrea Juliana Celis Camacho / Yudith Milagros Martinez Bautista',
+  10: 'Zaida Jeleidy Garcia Jaimes',
+  11: 'Erika Johana Gómez Verdugo',
+  12: 'Nelson Fabian Duarte Peñaloza / Eileen Erlensi Hurtado Ariza',
+  13: 'Karen Andrea Garcia Carreño',
+  14: 'Ing. Carlos Supervisor',
+}
+
 // Normaliza la respuesta del backend al formato que usa la tabla del certificado
 function normalizarFilasPlantilla(filas) {
   return (filas || []).map((fila) => {
+    const id = Number(fila.id_fila ?? fila.id)
     const responsables = (fila.responsables || []).map((r) => ({
       id: String(r.id || r._id || ''),
       nombre: r.nombre || r.nombre_completo || '',
       correo: r.correo || r.correo_institucional || '',
     }))
-    const nombres = Array.isArray(fila.nombres)
+    let nombres = Array.isArray(fila.nombres)
       ? fila.nombres.filter(Boolean).join(' / ')
       : fila.nombres || responsables.map((r) => r.nombre).filter(Boolean).join(' / ')
 
+    if (!nombres || String(nombres).trim() === '') {
+      nombres = nombresOficialesDependencias[id] || ''
+    }
+
     return {
-      id: Number(fila.id_fila ?? fila.id),
-      id_fila: Number(fila.id_fila ?? fila.id),
+      id,
+      id_fila: id,
       dependencia: fila.dependencia || fila.dependenciaSimple || '',
       dependenciaSimple: fila.dependenciaSimple || fila.dependencia_nombre || '',
       dependencia_id: fila.dependencia_id || null,
@@ -815,7 +837,7 @@ const filasRespaldo = [
   dependencia_nombre: '',
   aplica: true,
   marca: 'X',
-  nombres: '',
+  nombres: nombresOficialesDependencias[f.id] || '',
   responsables: [],
 }))
 
@@ -877,6 +899,13 @@ function sincronizarSupervisorConFilas(forzar = false) {
       f14.nombres = supReal
     }
   }
+
+  // Garantizar que ninguna fila quede con nombres vacíos
+  filasDependencias.value.forEach((f) => {
+    if (!f.nombres || String(f.nombres).trim() === '') {
+      f.nombres = nombresOficialesDependencias[f.id] || ''
+    }
+  })
 }
 
 function alHacerClicFirmaContratistaBloqueada() {
