@@ -7,3 +7,5 @@ frontend-backup-main/
 
 # Cobertura de pruebas unitarias
 backend/coverage/
+.quasar/
+dist/

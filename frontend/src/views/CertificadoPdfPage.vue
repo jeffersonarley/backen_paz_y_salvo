@@ -265,10 +265,10 @@
             <div
               class="td-firma"
               :class="{
-                'cursor-pointer': fila.aplica !== false && puedeFirmarFila(fila),
-                'cursor-default': fila.aplica === false || !puedeFirmarFila(fila),
+                'cursor-pointer': fila.aplica !== false,
+                'cursor-default': fila.aplica === false,
               }"
-              @click="fila.aplica !== false && puedeFirmarFila(fila) ? abrirModalFirmaFila(fila) : null"
+              @click="alHacerClicFirmaFila(fila)"
               :title="
                 fila.aplica === false
                   ? 'Esta dependencia no aplica para este contrato (N/A)'
@@ -290,7 +290,11 @@
                 :alt="'Firma ' + fila.nombres"
                 class="img-firma-tabla"
               />
-              <div v-else-if="puedeFirmarFila(fila)" class="btn-firmar-fila no-print">
+              <div
+                v-else-if="puedeFirmarFila(fila)"
+                class="btn-firmar-fila no-print cursor-pointer"
+                @click.stop="abrirModalFirmaFila(fila)"
+              >
                 <span class="texto-firmar-fila">+ firmar</span>
               </div>
               <div v-else class="texto-pendiente-fila no-print">
@@ -332,7 +336,7 @@
                 'cursor-default': !esContratista,
                 'cursor-not-allowed': esContratista && datosSolicitud.estado === 'Rechazado',
               }"
-              @click="esContratista ? abrirModalFirma() : null"
+              @click="esContratista ? abrirModalFirma() : alHacerClicFirmaContratistaBloqueada()"
               :title="
                 datosSolicitud.estado === 'Rechazado'
                   ? 'Firma retenida: solicitud rechazada por novedades pendientes'
@@ -359,6 +363,7 @@
                   color="negative"
                   icon="lock"
                   label="Firma bloqueada (Rechazado)"
+                  @click.stop="abrirModalFirma"
                 />
                 <q-btn
                   v-else-if="esContratista"
@@ -368,6 +373,7 @@
                   color="primary"
                   icon="draw"
                   label="Clic para firmar (Contratista)"
+                  @click.stop="abrirModalFirma"
                 />
                 <span v-else class="text-caption text-grey-6 text-italic">
                   Pendiente de firma del contratista
@@ -384,7 +390,7 @@
     </div>
 
     <!-- Diálogo para Pegar o Subir Firma directamente desde el Certificado -->
-    <q-dialog v-model="dialogoFirma" persistent>
+    <q-dialog v-model="dialogoFirma" persistent @hide="filaParaFirmar = null">
       <q-card style="min-width: 480px; max-width: 90vw">
         <q-card-section class="bg-primary text-white row items-center justify-between">
           <div class="text-h6">
@@ -685,6 +691,7 @@ const firmaGuardada = ref(null)
 const dialogoFirma = ref(false)
 const canvasRef = ref(null)
 const filaParaFirmar = ref(null)
+const firmandoFila = computed(() => filaParaFirmar.value)
 
 const firmasTabla = ref({})
 
@@ -844,6 +851,14 @@ function sincronizarSupervisorConFilas(forzar = false) {
   }
 }
 
+function alHacerClicFirmaContratistaBloqueada() {
+  $q.notify({
+    type: 'warning',
+    message: 'Este recuadro es exclusivo para la firma del contratista.',
+    icon: 'lock',
+  })
+}
+
 function abrirModalFirma() {
   if (!esContratista.value) {
     $q.notify({
@@ -907,21 +922,32 @@ function puedeFirmarFila(fila) {
     return false
   }
 
-  // Administrador tiene permisos para supervisión y firmas
-  if (rol === 'ADMIN') return true
+  // Administrador NO firma: firmas exclusivas de Supervisor, Responsable de Área y Contratista
+  if (rol.includes('ADMIN')) {
+    return false
+  }
 
+  const idFila = Number(fila.id)
   const nombreUsuario = normalizarTexto(u.nombre || u.nombre_completo)
   const correoUsuario = normalizarTexto(u.correo || u.correo_institucional)
   const depUsuario = normalizarTexto(u.dependencia)
   const cargoUsuario = normalizarTexto(u.cargo)
   const nombresFila = normalizarTexto(fila.nombres)
   const responsableContratoNorm = normalizarTexto(datosSolicitud.value.responsable)
+  const idUsuario = String(u.id || u._id || '')
+
+  const esSupervisor =
+    rol === 'SUPERVISOR' ||
+    rol.includes('SUPER') ||
+    rol.includes('COORD') ||
+    cargoUsuario.includes('supervisor') ||
+    cargoUsuario.includes('coordinad') ||
+    correoUsuario.includes('supervisor')
 
   // Si la fila tiene responsables asignados (desde el backend), solo ellos pueden firmar
   const responsablesFila = Array.isArray(fila.responsables) ? fila.responsables : []
   if (responsablesFila.length) {
-    const idUsuario = String(u.id || '')
-    return responsablesFila.some((r) => {
+    const coincideResp = responsablesFila.some((r) => {
       const idResp = String(r.id || r._id || '')
       if (idUsuario && idResp && idUsuario === idResp) return true
 
@@ -938,11 +964,12 @@ function puedeFirmarFila(fila) {
 
       return false
     })
+    if (coincideResp) return true
   }
 
   // 1. Fila 14 (SUPERVISOR DE CONTRATO)
-  if (fila.id === 14) {
-    if (rol === 'SUPERVISOR') return true
+  if (idFila === 14) {
+    if (esSupervisor) return true
     if (
       responsableContratoNorm &&
       nombreUsuario &&
@@ -961,14 +988,12 @@ function puedeFirmarFila(fila) {
     ) {
       return true
     }
-    if (correoUsuario.includes('supervisor')) {
-      return true
-    }
+    return false
   }
 
   // 2. Fila 3 (ENTREGA CARNÉ al supervisor)
-  if (fila.id === 3) {
-    if (rol === 'SUPERVISOR') return true
+  if (idFila === 3) {
+    if (esSupervisor) return true
     if (
       responsableContratoNorm &&
       nombreUsuario &&
@@ -996,7 +1021,7 @@ function puedeFirmarFila(fila) {
   }
 
   // 3. Fila 9 (BIBLIOTECA - Múltiples firmantes autorizados)
-  if (fila.id === 9) {
+  if (idFila === 9) {
     if (
       nombreUsuario.includes('andrea') ||
       nombreUsuario.includes('juliana') ||
@@ -1016,8 +1041,8 @@ function puedeFirmarFila(fila) {
     }
   }
 
-  // 4. Solo RESPONSABLE_AREA puede firmar dependencias (filas 1 a 13)
-  if (!esResponsableArea.value) {
+  // 4. Solo RESPONSABLE_AREA (o Supervisor asignado) puede firmar dependencias (filas 1 a 13)
+  if (!esResponsableArea.value && !esSupervisor) {
     return false
   }
 
@@ -1188,11 +1213,49 @@ function puedeFirmarFila(fila) {
   return false
 }
 
+function alHacerClicFirmaFila(fila) {
+  if (fila.aplica === false) {
+    $q.notify({
+      type: 'info',
+      message: 'Esta dependencia no aplica (N/A) para este contrato.',
+      icon: 'info',
+    })
+    return
+  }
+  abrirModalFirmaFila(fila)
+}
+
 function abrirModalFirmaFila(fila) {
   if (!puedeFirmarFila(fila)) {
+    if (esContratista.value) {
+      $q.notify({
+        type: 'info',
+        message: 'Como contratista, su firma se realiza al final de la hoja en "Firma del Contratista". Las dependencias son firmadas por sus responsables.',
+        icon: 'info',
+      })
+      return
+    }
+    const r = (auth.rolUsuario || '').toUpperCase()
+    if (r.includes('ADMIN')) {
+      $q.notify({
+        type: 'info',
+        message: 'El rol Administrador no firma en este formato. Las firmas son exclusivas del Supervisor, Responsables de Área y Contratista.',
+        icon: 'info',
+      })
+      return
+    }
+    if (r.includes('SUPER') || r.includes('COORD')) {
+      $q.notify({
+        type: 'warning',
+        message: `Como Supervisor, su firma corresponde a la Fila 14 (Supervisor de Contrato) y Fila 3 (Carné). La Fila ${fila.id} corresponde al Responsable de Área: ${fila.nombres || 'el área'}.`,
+        icon: 'lock',
+        timeout: 4500,
+      })
+      return
+    }
     $q.notify({
       type: 'warning',
-      message: `Esta firma corresponde exclusivamente a ${fila.nombres} (${fila.dependencia.replace(/<[^>]*>/g, ' ')}).`,
+      message: `Esta firma corresponde exclusivamente a ${fila.nombres || 'el responsable'} (${(fila.dependencia || '').replace(/<[^>]*>/g, ' ')}).`,
       icon: 'lock',
     })
     return
@@ -1257,18 +1320,33 @@ async function registrarFirmaCasillero(fila, dataUrl, codigo) {
 function guardarFirmaCertificado() {
   if (!canvasRef.value) return
   const dataUrl = canvasRef.value.exportarBase64()
+  if (!dataUrl) {
+    $q.notify({
+      type: 'warning',
+      message: 'Debe dibujar, cargar o pegar una firma antes de estampar.',
+      icon: 'warning',
+    })
+    return
+  }
   const codigo = route.query.codigo || route.params.id
 
   if (filaParaFirmar.value) {
     const fila = filaParaFirmar.value
-    firmasTabla.value[fila.id] = dataUrl
+    firmasTabla.value = { ...firmasTabla.value, [fila.id]: dataUrl }
     if (codigo) {
       localStorage.setItem(`firmas_tabla_${codigo}`, JSON.stringify(firmasTabla.value))
     }
+    const nombreFirmante = fila.nombres || 'la dependencia'
     filaParaFirmar.value = null
 
     // La firma de la casilla se registra en el backend indicando la dependencia exacta
     registrarFirmaCasillero(fila, dataUrl, codigo)
+
+    $q.notify({
+      type: 'positive',
+      message: `Firma de ${nombreFirmante} estampada correctamente en el paz y salvo.`,
+      icon: 'verified',
+    })
   } else {
     firmaGuardada.value = dataUrl
     if (codigo) {
@@ -1288,6 +1366,11 @@ function guardarFirmaCertificado() {
         store.cambiarEstado(codigo, 'Firmado')
       }
     }
+    $q.notify({
+      type: 'positive',
+      message: 'Firma del contratista estampada con éxito en el paz y salvo.',
+      icon: 'verified',
+    })
   }
   dialogoFirma.value = false
 }
@@ -2520,11 +2603,16 @@ Motivo registrado: "${datosSolicitud.value.observacionRechazo || 'Bienes o reque
   color: #1976d2;
   font-size: 7.5px;
   font-weight: 700;
-  opacity: 0.8;
+  opacity: 0.9;
+  cursor: pointer;
+  padding: 1px 4px;
+  border-radius: 3px;
+  transition: background-color 0.15s ease;
 }
 
 .btn-firmar-fila:hover {
   opacity: 1;
+  background-color: rgba(25, 118, 210, 0.1);
   text-decoration: underline;
 }
 

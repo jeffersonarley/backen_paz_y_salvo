@@ -8,7 +8,7 @@ function normalizarRol(valor) {
     .toUpperCase()
     .replace(/[\s_-]+/g, '')
   if (v.includes('ADMIN')) return 'ADMINISTRADOR'
-  if (v.includes('SUPER')) return 'SUPERVISOR'
+  if (v.includes('SUPER') || v.includes('COORD')) return 'SUPERVISOR'
   if (v.includes('RESPONSABLE')) return 'RESPONSABLE_AREA'
   if (v.includes('CONTRAT')) return 'CONTRATISTA'
   return v
