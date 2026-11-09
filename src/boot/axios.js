@@ -1,4 +1,4 @@
-﻿import { boot } from 'quasar/wrappers'
+import { boot } from 'quasar/wrappers'
 import axios from 'axios'
 
 // En Quasar con Vite se usa import.meta.env en lugar de process.env
@@ -10,10 +10,14 @@ const api = axios.create({
 })
 
 export default boot(({ app }) => {
-  // Inyectar token JWT si existe en localStorage
+  // Inyectar token JWT si existe en sessionStorage o localStorage
   api.interceptors.request.use(
     (config) => {
-      const token = localStorage.getItem('token')
+      const token =
+        sessionStorage.getItem('token') ||
+        sessionStorage.getItem('auth_token') ||
+        localStorage.getItem('token') ||
+        localStorage.getItem('auth_token')
       if (token) {
         config.headers.Authorization = `Bearer ${token}`
       }
@@ -29,7 +33,8 @@ export default boot(({ app }) => {
     (response) => response,
     (error) => {
       if (error.response && error.response.status === 401) {
-        localStorage.removeItem('token')
+        sessionStorage.removeItem('token')
+        sessionStorage.removeItem('auth_token')
       }
       return Promise.reject(error)
     },

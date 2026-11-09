@@ -16,7 +16,9 @@ function normalizarRol(valor) {
 
 export const useAuthStore = defineStore('auth', () => {
   // Usuario autenticado en sesión
-  const usuarioGuardado = JSON.parse(localStorage.getItem('gccon_user') || 'null')
+  const usuarioGuardado = JSON.parse(
+    sessionStorage.getItem('gccon_user') || localStorage.getItem('gccon_user') || 'null',
+  )
   if (
     usuarioGuardado &&
     (usuarioGuardado.correo === 'responsable@gccon.com' || usuarioGuardado.correo === 'franklin.chacon@sena.edu.co') &&
@@ -25,6 +27,7 @@ export const useAuthStore = defineStore('auth', () => {
     usuarioGuardado.nombre = 'Franklin Rolando Chacon Lopez'
     usuarioGuardado.cargo = 'Responsable de Gestión de TIC'
     usuarioGuardado.dependencia = 'Gestión de TIC'
+    sessionStorage.setItem('gccon_user', JSON.stringify(usuarioGuardado))
     localStorage.setItem('gccon_user', JSON.stringify(usuarioGuardado))
   }
   const usuario = ref(usuarioGuardado)

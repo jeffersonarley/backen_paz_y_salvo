@@ -35,7 +35,8 @@ export default defineRouter(() => {
 
   // Navigation Guard moderno (retornos directos sin callbacks next)
   Router.beforeEach((to) => {
-    const usuarioRaw = localStorage.getItem('gccon_user')
+    const usuarioRaw =
+      sessionStorage.getItem('gccon_user') || localStorage.getItem('gccon_user')
     const usuario = usuarioRaw ? JSON.parse(usuarioRaw) : null
 
     if (to.meta && to.meta.titulo) {

@@ -27,7 +27,11 @@ const api = axios.create({
 })
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('auth_token')
+  const token =
+    sessionStorage.getItem('auth_token') ||
+    sessionStorage.getItem('token') ||
+    localStorage.getItem('auth_token') ||
+    localStorage.getItem('token')
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
@@ -46,8 +50,14 @@ api.interceptors.response.use(
 
     // Sesión expirada en rutas protegidas (no en el login, que devuelve 401 por credenciales).
     if (status === 401 && !url.includes('auth/login')) {
-      localStorage.removeItem('auth_token')
-      localStorage.removeItem('gccon_user')
+      sessionStorage.removeItem('auth_token')
+      sessionStorage.removeItem('token')
+      sessionStorage.removeItem('gccon_user')
+      if (!sessionStorage.getItem('auth_token')) {
+        localStorage.removeItem('auth_token')
+        localStorage.removeItem('token')
+        localStorage.removeItem('gccon_user')
+      }
       if (!window.location.hash.includes('login')) {
         window.location.hash = '#/login'
       }

@@ -304,7 +304,15 @@ const menuBase = [
 ]
 
 const menuItems = computed(() => {
-  const u = auth.usuario || (typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('gccon_user') || 'null') : null)
+  const u =
+    auth.usuario ||
+    (typeof window !== 'undefined'
+      ? JSON.parse(
+          sessionStorage.getItem('gccon_user') ||
+            localStorage.getItem('gccon_user') ||
+            'null',
+        )
+      : null)
   const rolActual = normalizarRol(u?.rol || auth.rolUsuario)
   if (!rolActual) return []
 
