@@ -332,15 +332,15 @@
             <div
               class="caja-firma-contratista"
               :class="{
-                'cursor-pointer': (esContratista || esAdmin) && datosSolicitud.estado !== 'Rechazado',
-                'cursor-default': !esContratista && !esAdmin,
-                'cursor-not-allowed': (esContratista || esAdmin) && datosSolicitud.estado === 'Rechazado',
+                'cursor-pointer': esContratista && datosSolicitud.estado !== 'Rechazado',
+                'cursor-default': !esContratista,
+                'cursor-not-allowed': esContratista && datosSolicitud.estado === 'Rechazado',
               }"
-              @click="(esContratista || esAdmin) ? abrirModalFirma() : alHacerClicFirmaContratistaBloqueada()"
+              @click="esContratista ? abrirModalFirma() : alHacerClicFirmaContratistaBloqueada()"
               :title="
                 datosSolicitud.estado === 'Rechazado'
                   ? 'Firma retenida: solicitud rechazada por novedades pendientes'
-                  : (esContratista || esAdmin)
+                  : esContratista
                     ? 'Clic para estampar, cambiar o ajustar la firma del contratista'
                     : 'Firma reservada exclusivamente para el Contratista'
               "
@@ -350,7 +350,7 @@
                 class="contenedor-firma-img"
               >
                 <img :src="firmaGuardada" alt="Firma del Contratista" class="img-firma-estampada" />
-                <q-tooltip v-if="esContratista || esAdmin"
+                <q-tooltip v-if="esContratista"
                   >Clic para editar, agrandar o ajustar tu firma</q-tooltip
                 >
               </div>
@@ -366,7 +366,7 @@
                   @click.stop="abrirModalFirma"
                 />
                 <q-btn
-                  v-else-if="esContratista || esAdmin"
+                  v-else-if="esContratista"
                   flat
                   dense
                   size="xs"
@@ -1277,7 +1277,7 @@ function alHacerClicFirmaContratistaBloqueada() {
 }
 
 function abrirModalFirma() {
-  if (!esContratista.value && !esAdmin.value) {
+  if (!esContratista.value) {
     $q.notify({
       type: 'warning',
       message: 'Esta firma corresponde exclusivamente al Contratista.',
@@ -1339,9 +1339,12 @@ function puedeFirmarFila(fila) {
     return false
   }
 
-  // Administrador tiene permisos para supervisión y firmas
-  if (rol === 'ADMIN' || rol === 'ADMINISTRADOR' || esAdmin.value) return true
+  // Administrador NO firma: las firmas son exclusivas del Supervisor, Responsables de Área y Contratista
+  if (rol === 'ADMIN' || rol === 'ADMINISTRADOR' || esAdmin.value) {
+    return false
+  }
 
+  const idFila = Number(fila.id)
   const nombreUsuario = normalizarTexto(u.nombre || u.nombre_completo)
   const correoUsuario = normalizarTexto(u.correo || u.correo_institucional)
   const depUsuario = normalizarTexto(u.dependencia)
@@ -1349,6 +1352,14 @@ function puedeFirmarFila(fila) {
   const nombresFila = normalizarTexto(fila.nombres)
   const responsableContratoNorm = normalizarTexto(datosSolicitud.value.responsable)
   const idUsuario = String(u._id || u.id || '')
+
+  const esSupervisor =
+    rol === 'SUPERVISOR' ||
+    rol.includes('SUPER') ||
+    rol.includes('COORD') ||
+    cargoUsuario.includes('supervisor') ||
+    cargoUsuario.includes('coordinad') ||
+    correoUsuario.includes('supervisor')
 
   // Verificación de múltiples responsables asignados a la dependencia
   if (Array.isArray(fila.responsables) && fila.responsables.length > 0) {
@@ -1374,8 +1385,8 @@ function puedeFirmarFila(fila) {
   }
 
   // 1. Fila 14 (SUPERVISOR DE CONTRATO)
-  if (fila.id === 14) {
-    if (rol === 'SUPERVISOR') return true
+  if (idFila === 14) {
+    if (esSupervisor) return true
     if (
       responsableContratoNorm &&
       nombreUsuario &&
@@ -1394,14 +1405,12 @@ function puedeFirmarFila(fila) {
     ) {
       return true
     }
-    if (correoUsuario.includes('supervisor')) {
-      return true
-    }
+    return false
   }
 
   // 2. Fila 3 (ENTREGA CARNÉ al supervisor)
-  if (fila.id === 3) {
-    if (rol === 'SUPERVISOR') return true
+  if (idFila === 3) {
+    if (esSupervisor) return true
     if (
       responsableContratoNorm &&
       nombreUsuario &&
@@ -1429,7 +1438,7 @@ function puedeFirmarFila(fila) {
   }
 
   // 3. Fila 9 (BIBLIOTECA - Múltiples firmantes autorizados)
-  if (fila.id === 9) {
+  if (idFila === 9) {
     if (
       nombreUsuario.includes('andrea') ||
       nombreUsuario.includes('juliana') ||
@@ -1449,8 +1458,8 @@ function puedeFirmarFila(fila) {
     }
   }
 
-  // 4. Solo RESPONSABLE_AREA puede firmar dependencias (filas 1 a 13)
-  if (!esResponsableArea.value) {
+  // 4. Solo RESPONSABLE_AREA (o Supervisor asignado) puede firmar dependencias (filas 1 a 13)
+  if (!esResponsableArea.value && !esSupervisor) {
     return false
   }
 
@@ -1643,6 +1652,24 @@ function abrirModalFirmaFila(fila) {
       })
       return
     }
+    const r = (auth.rolUsuario || '').toUpperCase()
+    if (r.includes('ADMIN')) {
+      $q.notify({
+        type: 'info',
+        message: 'El rol Administrador no firma en este formato. Las firmas son exclusivas del Supervisor, Responsables de Área y Contratista.',
+        icon: 'info',
+      })
+      return
+    }
+    if (r.includes('SUPER') || r.includes('COORD')) {
+      $q.notify({
+        type: 'warning',
+        message: `Como Supervisor, su firma corresponde a la Fila 14 (Supervisor de Contrato) y Fila 3 (Carné). La Fila ${fila.id} corresponde al Responsable de Área: ${fila.nombres || 'el área'}.`,
+        icon: 'lock',
+        timeout: 4500,
+      })
+      return
+    }
     $q.notify({
       type: 'warning',
       message: `Esta firma corresponde exclusivamente a ${fila.nombres || 'el responsable'} (${(fila.dependencia || '').replace(/<[^>]*>/g, ' ')}).`,
@@ -1684,7 +1711,8 @@ function guardarFirmaCertificado() {
   const codigo = route.query.codigo || route.params.id
 
   if (filaParaFirmar.value) {
-    firmasTabla.value[filaParaFirmar.value.id] = dataUrl
+    const idFila = filaParaFirmar.value.id
+    firmasTabla.value = { ...firmasTabla.value, [idFila]: dataUrl }
     if (codigo) {
       localStorage.setItem(`firmas_tabla_${codigo}`, JSON.stringify(firmasTabla.value))
     }
