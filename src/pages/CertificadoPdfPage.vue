@@ -382,7 +382,7 @@
               </div>
               <div v-else class="contenedor-firma-placeholder no-print">
                 <q-btn
-                  v-if="datosSolicitud.estado === 'Rechazado'"
+                  v-if="datosSolicitud.estado === 'Rechazado' && esContratista"
                   flat
                   dense
                   size="xs"
@@ -1328,9 +1328,17 @@ function alHacerClicFirmaContratistaBloqueada() {
 
 function abrirModalFirma() {
   if (!esContratista.value) {
+    const r = (auth.rolUsuario || '').toUpperCase()
+    if (r.includes('SUPER') || r.includes('COORD')) {
+      const fila14 = filasDependencias.value.find((f) => Number(f.id) === 14)
+      if (fila14) {
+        abrirModalFirmaFila(fila14)
+        return
+      }
+    }
     $q.notify({
       type: 'warning',
-      message: 'Esta firma corresponde exclusivamente al Contratista.',
+      message: 'Esta firma corresponde exclusivamente al Contratista. Su firma como Supervisor corresponde a la Fila 14 (Supervisor de Contrato).',
       icon: 'lock',
     })
     return
@@ -1813,24 +1821,77 @@ function guardarFirmaCertificado() {
     return
   }
   const codigo = route.query.codigo || route.params.id
+  const r = (auth.rolUsuario || '').toUpperCase()
+  const esSupervisor = r === 'SUPERVISOR' || r.includes('SUPER') || r.includes('COORD')
 
-  if (filaParaFirmar.value) {
-    const idFila = filaParaFirmar.value.id
+  // Determinar la fila objetivo en la tabla (1 al 14)
+  let filaObjetivo = filaParaFirmar.value
+  if (!filaObjetivo && esSupervisor) {
+    filaObjetivo = filasDependencias.value.find((f) => Number(f.id) === 14) || {
+      id: 14,
+      nombres: auth.usuario?.nombre || 'Supervisor de Contrato',
+    }
+  } else if (!filaObjetivo && !esContratista.value) {
+    filaObjetivo = filasDependencias.value.find((f) => puedeFirmarFila(f))
+  }
+
+  if (filaObjetivo) {
+    const idFila = filaObjetivo.id
     firmasTabla.value = { ...firmasTabla.value, [idFila]: dataUrl }
     if (codigo) {
       localStorage.setItem(`firmas_tabla_${codigo}`, JSON.stringify(firmasTabla.value))
+      localStorage.setItem(
+        `firmas_tabla_${String(codigo).toLowerCase().trim()}`,
+        JSON.stringify(firmasTabla.value),
+      )
     }
-    const nombreFirmante = filaParaFirmar.value.nombres || 'la dependencia'
+    const numContrato = datosSolicitud.value.numeroContrato
+    if (numContrato) {
+      localStorage.setItem(`firmas_tabla_${numContrato}`, JSON.stringify(firmasTabla.value))
+      localStorage.setItem(
+        `firmas_tabla_${String(numContrato).toLowerCase().trim()}`,
+        JSON.stringify(firmasTabla.value),
+      )
+    }
+
+    // Asegurar que la firma de supervisión / área NUNCA se estampe en la caja del contratista
+    if (firmaGuardada.value === dataUrl) {
+      firmaGuardada.value = null
+    }
+    if (codigo) {
+      localStorage.removeItem(`firma_${codigo}`)
+      localStorage.removeItem(`firma_${String(codigo).toLowerCase().trim()}`)
+    }
+    if (numContrato) {
+      localStorage.removeItem(`firma_${numContrato}`)
+      localStorage.removeItem(`firma_${String(numContrato).toLowerCase().trim()}`)
+    }
+    if (localStorage.getItem('ultima_firma') === dataUrl) {
+      localStorage.removeItem('ultima_firma')
+    }
+
+    const nombreFirmante =
+      filaObjetivo.nombres || (idFila === 14 ? 'Supervisor de Contrato' : 'la dependencia')
     filaParaFirmar.value = null
+    dialogoFirma.value = false
     $q.notify({
       type: 'positive',
-      message: `Firma de ${nombreFirmante} estampada correctamente en el paz y salvo.`,
+      message: `Firma estampada correctamente en la Fila ${idFila} (${nombreFirmante}).`,
       icon: 'verified',
     })
-  } else {
+    return
+  }
+
+  if (esContratista.value) {
     firmaGuardada.value = dataUrl
     if (codigo) {
       localStorage.setItem(`firma_${codigo}`, dataUrl)
+      localStorage.setItem(`firma_${String(codigo).toLowerCase().trim()}`, dataUrl)
+    }
+    const numContrato = datosSolicitud.value.numeroContrato
+    if (numContrato) {
+      localStorage.setItem(`firma_${numContrato}`, dataUrl)
+      localStorage.setItem(`firma_${String(numContrato).toLowerCase().trim()}`, dataUrl)
     }
     localStorage.setItem('ultima_firma', dataUrl)
 
@@ -1850,6 +1911,12 @@ function guardarFirmaCertificado() {
       type: 'positive',
       message: 'Firma del contratista estampada con éxito en el paz y salvo.',
       icon: 'verified',
+    })
+  } else {
+    $q.notify({
+      type: 'warning',
+      message: 'Este recuadro es exclusivo para la firma del contratista.',
+      icon: 'lock',
     })
   }
   dialogoFirma.value = false
@@ -2175,14 +2242,35 @@ onMounted(async () => {
       f = localStorage.getItem('ultima_firma')
     }
 
-    // Si la firma en firmaGuardada es idéntica a alguna firma de área en la tabla,
-    // significa que proviene del visto bueno de un responsable de área y NO del contratista.
-    const esFirmaDeArea =
+    const rMount = (auth.rolUsuario || '').toUpperCase()
+    const esSupervisorMount =
+      rMount === 'SUPERVISOR' || rMount.includes('SUPER') || rMount.includes('COORD')
+
+    // Si no es contratista y existe una firma guardada en firma_${codigo}:
+    if (!esContratista.value && f) {
+      if (esSupervisorMount && !firmasTabla.value[14]) {
+        // Asignarla a la Fila 14 (Supervisor de Contrato)
+        firmasTabla.value = { ...firmasTabla.value, 14: f }
+        localStorage.setItem(`firmas_tabla_${codigo}`, JSON.stringify(firmasTabla.value))
+        localStorage.setItem(
+          `firmas_tabla_${String(codigo).toLowerCase().trim()}`,
+          JSON.stringify(firmasTabla.value),
+        )
+      }
+      // Limpiar firma del contratista porque el supervisor/área NO es el contratista
+      f = null
+      firmaGuardada.value = null
+      localStorage.removeItem(`firma_${codigo}`)
+      localStorage.removeItem(`firma_${String(codigo).toLowerCase().trim()}`)
+    }
+
+    // Si la firma en firmaGuardada es idéntica a alguna firma de área o supervisión en la tabla:
+    const esFirmaDeTabla =
       f &&
       Object.values(firmasTabla.value || {}).some(
         (firmaArea) => firmaArea && firmaArea === f,
       )
-    if (esFirmaDeArea && !esContratista.value) {
+    if (esFirmaDeTabla && !esContratista.value) {
       f = null
       localStorage.removeItem(`firma_${codigo}`)
       localStorage.removeItem(`firma_${String(codigo).toLowerCase().trim()}`)
@@ -2350,12 +2438,21 @@ onMounted(async () => {
           const esFirmaDeArea = Object.values(firmasTabla.value || {}).some(
             (firmaArea) => firmaArea && firmaArea === firmaGuardada.value,
           )
-          if (esFirmaDeArea) {
+          if (esFirmaDeArea || esSupervisorMount) {
+            if (esSupervisorMount && !firmasTabla.value[14] && firmaGuardada.value) {
+              firmasTabla.value[14] = firmaGuardada.value
+              localStorage.setItem(`firmas_tabla_${codigo}`, JSON.stringify(firmasTabla.value))
+              if (numContrato) {
+                localStorage.setItem(`firmas_tabla_${numContrato}`, JSON.stringify(firmasTabla.value))
+              }
+            }
             firmaGuardada.value = null
             localStorage.removeItem(`firma_${codigo}`)
             localStorage.removeItem(`firma_${String(codigo).toLowerCase().trim()}`)
-            localStorage.removeItem(`firma_${numContrato}`)
-            localStorage.removeItem(`firma_${String(numContrato).toLowerCase().trim()}`)
+            if (numContrato) {
+              localStorage.removeItem(`firma_${numContrato}`)
+              localStorage.removeItem(`firma_${String(numContrato).toLowerCase().trim()}`)
+            }
           }
         }
       }
@@ -2591,8 +2688,10 @@ onMounted(async () => {
     // Sincronizar dinámicamente el supervisor asignado real en Fila 14 y Fila 3
     sincronizarSupervisorConFilas()
   } else {
-    const f = localStorage.getItem('ultima_firma')
-    if (f) firmaGuardada.value = f
+    if (esContratista.value) {
+      const f = localStorage.getItem('ultima_firma')
+      if (f) firmaGuardada.value = f
+    }
     sincronizarSupervisorConFilas()
   }
 })

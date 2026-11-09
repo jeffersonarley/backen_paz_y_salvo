@@ -540,16 +540,33 @@
               />
             </div>
 
-            <!-- Acciones para SUPERVISOR Y ADMINISTRADOR (Solo consulta y auditoría) -->
+            <!-- Acciones para SUPERVISOR Y ADMINISTRADOR -->
             <div v-else-if="esSupervisorOAdmin" class="q-mt-lg column q-gutter-sm">
               <q-banner dense rounded class="bg-blue-1 text-primary text-caption q-mb-xs">
                 <template #avatar>
                   <q-icon name="verified_user" color="primary" />
                 </template>
                 <div>
-                  <strong>Vista de Supervisión y Control:</strong> La firma de paz y salvo corresponde exclusivamente al Responsable de Área asignado.
+                  <strong>Supervisión de Contrato:</strong> Puede aprobar y firmar en la casilla oficial de supervisión (Fila 14) del formato GCCON-F-088.
                 </div>
               </q-banner>
+
+              <q-btn
+                color="positive"
+                icon="draw"
+                label="Aprobar y Firmar Supervisión (Fila 14)"
+                class="full-width text-weight-bold"
+                @click="iniciarFirma('aprobar')"
+              />
+
+              <q-btn
+                outline
+                color="negative"
+                icon="report_problem"
+                label="Rechazar / Novedad de Bienes"
+                class="full-width text-weight-bold"
+                @click="abrirModalRechazo(solicitudActual)"
+              />
 
               <q-btn
                 outline
@@ -1240,9 +1257,12 @@ async function confirmarFirma() {
     const s = solicitudActual.value
     const numContrato = s?.numeroContrato || s?.contrato || idBusqueda
 
-    if (esResponsableArea.value) {
-      // 1. Identificar la fila de dependencia correspondiente al responsable autenticado
-      const filaId = obtenerFilaIdResponsable(auth.usuario, s)
+    const rRol = (auth.rolUsuario || '').toUpperCase()
+    const esSupervisor = rRol === 'SUPERVISOR' || rRol.includes('SUPER') || rRol.includes('COORD')
+
+    if (esResponsableArea.value || esSupervisor) {
+      // 1. Identificar la fila de dependencia correspondiente o Supervisión (Fila 14)
+      const filaId = esSupervisor ? 14 : obtenerFilaIdResponsable(auth.usuario, s)
 
       // 2. Cargar tabla de firmas existente para no sobrescribir las de otras áreas
       let firmasTabla = {}
@@ -1259,7 +1279,7 @@ async function confirmarFirma() {
         }
       }
 
-      // 3. Estampar en el casillero de la dependencia
+      // 3. Estampar en el casillero de la dependencia o supervisión (Fila 14)
       firmasTabla[filaId] = dataUrl
 
       // 4. Guardar en localStorage bajo las llaves del trámite
@@ -1270,12 +1290,12 @@ async function confirmarFirma() {
         localStorage.setItem(`firmas_tabla_${String(numContrato).toLowerCase().trim()}`, JSON.stringify(firmasTabla))
       }
 
-      // 5. IMPORTANTE: Evitar que esta firma se refleje en la caja del contratista
-      if (localStorage.getItem(`firma_${idBusqueda}`) === dataUrl) {
-        localStorage.removeItem(`firma_${idBusqueda}`)
-      }
-      if (numContrato && localStorage.getItem(`firma_${numContrato}`) === dataUrl) {
+      // 5. IMPORTANTE: Evitar que esta firma de área o supervisor se refleje en la caja del contratista
+      localStorage.removeItem(`firma_${idBusqueda}`)
+      localStorage.removeItem(`firma_${String(idBusqueda).toLowerCase().trim()}`)
+      if (numContrato) {
         localStorage.removeItem(`firma_${numContrato}`)
+        localStorage.removeItem(`firma_${String(numContrato).toLowerCase().trim()}`)
       }
       if (localStorage.getItem('ultima_firma') === dataUrl) {
         localStorage.removeItem('ultima_firma')
@@ -1359,9 +1379,11 @@ async function confirmarFirma() {
       $q.notify({
         type: 'positive',
         icon: 'verified',
-        message: '¡Paz y salvo del área aprobado y firmado exitosamente en la tabla (RF-008)! Trámite habilitado para la firma del contratista.',
+        message: esSupervisor
+          ? '¡Paz y salvo de Supervisión aprobado y firmado exitosamente en la Fila 14 (Supervisor de Contrato)!'
+          : '¡Paz y salvo del área aprobado y firmado exitosamente en la tabla (RF-008)! Trámite habilitado para la firma del contratista.',
       })
-    } else {
+    } else if (esContratista.value) {
       // Flujo exclusivo de CONTRATISTA (firma de cierre de hoja)
       if (idBusqueda) {
         localStorage.setItem(`firma_${idBusqueda}`, dataUrl)
