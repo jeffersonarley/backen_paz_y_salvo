@@ -185,7 +185,7 @@ const normalizarRol = (valor) => {
 }
 
 const $q = useQuasar()
-const leftDrawerOpen = ref($q.screen.gt.sm)
+const leftDrawerOpen = ref(true)
 const router = useRouter()
 const auth = useAuthStore()
 const notifStore = useNotificacionesStore()
@@ -291,7 +291,7 @@ const menuBase = [
     to: { name: 'firmas' },
     icon: 'draw',
     exact: false,
-    roles: ['RESPONSABLE_AREA'],
+    roles: ['RESPONSABLE_AREA', 'SUPERVISOR'],
   },
   {
     name: 'reportes',
@@ -304,7 +304,8 @@ const menuBase = [
 ]
 
 const menuItems = computed(() => {
-  const rolActual = normalizarRol(auth.usuario?.rol)
+  const u = auth.usuario || (typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('gccon_user') || 'null') : null)
+  const rolActual = normalizarRol(u?.rol || auth.rolUsuario)
   if (!rolActual) return []
 
   return menuBase.filter((item) => item.roles.some((rol) => normalizarRol(rol) === rolActual))
@@ -335,7 +336,7 @@ function cerrarSesion() {
 }
 
 function cerrarDrawerEnMovil() {
-  if ($q.screen.lt.md) {
+  if ($q.screen.xs) {
     leftDrawerOpen.value = false
   }
 }

@@ -956,10 +956,10 @@ const listaBienes = computed(() => {
 })
 
 onMounted(() => {
-  if (!esResponsableArea.value) {
+  if (!esResponsableArea.value && !esSupervisorOAdmin.value) {
     $q.notify({
       type: 'warning',
-      message: 'El módulo de firmas y evaluación de dependencias es exclusivo para los Responsables de Área.',
+      message: 'El módulo de firmas y evaluación de dependencias es exclusivo para los Responsables de Área y Supervisores.',
       icon: 'lock',
     })
     router.replace({ name: 'solicitudes' })

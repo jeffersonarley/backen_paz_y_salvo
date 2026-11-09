@@ -24,6 +24,22 @@ const routes = [
     redirect: '/app/solicitudes',
   },
   {
+    path: '/plantillas',
+    redirect: '/app/plantillas',
+  },
+  {
+    path: '/contratistas',
+    redirect: '/app/contratistas',
+  },
+  {
+    path: '/dependencias',
+    redirect: '/app/dependencias',
+  },
+  {
+    path: '/firmas',
+    redirect: '/app/firmas',
+  },
+  {
     path: '/solicitudes/certificado',
     redirect: (to) => ({ path: '/app/solicitudes/certificado', query: to.query }),
   },
@@ -116,7 +132,7 @@ const routes = [
         component: () => import('@/pages/FirmasPage.vue'),
         meta: {
           titulo: 'Gestionar Firmas',
-          roles: ['RESPONSABLE_AREA'],
+          roles: ['RESPONSABLE_AREA', 'SUPERVISOR'],
         },
       },
       {
@@ -153,7 +169,7 @@ const routes = [
       },
       {
         path: 'plantilla',
-        redirect: { name: 'dashboard' },
+        redirect: { name: 'plantillas' },
       },
     ],
   },
