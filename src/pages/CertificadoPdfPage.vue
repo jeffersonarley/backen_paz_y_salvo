@@ -265,10 +265,10 @@
             <div
               class="td-firma"
               :class="{
-                'cursor-pointer': fila.aplica !== false && puedeFirmarFila(fila),
-                'cursor-default': fila.aplica === false || !puedeFirmarFila(fila),
+                'cursor-pointer': fila.aplica !== false,
+                'cursor-default': fila.aplica === false,
               }"
-              @click="fila.aplica !== false && puedeFirmarFila(fila) ? abrirModalFirmaFila(fila) : null"
+              @click="alHacerClicFirmaFila(fila)"
               :title="
                 fila.aplica === false
                   ? 'Esta dependencia no aplica para este contrato (N/A)'
@@ -290,7 +290,11 @@
                 :alt="'Firma ' + fila.nombres"
                 class="img-firma-tabla"
               />
-              <div v-else-if="puedeFirmarFila(fila)" class="btn-firmar-fila no-print">
+              <div
+                v-else-if="puedeFirmarFila(fila)"
+                class="btn-firmar-fila no-print cursor-pointer"
+                @click.stop="abrirModalFirmaFila(fila)"
+              >
                 <span class="texto-firmar-fila">+ firmar</span>
               </div>
               <div v-else class="texto-pendiente-fila no-print">
@@ -328,15 +332,15 @@
             <div
               class="caja-firma-contratista"
               :class="{
-                'cursor-pointer': esContratista && datosSolicitud.estado !== 'Rechazado',
-                'cursor-default': !esContratista,
-                'cursor-not-allowed': esContratista && datosSolicitud.estado === 'Rechazado',
+                'cursor-pointer': (esContratista || esAdmin) && datosSolicitud.estado !== 'Rechazado',
+                'cursor-default': !esContratista && !esAdmin,
+                'cursor-not-allowed': (esContratista || esAdmin) && datosSolicitud.estado === 'Rechazado',
               }"
-              @click="esContratista ? abrirModalFirma() : null"
+              @click="(esContratista || esAdmin) ? abrirModalFirma() : alHacerClicFirmaContratistaBloqueada()"
               :title="
                 datosSolicitud.estado === 'Rechazado'
                   ? 'Firma retenida: solicitud rechazada por novedades pendientes'
-                  : esContratista
+                  : (esContratista || esAdmin)
                     ? 'Clic para estampar, cambiar o ajustar la firma del contratista'
                     : 'Firma reservada exclusivamente para el Contratista'
               "
@@ -346,7 +350,7 @@
                 class="contenedor-firma-img"
               >
                 <img :src="firmaGuardada" alt="Firma del Contratista" class="img-firma-estampada" />
-                <q-tooltip v-if="esContratista"
+                <q-tooltip v-if="esContratista || esAdmin"
                   >Clic para editar, agrandar o ajustar tu firma</q-tooltip
                 >
               </div>
@@ -359,15 +363,17 @@
                   color="negative"
                   icon="lock"
                   label="Firma bloqueada (Rechazado)"
+                  @click.stop="abrirModalFirma"
                 />
                 <q-btn
-                  v-else-if="esContratista"
+                  v-else-if="esContratista || esAdmin"
                   flat
                   dense
                   size="xs"
                   color="primary"
                   icon="draw"
                   label="Clic para firmar (Contratista)"
+                  @click.stop="abrirModalFirma"
                 />
                 <span v-else class="text-caption text-grey-6 text-italic">
                   Pendiente de firma del contratista
@@ -384,7 +390,7 @@
     </div>
 
     <!-- Diálogo para Pegar o Subir Firma directamente desde el Certificado -->
-    <q-dialog v-model="dialogoFirma" persistent>
+    <q-dialog v-model="dialogoFirma" persistent @hide="filaParaFirmar = null">
       <q-card style="min-width: 480px; max-width: 90vw">
         <q-card-section class="bg-primary text-white row items-center justify-between">
           <div class="text-h6">
@@ -909,6 +915,10 @@ const store = useSolicitudesStore()
 const contratistasStore = useContratistasStore()
 const auth = useAuthStore()
 
+const esAdmin = computed(() => {
+  const r = (auth.rolUsuario || '').toUpperCase()
+  return r === 'ADMIN' || r === 'ADMINISTRADOR'
+})
 const esContratista = computed(() => auth.rolUsuario === 'CONTRATISTA')
 const esResponsableArea = computed(() => auth.rolUsuario === 'RESPONSABLE_AREA')
 
@@ -916,6 +926,7 @@ const firmaGuardada = ref(null)
 const dialogoFirma = ref(false)
 const canvasRef = ref(null)
 const filaParaFirmar = ref(null)
+const firmandoFila = computed(() => filaParaFirmar.value)
 
 const firmasTabla = ref({})
 
@@ -1257,8 +1268,16 @@ function guardarPlantillaFirmas() {
 }
 void abrirModalPlantillaFirmas
 
+function alHacerClicFirmaContratistaBloqueada() {
+  $q.notify({
+    type: 'warning',
+    message: 'Este recuadro es exclusivo para la firma del contratista.',
+    icon: 'lock',
+  })
+}
+
 function abrirModalFirma() {
-  if (!esContratista.value) {
+  if (!esContratista.value && !esAdmin.value) {
     $q.notify({
       type: 'warning',
       message: 'Esta firma corresponde exclusivamente al Contratista.',
@@ -1321,7 +1340,7 @@ function puedeFirmarFila(fila) {
   }
 
   // Administrador tiene permisos para supervisión y firmas
-  if (rol === 'ADMIN') return true
+  if (rol === 'ADMIN' || rol === 'ADMINISTRADOR' || esAdmin.value) return true
 
   const nombreUsuario = normalizarTexto(u.nombre || u.nombre_completo)
   const correoUsuario = normalizarTexto(u.correo || u.correo_institucional)
@@ -1602,11 +1621,31 @@ function puedeFirmarFila(fila) {
   return false
 }
 
+function alHacerClicFirmaFila(fila) {
+  if (fila.aplica === false) {
+    $q.notify({
+      type: 'info',
+      message: 'Esta dependencia no aplica (N/A) para este contrato.',
+      icon: 'info',
+    })
+    return
+  }
+  abrirModalFirmaFila(fila)
+}
+
 function abrirModalFirmaFila(fila) {
   if (!puedeFirmarFila(fila)) {
+    if (esContratista.value) {
+      $q.notify({
+        type: 'info',
+        message: 'Como contratista, su firma se realiza al final de la hoja en "Firma del Contratista". Las dependencias son firmadas por sus responsables.',
+        icon: 'info',
+      })
+      return
+    }
     $q.notify({
       type: 'warning',
-      message: `Esta firma corresponde exclusivamente a ${fila.nombres} (${fila.dependencia.replace(/<[^>]*>/g, ' ')}).`,
+      message: `Esta firma corresponde exclusivamente a ${fila.nombres || 'el responsable'} (${(fila.dependencia || '').replace(/<[^>]*>/g, ' ')}).`,
       icon: 'lock',
     })
     return
@@ -1634,6 +1673,14 @@ function abrirModalFirmaFila(fila) {
 function guardarFirmaCertificado() {
   if (!canvasRef.value) return
   const dataUrl = canvasRef.value.exportarBase64()
+  if (!dataUrl) {
+    $q.notify({
+      type: 'warning',
+      message: 'Debe dibujar, cargar o pegar una firma antes de estampar.',
+      icon: 'warning',
+    })
+    return
+  }
   const codigo = route.query.codigo || route.params.id
 
   if (filaParaFirmar.value) {
@@ -1641,7 +1688,13 @@ function guardarFirmaCertificado() {
     if (codigo) {
       localStorage.setItem(`firmas_tabla_${codigo}`, JSON.stringify(firmasTabla.value))
     }
+    const nombreFirmante = filaParaFirmar.value.nombres || 'la dependencia'
     filaParaFirmar.value = null
+    $q.notify({
+      type: 'positive',
+      message: `Firma de ${nombreFirmante} estampada correctamente en el paz y salvo.`,
+      icon: 'verified',
+    })
   } else {
     firmaGuardada.value = dataUrl
     if (codigo) {
@@ -1661,6 +1714,11 @@ function guardarFirmaCertificado() {
         store.cambiarEstado(codigo, 'Firmado')
       }
     }
+    $q.notify({
+      type: 'positive',
+      message: 'Firma del contratista estampada con éxito en el paz y salvo.',
+      icon: 'verified',
+    })
   }
   dialogoFirma.value = false
 }
@@ -2925,11 +2983,16 @@ Motivo registrado: "${datosSolicitud.value.observacionRechazo || 'Bienes o reque
   color: #1976d2;
   font-size: 7.5px;
   font-weight: 700;
-  opacity: 0.8;
+  opacity: 0.9;
+  cursor: pointer;
+  padding: 1px 4px;
+  border-radius: 3px;
+  transition: background-color 0.15s ease;
 }
 
 .btn-firmar-fila:hover {
   opacity: 1;
+  background-color: rgba(25, 118, 210, 0.1);
   text-decoration: underline;
 }
 
